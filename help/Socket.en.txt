@@ -1,0 +1,95 @@
+int server_fd = socket(domain, type, protocol);
+
+    domain, or address family: communication domain in which the socket
+    should be created. Some of address families are AF_INET (IP), AF_INET6
+    (IPv6), AF_UNIX (local channel, similar to pipes), AF_ISO (ISO protocols),
+    and AF_NS (Xerox Network Systems protocols).
+        domain(alan adi): Soketin oluşturulması gereken iletişim alanı.
+        Adres ailelerinden bazıları AF_INET (IP), AF_INET6 (IPv6), AF_UNIX (boruya
+        benzer yerel kanal), AF_ISO (ISO protokoller) ve AF_NS (Xerox Network Systems
+        protokolleridir).
+
+    type: type of service. This is selected according to the properties required
+    by the application: SOCK_STREAM (virtual circuit service), SOCK_DGRAM
+    (datagram service), SOCK_RAW (direct IP service). Check with your address family
+    to see whether a particular service is available.
+        type: hizmet türü. Bu, uygulamanın gerektirdiği özelliklere göre seçilir:
+        SOCK_STREAM (sanal devre hizmeti), SOCK_DGRAM (datagram hizmeti), SOCK_RAW (doğrudan
+        IP hizmeti). Adres ailesinizle görüşerek belirli bir hizmetin mevcut olup olmadığını
+        kontrol edin.
+
+    protocol: indicate a specific protocol to use in supporting the sockets operation.
+    This is useful in cases where some families may have more than one protocol to
+    support a given type of service. The return value is a file descriptor (a small integer).
+    The analogy of creating a socket is that of requesting a telephone line from the phone
+    company. For TCP/IP sockets, we want to specify the IP address family (AF_INET) and
+    virtual circuit service (SOCK_STREAM). Since there’s only one form of virtual circuit
+    service, there are no variations of the protocol, so the last argument, protocol, is
+    zero.
+        Protokol: Soket işlemlerini desteklemek için kullanılacak belirli bir protokol belirtir.
+        Bazı ailelerin belirli bir hizmet türünü desteklemek için birden fazla protokolü olabilmesi
+        durumunda kullanışlıdır. Dönen değer bir dosya tanımlayıcısıdır (küçük bir tam sayı). Soket
+        oluşturmanın benzetimi telefon şirketinden bir telefon hatı talep etmektir. TCP/IP soketleri
+        için, IP adres ailesi (AF_INET) ve sanal devre hizmetini (SOCK_STREAM) belirtmek isteyeceğiz.
+        Sanal devre hizmetinin tek bir formu olduğu için protokol değişiklikleri yoktur, bu nedenle son
+        argumento, protokol, sıfırdır.
+
+int bind(int socket, const struct sockaddr *address, socklen_t address_len);
+
+    socket: is the socket that was created with the socket system call.
+        soket: socket sistem çağrısı ile oluşturulan sokettir.
+
+    const structure sockaddr: is a generic container that just allows the OS to be able to read the first
+    couple of bytes that identify the address family. The address family determines what variant of
+    the sockaddr struct to use that contains elements that make sense for that specific communication
+    type. For IP networking, we use struct sockaddr_in, which is defined in the header netinet/in.h.
+    This structure defines:
+        const structure sockaddr: OS'nin adres ailesini tanımlayan ilk birkaç baytı okuyabilmesini sağlayan
+        genel bir konteynırdır. Adres ailesi, belirli iletişim türü için anlamlı elemanlar içeren sockaddr
+        struct'ın hangi varyantını kullanacağını belirler. IP ağı için, başlık netinet/in.h içinde tanımlanmış
+		olan struct sockaddr_in kullanırız. Bu struct şunları tanımlar:
+
+        struct sockaddr_in 
+        { 
+            __uint8_t         sin_len; 
+            sa_family_t       sin_family; 
+            in_port_t         sin_port; 
+            struct in_addr    sin_addr; 
+            char              sin_zero[8]; 
+        };
+
+        sin_family: The address family we used when we set up the socket. In our case, it’s AF_INET.
+			sin_family:: Soketi kurarken kullandığımız adres ailesi. Bizim durumumuzda AF_INET.
+
+        sin_port: The port number (the transport address). You can explicitly assign a transport address
+        (port) or allow the operating system to assign one. If you’re a client and won’t be receiving
+        incoming connections, you’ll usually just let the operating system pick any available port number
+        by specifying port 0. If you’re a server, you’ll generally pick a specific number since clients
+        will need to know a port number to connect to.
+				sin_port: Port numarası (taşıma adresi). Taşıma adresini (port) özelleştirebilir veya
+				işletim sistemi tarafından atanmasını sağlayabilirsiniz. Müşteriyseniz ve gelen bağlantıları
+				almayacaksınız, genellikle işletim sistemi tarafından atanabilecek herhangi bir port numarası
+				belirlemek için port 0 belirlemeniz yeterlidir. Sunucuysanız, genellikle belirli bir numara
+				seçersiniz çünkü müşteriler bağlanmak için bir port numarası bilmelidir.
+
+        sin_addr: The address for this socket. This is just your machine’s IP address. With IP, your machine
+        will have one IP address for each network interface. For example, if your machine has both Wi-Fi and
+        ethernet connections, that machine will have two addresses, one for each interface. Most of the time,
+        we don’t care to specify a specific interface and can let the operating system use whatever it wants.
+        The special address for this is 0.0.0.0, defined by the symbolic constant INADDR_ANY.
+			sin_addr: Bu soket için adres. Bu sadece makinenizin IP adresidir. IP ile makineniz her ağ arayüzü
+			için bir IP adresi olacaktır. Örneğin, makineniz Wi-Fi ve ethernet bağlantılarına sahipse, bu makine
+			iki adresi olacak, her bir arayüz için bir tane. Çoğu zaman belirli bir arayüz belirtmek istemeyiz
+			ve işletim sistemi istediğini kullanabilir. Bu için özel adres 0.0.0.0'dır ve sembolik sabit
+			INADDR_ANY tarafından tanımlanır.
+
+        address_len: (address structure may differ based on the type of transport used)specifies the length of that structure.
+        This is simply sizeof(struct sockaddr_in).
+			address_len: (taşıma türüne göre adres yapısı farklılık gösterir) o yapının uzunluğunu belirtir. Bu basitçe sizeof
+			(struct sockaddr_in)'dır."
+
+htonl converts a long integer (e.g. address) to a network representation 
+htons converts a short integer (e.g. port) to a network representation
+
+BACKLOG: defines the maximum number of pending connections that can be queued up before connections are refused.
+

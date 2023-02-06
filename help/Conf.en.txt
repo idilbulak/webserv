@@ -1,0 +1,35 @@
+Setting routes with one or multiple of the following rules/configuration (routes wont
+be using regexp):
+    ◦ Define a list of accepted HTTP methods for the route.
+    HTTP (Hypertext Transfer Protocol) defines a set of methods that can be used for communication between clients and servers. The following are the most commonly used HTTP methods:
+        GET: This method is used to retrieve information from a server, for example to retrieve a web page.
+        POST: This method is used to send data to a server, for example to submit a form.
+        PUT: This method is used to update an existing resource on a server.
+        DELETE: This method is used to delete a resource on a server.
+        HEAD: This method is used to retrieve the headers of a response, without the response body.
+        OPTIONS: This method is used to retrieve information about the communication options available for a resource.
+        CONNECT: This method is used to establish a network connection to a resource, typically for the purpose of setting up a secure communication channel (e.g., SSL/TLS).
+        TRACE: This method is used to retrieve a diagnostic trace of the request and response messages for a resource.
+        PATCH: This method is used to apply a set of changes to a resource.
+    ◦ Define a HTTP redirection.
+    HTTP redirection is a technique where a web server returns a response to a client indicating that the requested resource has been moved to a different URL. The client then makes a subsequent request to the new URL to retrieve the resource.
+        301 Moved Permanently: Indicates that the resource has been permanently moved to a new URL, and future requests should be directed to the new URL.
+        302 Found (Temporary Redirect): Indicates that the resource has temporarily been moved to a new URL, and future requests should continue to be directed to the original URL.
+        303 See Other: Indicates that the resource can be found under a different URL, but the original URL should be retained in the client's request.
+        307 Temporary Redirect: Indicates that the resource has temporarily been moved to a new URL, and future requests should be directed to the new URL.
+        308 Permanent Redirect: Indicates that the resource has been permanently moved to a new URL, and future requests should be directed to the new URL.
+        In Nginx, HTTP redirection can be achieved by using the return directive in a location block, or by using the rewrite directive to change the URL of a request and then issuing a return directive to trigger a redirect.
+            location /route {
+            return 301 https://new.example.com/route;
+            }
+
+
+∗ Do you wonder what a CGI is?
+∗ Because you won’t call the CGI directly, use the full path as PATH_INFO.
+∗ Just remember that, for chunked request, your server needs to unchunked
+it and the CGI will expect EOF as end of the body.
+∗ Same things for the output of the CGI. If no content_length is returned
+from the CGI, EOF will mark the end of the returned data.
+∗ Your program should call the CGI with the file requested as first argument.
+∗ The CGI should be run in the correct directory for relative path file access.
+∗ Your server should work with one CGI (php-CGI, Python, and so forth)

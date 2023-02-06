@@ -1,0 +1,60 @@
+int server_fd = socket(domain, type, protocol);
+
+    domain(alan adi): Soketin oluşturulması gereken iletişim alanı.
+    Adres ailelerinden bazıları AF_INET (IP), AF_INET6 (IPv6), AF_UNIX (boruya
+    benzer yerel kanal), AF_ISO (ISO protokoller) ve AF_NS (Xerox Network Systems
+    protokolleridir).
+
+    type: hizmet türü. Bu, uygulamanın gerektirdiği özelliklere göre seçilir:
+    SOCK_STREAM (sanal devre hizmeti), SOCK_DGRAM (datagram hizmeti), SOCK_RAW (doğrudan
+    IP hizmeti). Adres ailesinizle görüşerek belirli bir hizmetin mevcut olup olmadığını
+    kontrol edin.
+
+    Protokol: Soket işlemlerini desteklemek için kullanılacak belirli bir protokol belirtir.
+    Bazı ailelerin belirli bir hizmet türünü desteklemek için birden fazla protokolü olabilmesi
+    durumunda kullanışlıdır. Dönen değer bir dosya tanımlayıcısıdır (küçük bir tam sayı). Soket
+    oluşturmanın benzetimi telefon şirketinden bir telefon hatı talep etmektir. TCP/IP soketleri
+    için, IP adres ailesi (AF_INET) ve sanal devre hizmetini (SOCK_STREAM) belirtmek isteyeceğiz.
+    Sanal devre hizmetinin tek bir formu olduğu için protokol değişiklikleri yoktur, bu nedenle son
+    argumento, protokol, sıfırdır.
+
+int bind(int socket, const struct sockaddr *address, socklen_t address_len);
+
+    soket: socket sistem çağrısı ile oluşturulan sokettir.
+
+    const structure sockaddr: OS'nin adres ailesini tanımlayan ilk birkaç baytı okuyabilmesini sağlayan
+    genel bir konteynırdır. Adres ailesi, belirli iletişim türü için anlamlı elemanlar içeren sockaddr
+    struct'ın hangi varyantını kullanacağını belirler. IP ağı için, başlık netinet/in.h içinde tanımlanmış
+            olan struct sockaddr_in kullanırız. Bu struct şunları tanımlar:
+
+    struct sockaddr_in 
+    { 
+        __uint8_t         sin_len; 
+        sa_family_t       sin_family; 
+        in_port_t         sin_port; 
+        struct in_addr    sin_addr; 
+        char              sin_zero[8]; 
+    };
+
+	sin_family:: Soketi kurarken kullandığımız adres ailesi. Bizim durumumuzda AF_INET.
+
+	sin_port: Port numarası (taşıma adresi). Taşıma adresini (port) özelleştirebilir veya
+	işletim sistemi tarafından atanmasını sağlayabilirsiniz. Müşteriyseniz ve gelen bağlantıları
+	almayacaksınız, genellikle işletim sistemi tarafından atanabilecek herhangi bir port numarası
+	belirlemek için port 0 belirlemeniz yeterlidir. Sunucuysanız, genellikle belirli bir numara
+	seçersiniz çünkü müşteriler bağlanmak için bir port numarası bilmelidir.
+
+	sin_addr: Bu soket için adres. Bu sadece makinenizin IP adresidir. IP ile makineniz her ağ arayüzü
+	için bir IP adresi olacaktır. Örneğin, makineniz Wi-Fi ve ethernet bağlantılarına sahipse, bu makine
+	iki adresi olacak, her bir arayüz için bir tane. Çoğu zaman belirli bir arayüz belirtmek istemeyiz
+	ve işletim sistemi istediğini kullanabilir. Bu için özel adres 0.0.0.0'dır ve sembolik sabit
+	INADDR_ANY tarafından tanımlanır.
+
+	address_len: (taşıma türüne göre adres yapısı farklılık gösterir) o yapının uzunluğunu belirtir. Bu basitçe sizeof
+	(struct sockaddr_in)'dır."
+
+htonl converts a long integer (e.g. address) to a network representation 
+htons converts a short integer (e.g. port) to a network representation
+
+BACKLOG: defines the maximum number of pending connections that can be queued up before connections are refused.
+
