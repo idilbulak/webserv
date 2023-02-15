@@ -41,10 +41,13 @@ class Config {
         ~Config();
 
         void parse();
+        void display();
         void getServer(std::vector<std::string> &tokens, size_t &i);
 		void getHostPort(std::string &host, std::string &port, std::string &tokens);
 		void getErrorPage(std::map<int,std::string> &error_pages, std::vector<std::string> &tokens, size_t &i);
 		void getLocation(std::vector<Location> &locations, const std::vector<std::string> &tokens, size_t &i);
+
+	// std::ostream	&operator << ( std::ostream &out, const Config &conf );
 
 };
 
