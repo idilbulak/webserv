@@ -101,6 +101,8 @@ void	Config::getHostPort(std::string &host, std::string &port, std::string &toke
 }
 
 bool	check_word(const std::string &word) {
+	if (word.empty())
+		return true;
 	if (word == "index" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return")
 		return true;
 	return false;
@@ -160,6 +162,11 @@ void	Config::getLocation(std::vector<Location> &locations, const std::vector<std
 		}
 		else if (tokens[i] == "upload_dir")
 			loc.upload_dir = tokens[++i];
+		else if (tokens[i] == "index")
+		{
+			for (++i;!check_word(tokens[i]); ++i)
+				loc.index.push_back(tokens[i]);			
+		}
 		else
 			i++;
 	}
