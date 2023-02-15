@@ -23,7 +23,7 @@ struct ServerConfig {
 	std::string					port;
 	std::string					name;
 	std::string					root;
-	int							max_body_size;
+	std::string					max_body_size;
 	std::map<int,std::string>   error_pages;
 	std::vector<Location>		locations;
 };

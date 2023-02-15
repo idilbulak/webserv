@@ -10,8 +10,8 @@ Config::~Config() {
 void Config::display() {
     std::cout << "Config path: " << _path << std::endl;
     std::cout << "Servers: " << std::endl;
-    for (std::vector<ServerConfig>::const_iterator it = conf.servers.begin(); it != conf.servers.end(); ++it) {
-        const ServerConfig &server = *it;
+    for (std::vector<ServerConfig>::const_iterator it = conf.servers.begin(); it != conf.servers.end(); it++) {
+        const ServerConfig server = *it;
         std::cout << "\tHost: " << server.host << std::endl;
         std::cout << "\tPort: " << server.port << std::endl;
         std::cout << "\tName: " << server.name << std::endl;
@@ -55,27 +55,36 @@ void	Config::parse() {
     }
     ifs.close();
 	for (size_t i = 0; i != tokens.size(); ++i) {
+		size_t found = tokens[i].find(";");
+		if (found)
+			tokens[i] = tokens[i].substr(0, found);
+		// printf("tokens: %s\n", tokens[i].c_str());
+	}
+	for (size_t i = 0; i != tokens.size(); ++i) {
 		if (tokens[i] == "server" || tokens[i] == "?server")
-			printf("tokens: %s\n", tokens[i]);
 			getServer(tokens, i);
 	}
 }
 
 void	Config::getServer(std::vector< std::string > &tokens, size_t &i) {
 	ServerConfig	server;
-	for (;i!=tokens.size(); ++i) {
-		if (tokens[i] == "listen")
+	i++;
+	for (;i<tokens.size()-1; ++i) {
+		if(tokens[i] == "server")
+			break;
+		if (tokens[i] == "listen") 
             getHostPort(server.host, server.port, tokens[++i]);
 		else if (tokens[i] == "server_name")
 			server.name = tokens[++i];
 		else if (tokens[i] == "root")
 			server.root = tokens[++i];
 		else if (tokens[i] == "client_max_body_size" )
-		    server.max_body_size = std::stoi(tokens[i]);
+		    server.max_body_size = tokens[++i];
 		else if (tokens[i] == "error_page" )
 			getErrorPage(server.error_pages, tokens, i);
 		else if (tokens[i] == "location" )
 			getLocation(server.locations, tokens, i);
+		// conf->server = server;
 	}
 	conf.servers.push_back(server);
 }
@@ -89,7 +98,7 @@ void	Config::getHostPort(std::string &host, std::string &port, std::string &toke
 }
 
 bool	check_word(const std::string &word) {
-	if (word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name")
+	if (word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page")
 		return true;
 	return false;
 }
@@ -105,7 +114,7 @@ static bool str_isdigit(std::string line)
 void	Config::getErrorPage(std::map<int,std::string> &error_pages, std::vector<std::string> &tokens, size_t &i) {
 	++i;
 	int j = i;
-	while (tokens[j] != ";" && !check_word(tokens[j]))
+	while (tokens[j] != "\0" && !check_word(tokens[j]))
 		++j;
 	std::string path = tokens[--j];
 	while (str_isdigit(tokens[i])) {
@@ -117,25 +126,30 @@ void	Config::getErrorPage(std::map<int,std::string> &error_pages, std::vector<st
 void	Config::getLocation(std::vector<Location> &locations, const std::vector<std::string> &tokens, size_t &i) {
 	Location	loc;
 	loc.path = tokens[++i];
-	for ( ++i; tokens[i] != "location" || tokens[i] != "server"; ++i ) {
-		if ( tokens[i] == "allow" ) {
-			for ( ++i; tokens[i] != ";"; ++i )
-				loc.methods.push_back(tokens[i]);
-		}
-		else if ( tokens[i] == "root" )
-			loc.root = tokens[++i];
-		else if ( tokens[i] == "autoindex" ) {
-			if (tokens[++i]== "on")
-				loc.autoindex = 1;
-			else if (tokens[++i]== "off")
-				loc.autoindex = 0;
-		}
-		else if (tokens[i] == "cgi_ext") {
-			loc.cgi_ext = tokens[++i];
-			loc.cgi_path = tokens[++i];
-		}
-		else if (tokens[i] == "upload_dir")
-			loc.upload_dir = tokens[++i];
+	// std::cout << "token" << tokens[i] << std::endl;
+	for (;tokens.size() > i; i++ ) {
+		if (tokens[i] == "location\n" || tokens[i] == "server")
+			break;
+	// std::cout << tokens.size() << "  "<< i << "token " << tokens[i] << std::endl;
+		
+		// if ( tokens[i] == "allow" ) {
+		// 	for ( ++i; tokens[i] != ";"; ++i )
+		// 		loc.methods.push_back(tokens[i]);
+		// }
+		// else if ( tokens[i] == "root" )
+		// 	loc.root = tokens[++i];
+		// else if ( tokens[i] == "autoindex" ) {
+		// 	if (tokens[++i]== "on")
+		// 		loc.autoindex = 1;
+		// 	else if (tokens[++i]== "off")
+		// 		loc.autoindex = 0;
+		// }
+		// else if (tokens[i] == "cgi_ext") {
+		// 	loc.cgi_ext = tokens[++i];
+		// 	loc.cgi_path = tokens[++i];
+		// }
+		// else if (tokens[i] == "upload_dir")
+		// 	loc.upload_dir = tokens[++i];
 	}
-	locations.push_back(loc);
+	// locations.push_back(loc);
 }
