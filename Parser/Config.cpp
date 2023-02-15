@@ -59,9 +59,9 @@ void	Config::parse() {
 		size_t found = tokens[i].find(";");
 		if (found)
 			tokens[i] = tokens[i].substr(0, found);
-		// printf("tokens: %s\n", tokens[i].c_str());
+		// printf("tokens: %s|\n, %d\n", tokens[i].c_str(), i);
 	}
-	for (size_t i = 0; i != tokens.size(); ++i) {
+	for (size_t i = 0; i < tokens.size(); ++i) {
 		if (tokens[i] == "server" || tokens[i] == "?server")
 			getServer(tokens, i);
 	}
@@ -127,29 +127,37 @@ void	Config::getErrorPage(std::map<int,std::string> &error_pages, std::vector<st
 void	Config::getLocation(std::vector<Location> &locations, const std::vector<std::string> &tokens, size_t &i) {
 	Location	loc;
 	loc.path = tokens[++i];
-	std::cout << "tokensize" << tokens.size() << std::endl;
-	for (; i<tokens.size(); i++ ) {
-		if (tokens[i] == "location" || tokens[i] == "server")
+	// std::cout << "tokensize" << tokens.size() << std::endl;
+	// std::cout << "token" << tokens[i] << std::endl;
+	for (; i<tokens.size()-1 && (tokens[i] != "location" || tokens[i] != "server"); ++i) {
+
+	// std::cout << "token" << tokens[i] << std::endl;
+
+		std::cout << tokens[i] << std::endl;
+		if (tokens[i] == "location" || tokens[i] == "server") {
+			// std::cout << "neee" << std::endl;
 			break;
-		std::cout <<  i << "token " << tokens[i] << std::endl;	
+		}
+
+		// std::cout <<  i << "token " << tokens[i] << std::endl;	
 		if ( tokens[i] == "allow" ) {
 			for ( ++i; !check_word(tokens[i]); ++i)
 				loc.methods.push_back(tokens[i]);
 		}
-		// else if ( tokens[i] == "root" )
-		// 	loc.root = tokens[++i];
-		// else if ( tokens[i] == "autoindex" ) {
-		// 	if (tokens[++i]== "on")
-		// 		loc.autoindex = 1;
-		// 	else if (tokens[++i]== "off")
-		// 		loc.autoindex = 0;
-		// }
-		// else if (tokens[i] == "cgi_ext") {
-		// 	loc.cgi_ext = tokens[++i];
-		// 	loc.cgi_path = tokens[++i];
-		// }
-		// else if (tokens[i] == "upload_dir")
-		// 	loc.upload_dir = tokens[++i];
+		else if ( tokens[i] == "root" )
+			loc.root = tokens[++i];
+		else if ( tokens[i] == "autoindex" ) {
+			if (tokens[++i]== "on")
+				loc.autoindex = 1;
+			else if (tokens[++i]== "off")
+				loc.autoindex = 0;
+		}
+		else if (tokens[i] == "cgi_ext") {
+			loc.cgi_ext = tokens[++i];
+			loc.cgi_path = tokens[++i];
+		}
+		else if (tokens[i] == "upload_dir")
+			loc.upload_dir = tokens[++i];
 	}
 	locations.push_back(loc);
 }
