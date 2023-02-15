@@ -70,7 +70,7 @@ void	Config::parse() {
 void	Config::getServer(std::vector< std::string > &tokens, size_t &i) {
 	ServerConfig	server;
 	i++;
-	for (;i<tokens.size()-1; ++i) {
+	for (;i<tokens.size()-1;) {
 		if(tokens[i] == "server")
 			break;
 		if (tokens[i] == "listen") 
@@ -85,6 +85,8 @@ void	Config::getServer(std::vector< std::string > &tokens, size_t &i) {
 			getErrorPage(server.error_pages, tokens, i);
 		else if (tokens[i] == "location" )
 			getLocation(server.locations, tokens, i);
+		else
+			i++;
 		// conf->server = server;
 	}
 	conf.servers.push_back(server);
@@ -99,7 +101,7 @@ void	Config::getHostPort(std::string &host, std::string &port, std::string &toke
 }
 
 bool	check_word(const std::string &word) {
-	if (word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return")
+	if (word == "index" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return")
 		return true;
 	return false;
 }
@@ -129,7 +131,7 @@ void	Config::getLocation(std::vector<Location> &locations, const std::vector<std
 	loc.path = tokens[++i];
 	// std::cout << "tokensize" << tokens.size() << std::endl;
 	// std::cout << "token" << tokens[i] << std::endl;
-	for (; i<tokens.size()-1 && (tokens[i] != "location" || tokens[i] != "server"); ++i) {
+	for (; i<tokens.size()-1 && (tokens[i] != "location" || tokens[i] != "server");) {
 
 	// std::cout << "token" << tokens[i] << std::endl;
 
@@ -144,7 +146,7 @@ void	Config::getLocation(std::vector<Location> &locations, const std::vector<std
 			for ( ++i; !check_word(tokens[i]); ++i)
 				loc.methods.push_back(tokens[i]);
 		}
-		else if ( tokens[i] == "root" )
+		if ( tokens[i] == "root" )
 			loc.root = tokens[++i];
 		else if ( tokens[i] == "autoindex" ) {
 			if (tokens[++i]== "on")
@@ -158,6 +160,8 @@ void	Config::getLocation(std::vector<Location> &locations, const std::vector<std
 		}
 		else if (tokens[i] == "upload_dir")
 			loc.upload_dir = tokens[++i];
+		else
+			i++;
 	}
 	locations.push_back(loc);
 }
