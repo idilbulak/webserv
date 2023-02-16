@@ -7,46 +7,13 @@ Config::Config(const std::string &path) :_path(path) {
 Config::~Config() {
 }
 
-void Config::display() {
-    std::cout << "Config path: " << _path << std::endl;
-    std::cout << "Servers: " << std::endl;
-    for (std::vector<ServerConfig>::const_iterator it = conf.servers.begin(); it != conf.servers.end(); it++) {
-        const ServerConfig server = *it;
-        std::cout << "\tHost: " << server.host << std::endl;
-        std::cout << "\tPort: " << server.port << std::endl;
-        std::cout << "\tName: " << server.name << std::endl;
-        std::cout << "\tRoot: " << server.root << std::endl;
-        std::cout << "\tMax Body Size: " << server.max_body_size << std::endl;
-        std::cout << "\tError Pages: " << std::endl;
-        for (std::map<int, std::string>::const_iterator it_err = server.error_pages.begin(); it_err != server.error_pages.end(); ++it_err) {
-            std::cout << "\t\tCode: " << it_err->first << std::endl;
-            std::cout << "\t\tPath: " << it_err->second << std::endl;
-        }
-        std::cout << "\tLocations: " << std::endl;
-        for (std::vector<Location>::const_iterator it_loc = server.locations.begin(); it_loc != server.locations.end(); ++it_loc) {
-            const Location &location = *it_loc;
-	        std::cout << "\tlocation: " << std::endl;
-            std::cout << "\t\tPath: " << location.path << std::endl;
-            std::cout << "\t\tMethods: " << std::endl;
-            for (std::vector<std::string>::const_iterator it_meth = location.methods.begin(); it_meth != location.methods.end(); ++it_meth) {
-                std::cout << "\t\t\t" << *it_meth << std::endl;
-            }
-            std::cout << "\t\tRoot: " << location.root << std::endl;
-            std::cout << "\t\tAuto Index: " << location.autoindex << std::endl;
-            std::cout << "\t\tCGI Ext: " << location.cgi_ext << std::endl;
-            std::cout << "\t\tCGI Path: " << location.cgi_path << std::endl;
-            std::cout << "\t\tUpload Dir: " << location.upload_dir << std::endl;
-            std::cout << "\t\tIndex: " << std::endl;
-            for (std::vector<std::string>::const_iterator it_ind = location.index.begin(); it_ind != location.index.end(); ++it_ind) {
-                std::cout << "\t\t\t" << *it_ind << std::endl;
-            }
-        }
-	}
-}
-
 void	Config::parse() {
 
     std::ifstream ifs(_path.c_str());
+	if (!ifs.is_open()) {
+        std::cerr << "File does not exist: " << _path << std::endl;
+        exit(1);
+    }
     std::vector<std::string> tokens;
     std::string token;
     while (ifs >> token) {
@@ -87,7 +54,6 @@ void	Config::getServer(std::vector< std::string > &tokens, size_t &i) {
 			getLocation(server.locations, tokens, i);
 		else
 			i++;
-		// conf->server = server;
 	}
 	conf.servers.push_back(server);
 }
@@ -161,4 +127,41 @@ void	Config::getLocation(std::vector<Location> &locations, const std::vector<std
 			i++;
 	}
 	locations.push_back(loc);
+}
+
+void Config::display() {
+    std::cout << "Config path: " << _path << std::endl;
+    std::cout << "Servers: " << std::endl;
+    for (std::vector<ServerConfig>::const_iterator it = conf.servers.begin(); it != conf.servers.end(); it++) {
+        const ServerConfig server = *it;
+        std::cout << "\tHost: " << server.host << std::endl;
+        std::cout << "\tPort: " << server.port << std::endl;
+        std::cout << "\tName: " << server.name << std::endl;
+        std::cout << "\tRoot: " << server.root << std::endl;
+        std::cout << "\tMax Body Size: " << server.max_body_size << std::endl;
+        std::cout << "\tError Pages: " << std::endl;
+        for (std::map<int, std::string>::const_iterator it_err = server.error_pages.begin(); it_err != server.error_pages.end(); ++it_err) {
+            std::cout << "\t\tCode: " << it_err->first << std::endl;
+            std::cout << "\t\tPath: " << it_err->second << std::endl;
+        }
+        std::cout << "\tLocations: " << std::endl;
+        for (std::vector<Location>::const_iterator it_loc = server.locations.begin(); it_loc != server.locations.end(); ++it_loc) {
+            const Location &location = *it_loc;
+	        std::cout << "\tlocation: " << std::endl;
+            std::cout << "\t\tPath: " << location.path << std::endl;
+            std::cout << "\t\tMethods: " << std::endl;
+            for (std::vector<std::string>::const_iterator it_meth = location.methods.begin(); it_meth != location.methods.end(); ++it_meth) {
+                std::cout << "\t\t\t" << *it_meth << std::endl;
+            }
+            std::cout << "\t\tRoot: " << location.root << std::endl;
+            std::cout << "\t\tAuto Index: " << location.autoindex << std::endl;
+            std::cout << "\t\tCGI Ext: " << location.cgi_ext << std::endl;
+            std::cout << "\t\tCGI Path: " << location.cgi_path << std::endl;
+            std::cout << "\t\tUpload Dir: " << location.upload_dir << std::endl;
+            std::cout << "\t\tIndex: " << std::endl;
+            for (std::vector<std::string>::const_iterator it_ind = location.index.begin(); it_ind != location.index.end(); ++it_ind) {
+                std::cout << "\t\t\t" << *it_ind << std::endl;
+            }
+        }
+	}
 }
