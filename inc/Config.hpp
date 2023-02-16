@@ -28,15 +28,11 @@ struct ServerConfig {
 	std::vector<Location>		locations;
 };
 
-struct NetworkConfig {
-	    std::vector<ServerConfig>   servers;
-};
-
 class Config {
     private:
         const std::string	_path;
-	    NetworkConfig		conf;
     public:
+	    std::vector<ServerConfig>   servers;
         Config(const std::string &path);
         ~Config();
 

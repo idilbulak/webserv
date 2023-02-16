@@ -55,7 +55,7 @@ void	Config::getServer(std::vector< std::string > &tokens, size_t &i) {
 		else
 			i++;
 	}
-	conf.servers.push_back(server);
+	servers.push_back(server);
 }
 
 void	Config::getHostPort(std::string &host, std::string &port, std::string &tokens) {
@@ -132,7 +132,7 @@ void	Config::getLocation(std::vector<Location> &locations, const std::vector<std
 void Config::display() {
     std::cout << "Config path: " << _path << std::endl;
     std::cout << "Servers: " << std::endl;
-    for (std::vector<ServerConfig>::const_iterator it = conf.servers.begin(); it != conf.servers.end(); it++) {
+    for (std::vector<ServerConfig>::const_iterator it = servers.begin(); it != servers.end(); it++) {
         const ServerConfig server = *it;
         std::cout << "\tHost: " << server.host << std::endl;
         std::cout << "\tPort: " << server.port << std::endl;
