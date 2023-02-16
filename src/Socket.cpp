@@ -1,4 +1,4 @@
-#include "Socket.hpp"
+#include "../inc/Socket.hpp"
 
 Socket::Socket(std::string host, std::string port) :_host(host), _port(port) {}
 Socket::~Socket() {}
@@ -20,6 +20,7 @@ void Socket::identify() {
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = htonl(INADDR_ANY);
     address.sin_port = htons(port);
+	// address.sin_zero = memset()
 	if (bind(_serverfd, (struct sockaddr *)&address, sizeof(address)) < 0 ) {
 		std::cout << "socket bind failed: " << std::string(strerror(errno)) << std::endl;
 		close( _serverfd );

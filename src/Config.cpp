@@ -1,4 +1,4 @@
-#include "Config.hpp"
+#include "../inc/Config.hpp"
 
 Config::Config(const std::string &path) :_path(path) {
     this->parse();
@@ -131,19 +131,9 @@ void	Config::getErrorPage(std::map<int,std::string> &error_pages, std::vector<st
 void	Config::getLocation(std::vector<Location> &locations, const std::vector<std::string> &tokens, size_t &i) {
 	Location	loc;
 	loc.path = tokens[++i];
-	// std::cout << "tokensize" << tokens.size() << std::endl;
-	// std::cout << "token" << tokens[i] << std::endl;
 	for (; i<tokens.size()-1 && (tokens[i] != "location" || tokens[i] != "server");) {
-
-	// std::cout << "token" << tokens[i] << std::endl;
-
-		std::cout << tokens[i] << std::endl;
-		if (tokens[i] == "location" || tokens[i] == "server") {
-			// std::cout << "neee" << std::endl;
+		if (tokens[i] == "location" || tokens[i] == "server")
 			break;
-		}
-
-		// std::cout <<  i << "token " << tokens[i] << std::endl;	
 		if ( tokens[i] == "allow" ) {
 			for ( ++i; !check_word(tokens[i]); ++i)
 				loc.methods.push_back(tokens[i]);

@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "Parser/Config.hpp"
+#include "../inc/Config.hpp"
 
 int main(int argc, char **argv) {
     if (argc != 2)
