@@ -33,3 +33,17 @@ struct. It takes six arguments:
 	will return the corresponding kevent struct to the calling process.
 	EV_ADD is a flag that tells kqueue to add the specified event to the set of events being monitored for the given
 	file descriptor.
+
+int kevent(int	kq, const struct kevent	*changelist, int nchanges, struct	kevent *eventlist, int nevents, const struct timespec *timeout);
+The kqueue system call creates a new kernel object, called a kqueue, that allows your application to efficiently
+monitor a set of file descriptors or other types of events for readiness or completion. However, just creating a
+kqueue does not provide any functionality on its own; you need to use the kevent function to register events that
+you want to monitor and receive notifications about.
+	kq parameter is the file descriptor of the kqueue that you want to monitor.
+	changelist parameter is a pointer to an array of struct kevent structures that describe the changes that you want to make to the kqueue.
+	nchanges parameter is the number of changes in the changelist array.
+	eventlist parameter is a pointer to an array of struct kevent structures that will be used to store the events that have occurred.
+	nevents parameter is the maximum number of events that can be stored in the eventlist array.
+	timeout parameter is a pointer to a struct timespec that specifies the amount of time that the kevent function should wait for events
+	to occur before returning. If timeout is NULL, then kevent will block indefinitely until at least one event occurs. If timeout is
+	non-NULL, then kevent will return after the specified time has elapsed, even if no events have occurred
