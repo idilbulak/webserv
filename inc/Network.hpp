@@ -6,6 +6,10 @@
 #include "Config.hpp"
 #include "Socket.hpp"
 
+typedef struct s_udata {
+  // what should i put?
+} t_udata;
+
 class Network {
     private:
 		Config	_cf;
