@@ -4,7 +4,7 @@ Socket::Socket(std::string host, std::string port) :_host(host), _port(port) {
 	create();
 	identify();
 	wait_incomingconnections();
-	accept_loop();
+	// accept_loop();
 }
 
 Socket::~Socket() {}
@@ -41,7 +41,7 @@ void Socket::wait_incomingconnections() {
 	}
 }
 
-void Socket::accept_loop() {
+// void Socket::accept_loop() {
 
-}
+// }
 
