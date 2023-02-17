@@ -25,6 +25,7 @@ class Socket {
         void create();
         void identify();
         void wait_incomingconnections();
+        void accept_loop();
 
 };
 
