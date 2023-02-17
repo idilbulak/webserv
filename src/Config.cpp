@@ -30,18 +30,18 @@ void	Config::parse() {
 	}
 	for (size_t i = 0; i < tokens.size(); ++i) {
 		if (tokens[i] == "server" || tokens[i] == "?server")
-			getServer(tokens, i);
+			parseServer(tokens, i);
 	}
 }
 
-void	Config::getServer(std::vector< std::string > &tokens, size_t &i) {
+void	Config::parseServer(std::vector< std::string > &tokens, size_t &i) {
 	ServerConfig	server;
 	i++;
 	for (;i<tokens.size()-1;) {
 		if(tokens[i] == "server")
 			break;
 		if (tokens[i] == "listen") 
-            getHostPort(server.host, server.port, tokens[++i]);
+            parseHostPort(server.host, server.port, tokens[++i]);
 		else if (tokens[i] == "server_name")
 			server.name = tokens[++i];
 		else if (tokens[i] == "root")
@@ -49,16 +49,16 @@ void	Config::getServer(std::vector< std::string > &tokens, size_t &i) {
 		else if (tokens[i] == "client_max_body_size" )
 		    server.max_body_size = tokens[++i];
 		else if (tokens[i] == "error_page" )
-			getErrorPage(server.error_pages, tokens, i);
+			parseErrorPage(server.error_pages, tokens, i);
 		else if (tokens[i] == "location" )
-			getLocation(server.locations, tokens, i);
+			parseLocation(server.locations, tokens, i);
 		else
 			i++;
 	}
 	servers.push_back(server);
 }
 
-void	Config::getHostPort(std::string &host, std::string &port, std::string &tokens) {
+void	Config::parseHostPort(std::string &host, std::string &port, std::string &tokens) {
     std::stringstream ss;
     size_t found = tokens.find(":");
     host = tokens.substr(0, found);
@@ -82,7 +82,7 @@ static bool str_isdigit(std::string line)
 	return (1);
 }
 
-void	Config::getErrorPage(std::map<int,std::string> &error_pages, std::vector<std::string> &tokens, size_t &i) {
+void	Config::parseErrorPage(std::map<int,std::string> &error_pages, std::vector<std::string> &tokens, size_t &i) {
 	++i;
 	int j = i;
 	while (tokens[j] != "\0" && !check_word(tokens[j]))
@@ -94,7 +94,7 @@ void	Config::getErrorPage(std::map<int,std::string> &error_pages, std::vector<st
 	}
 }
 
-void	Config::getLocation(std::vector<Location> &locations, const std::vector<std::string> &tokens, size_t &i) {
+void	Config::parseLocation(std::vector<Location> &locations, const std::vector<std::string> &tokens, size_t &i) {
 	Location	loc;
 	loc.path = tokens[++i];
 	for (; i<tokens.size()-1 && (tokens[i] != "location" || tokens[i] != "server");) {

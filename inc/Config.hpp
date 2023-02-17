@@ -32,16 +32,16 @@ class Config {
     private:
         const std::string	_path;
     public:
-	    std::vector<ServerConfig>   servers;
+	    std::vector<ServerConfig>   servers; //make this private
         Config(const std::string &path);
         ~Config();
 
         void parse();
         void display();
-        void getServer(std::vector<std::string> &tokens, size_t &i);
-		void getHostPort(std::string &host, std::string &port, std::string &tokens);
-		void getErrorPage(std::map<int,std::string> &error_pages, std::vector<std::string> &tokens, size_t &i);
-		void getLocation(std::vector<Location> &locations, const std::vector<std::string> &tokens, size_t &i);
+        void parseServer(std::vector<std::string> &tokens, size_t &i);
+		void parseHostPort(std::string &host, std::string &port, std::string &tokens);
+		void parseErrorPage(std::map<int,std::string> &error_pages, std::vector<std::string> &tokens, size_t &i);
+		void parseLocation(std::vector<Location> &locations, const std::vector<std::string> &tokens, size_t &i);
 
 	// std::ostream	&operator << ( std::ostream &out, const Config &conf );
 
