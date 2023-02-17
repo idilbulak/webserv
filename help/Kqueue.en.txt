@@ -47,3 +47,9 @@ you want to monitor and receive notifications about.
 	timeout parameter is a pointer to a struct timespec that specifies the amount of time that the kevent function should wait for events
 	to occur before returning. If timeout is NULL, then kevent will block indefinitely until at least one event occurs. If timeout is
 	non-NULL, then kevent will return after the specified time has elapsed, even if no events have occurred
+	
+	First call to kevent() is used to register the listening sockets with the kqueue. This allows the server to receive notifications from the kqueue
+	when there is incoming network traffic on the listening sockets. This call is made only once, during initialization.
+	Second call to kevent() is the main event loop of the server. It is used to retrieve the events that have occurred on the file descriptors registered
+	with the kqueue. In this loop, the server waits for events on the registered sockets and processes them accordingly. This call is made repeatedly in
+	a loop while the server is running.
