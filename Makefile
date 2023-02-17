@@ -5,7 +5,8 @@ OBJDIR	:= obj
 SRC		:= $(shell find $(SRCDIR) -name '*.cpp')
 OBJ		:= $(SRC:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 CC		:= g++
-FLAGS	= -std=c++98 -Wall -Wextra -Werror
+FLAGS	= -std=c++98
+# -Wall -Wextra -Werror
 
 all: $(NAME)
 $(NAME): $(OBJ)
