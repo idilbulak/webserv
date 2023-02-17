@@ -8,7 +8,7 @@ Network::~Network() {
 }
 
 void	Network::start() {
-	int kq;
+	int kq = kqueue();
 	struct kevent event;
 	t_udata udata; //how to fill??
 	int len = _cf.servers.size();
@@ -19,7 +19,7 @@ void	Network::start() {
 		// create bind listen
 	Socket s = Socket(_cf.servers[0].host, _cf.servers[0].port);
 		// fill the event struct with macro
-	if (kq == kqueue() == -1) {
+	if (kq == -1) {
 		std::cout << "kqueue error" << std::endl;
 		exit(1);
 	}
