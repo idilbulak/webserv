@@ -2,6 +2,7 @@
 # define NETWORK_HPP
 
 #include <iostream>
+#include <sys/event.h>
 #include "Config.hpp"
 #include "Socket.hpp"
 
