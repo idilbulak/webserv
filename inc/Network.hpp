@@ -18,6 +18,7 @@ class Network {
         ~Network();
 
         void start();
+        void handleConnections(struct kevent eset, struct kevent events);
 
 	// std::ostream	&operator << (std::ostream &out, const Network &n);
 
