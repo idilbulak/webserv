@@ -29,18 +29,19 @@ void	Network::start() {
 		exit(1);
 	}
 	// accept_loop
-	struct kevent events;
+	struct kevent events[100];
 	int	n_events;
 	while (1) {
-		n_events = kevent(kq, NULL, 0, &events, _cf.servers.size(), NULL);
+		n_events = kevent(kq, NULL, 0, events, _cf.servers.size(), NULL);
 		if (n_events == -1) 
 			break;
 		for(int i=0;i<n_events;i++)
+
 			handleConnections(eset, events);
 	}
 	close(kq);
 }
 
-void Network::handleConnections(struct kevent eset, struct kevent events) {
+void Network::handleConnections(struct kevent eset, struct kevent *events) {
 	std::cout << "this girl is ON FIREEEEEEEEEEEE" << std::endl;
 }
