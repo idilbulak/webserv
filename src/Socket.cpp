@@ -9,7 +9,7 @@ Socket::Socket(std::string host, std::string port) :_host(host), _port(port) {
 Socket::~Socket() {}
 std::string	Socket::getHost() {return _host;}
 std::string	Socket::getPort() {return _port;}
-int Socket::getSocketfd() {return _serverfd;}
+int Socket::getServerfd() {return _serverfd;}
 
 void	Socket::create() {
 	if (( _serverfd = socket( AF_INET, SOCK_STREAM, 0)) < 0) {

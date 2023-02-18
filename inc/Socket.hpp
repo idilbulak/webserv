@@ -20,7 +20,7 @@ class Socket {
 
 		std::string getHost( void );
 		std::string getPort( void );
-		int getSocketfd( void );
+		int getServerfd( void );
 
         void create();
         void identify();
