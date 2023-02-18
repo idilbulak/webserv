@@ -5,6 +5,7 @@
 #include <sys/event.h>
 #include "Config.hpp"
 #include "Socket.hpp"
+#include "Time.hpp"
 
 typedef struct s_udata {
   // what should i put?
@@ -18,7 +19,7 @@ class Network {
         ~Network();
 
         void start();
-        void handleConnections(struct kevent eset, struct kevent *events);
+        void handleConnections(struct kevent *eset, struct kevent *events);
 
 	// std::ostream	&operator << (std::ostream &out, const Network &n);
 

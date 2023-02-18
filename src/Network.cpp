@@ -1,6 +1,5 @@
 #include "../inc/Network.hpp"
 
-
 Network::Network(Config &cf) :_cf(cf) {
 }
 
@@ -8,23 +7,20 @@ Network::~Network() {
 }
 
 void	Network::start() {
-	// check if the current server being set up is trying to listen on a port that is already being used by another server in the servers.
-	// if not.. 
-		// create the new socket on that port
-		// multiple sockets for multiple ports?
-		// create bind listen
-	Socket s = Socket(_cf.servers[0].host, _cf.servers[0].port);
-		// fill the event struct with macro
 	int kq = kqueue();
 	if (kq == -1) {
 		std::cout << "kqueue error" << std::endl;
 		exit(1);
 	}
-	// register the event
-	struct kevent eset;
-	t_udata udata; //how to fill??
-	EV_SET(&eset, s.getSocketfd(), EVFILT_READ, EV_ADD, 0, 0, &udata);
-	if (kevent(kq, &eset, _cf.servers.size(), NULL, 0, NULL) == -1) {
+	struct kevent *eset=new struct kevent[_cf.servers.size()];
+	t_udata udata;
+	for (int i = 0; i < _cf.servers.size(); ++i) {
+		Socket s(_cf.servers[i].host, _cf.servers[i].port);
+		EV_SET(eset+i, s.getSocketfd(), EVFILT_READ, EV_ADD, 0, 0, &udata);
+		std::string time_str = getTime();
+		std::cout << "\033[31m" << time_str << "\033[0m\t Listening on port: " << _cf.servers[i].port << std::endl;
+	}
+	if (kevent(kq, eset, _cf.servers.size(), NULL, 0, NULL) == -1) {
 		std::cout << "kevent error" << std::endl;
 		exit(1);
 	}
@@ -36,12 +32,12 @@ void	Network::start() {
 		if (n_events == -1) 
 			break;
 		for(int i=0;i<n_events;i++)
-
+		
 			handleConnections(eset, events);
 	}
 	close(kq);
 }
 
-void Network::handleConnections(struct kevent eset, struct kevent *events) {
+void Network::handleConnections(struct kevent *eset, struct kevent *events) {
 	std::cout << "this girl is ON FIREEEEEEEEEEEE" << std::endl;
 }
