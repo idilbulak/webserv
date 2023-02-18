@@ -18,7 +18,7 @@ struct Location {
 	std::vector<std::string>	index;
 };
 
-struct ServerConfig {
+struct Server {
     std::string					host;
 	std::string					port;
 	std::string					name;
@@ -32,7 +32,7 @@ class Config {
     private:
         const std::string	_path;
     public:
-	    std::vector<ServerConfig>   servers; //make this private
+	    std::vector<Server>   servers; //make this private
         Config(const std::string &path);
         ~Config();
 
