@@ -16,7 +16,7 @@ void	Network::start() {
 	t_udata udata;
 	for (int i = 0; i < _cf.servers.size(); ++i) {
 		Socket s(_cf.servers[i].host, _cf.servers[i].port);
-		EV_SET(eset+i, s.getSocketfd(), EVFILT_READ, EV_ADD, 0, 0, &udata);
+		// EV_SET(eset+i, s.getSocketfd(), EVFILT_READ, EV_ADD, 0, 0, &udata);
 		std::string time_str = getTime();
 		std::cout << "\033[31m" << time_str << "\033[0m\t Listening on port: " << _cf.servers[i].port << std::endl;
 	}

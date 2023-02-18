@@ -28,9 +28,11 @@ void	Config::parse() {
 			tokens[i] = tokens[i].substr(0, found);
 		// printf("tokens: %s|\n, %d\n", tokens[i].c_str(), i);
 	}
-	for (size_t i = 0; i < tokens.size(); ++i) {
+	for (size_t i = 0; i < tokens.size(); i++) {
 		if (tokens[i] == "server" || tokens[i] == "?server")
 			parseServer(tokens, i);
+		if (tokens[i] == "server")
+			i--;
 	}
 }
 
@@ -38,6 +40,7 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 	Server	server;
 	i++;
 	for (;i<tokens.size()-1;) {
+		std::cout << tokens[i] << "is token " << std::endl;
 		if(tokens[i] == "server")
 			break;
 		if (tokens[i] == "listen") 
@@ -97,6 +100,7 @@ void	Config::parseErrorPage(std::map<int,std::string> &error_pages, std::vector<
 void	Config::parseLocation(std::vector<Location> &locations, const std::vector<std::string> &tokens, size_t &i) {
 	Location	loc;
 	loc.path = tokens[++i];
+	//what do you mean? if for work, first if doesnt always work :))))
 	for (; i<tokens.size()-1 && (tokens[i] != "location" || tokens[i] != "server");) {
 		if (tokens[i] == "location" || tokens[i] == "server")
 			break;
