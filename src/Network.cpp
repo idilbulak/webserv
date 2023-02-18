@@ -32,9 +32,10 @@ void	Network::start() {
 		if (n_events == -1) 
 			break;
 		for(int i=0;i<n_events;i++)
-		
+
 			handleConnections(eset, events);
 	}
+	delete[] eset;
 	close(kq);
 }
 
