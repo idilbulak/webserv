@@ -19,14 +19,17 @@ void	Socket::create() {
 }
 
 void Socket::identify() {
-    struct sockaddr_in address;
+    struct sockaddr_in servaddr;
     const int port = std::stoi(_port);
-    memset((char *)&address, 0, sizeof(address));
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = htonl(INADDR_ANY);
-    address.sin_port = htons(port);
-	// address.sin_zero = memset()
-	if (bind(_serverfd, (struct sockaddr *)&address, sizeof(address)) < 0 ) {
+    memset((char *)&servaddr, 0, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servaddr.sin_port = htons(port);
+	// servaddr.sin_zero = memset()
+	// kullanimda olan varsa kapamak icin
+	int optval = 1;
+	setsockopt(_serverfd,SOL_SOCKET,SO_REUSEADDR,&optval,sizeof(optval));
+	if (bind(_serverfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0 ) {
 		std::cout << "socket bind failed: " << std::string(strerror(errno)) << std::endl;
 		close( _serverfd );
 		exit(1);
