@@ -40,7 +40,7 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 	Server	server;
 	i++;
 	for (;i<tokens.size()-1;) {
-		std::cout << tokens[i] << "is token " << std::endl;
+		// std::cout << tokens[i] << "is token " << std::endl;
 		if(tokens[i] == "server")
 			break;
 		if (tokens[i] == "listen") 
