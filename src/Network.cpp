@@ -16,9 +16,10 @@ void	Network::start() {
 	t_udata udata;
 	for (int i = 0; i < _cf.servers.size(); ++i) {
 		Socket s(_cf.servers[i].host, _cf.servers[i].port);
-		// EV_SET(eset+i, s.getSocketfd(), EVFILT_READ, EV_ADD, 0, 0, &udata);
+		udata.port = _cf.servers[i].port;
+		EV_SET(eset+i, s.getServerfd(), EVFILT_READ, EV_ADD, 0, 0, &udata);
 		std::string time_str = getTime();
-		std::cout << "\033[31m" << time_str << "\033[0m\t Listening on port: " << _cf.servers[i].port << std::endl;
+		std::cout << "\033[31m" << time_str << "\033[0m\t Listening on port: " << udata.port << std::endl;
 	}
 	if (kevent(kq, eset, _cf.servers.size(), NULL, 0, NULL) == -1) {
 		std::cout << "kevent error" << std::endl;
@@ -28,17 +29,30 @@ void	Network::start() {
 	struct kevent events[100];
 	int	n_events;
 	while (1) {
-		n_events = kevent(kq, NULL, 0, events, _cf.servers.size(), NULL);
+		n_events = kevent(kq,NULL,0,events,_cf.servers.size(),NULL);
 		if (n_events == -1) 
 			break;
-		for(int i=0;i<n_events;i++)
-
-			handleConnections(eset, events);
+		struct sockaddr_in cliaddr;
+		socklen_t clilen = sizeof(cliaddr);
+		int clientfd = accept(events->ident, (struct sockaddr *)&cliaddr, &clilen);
+		int optval = 1;
+		setsockopt(clientfd,SOL_SOCKET,SO_REUSEADDR,&optval,sizeof(optval));
+		struct kevent new_event;
+		t_udata new_udata;
+		EV_SET( &new_event, clientfd, EVFILT_READ, EV_ADD, 0, 0, &new_udata );
+		if (kevent(kq, &new_event, 1, NULL, 0, NULL) == -1) {
+			std::cout << "new connection error" << std::endl;
+			exit(1);
+		}
+		std::string time_str = getTime();
+		std::cout << "\033[31m" << time_str << "\033[0m\t New connection on port: (how to carry the port?)" << std::endl;
+		handleConnections(eset, events);
 	}
 	delete[] eset;
 	close(kq);
 }
 
 void Network::handleConnections(struct kevent *eset, struct kevent *events) {
-	std::cout << "this girl is ON FIREEEEEEEEEEEE" << std::endl;
+	std::cout << "this girl sucks" << std::endl;
+	// exit(0);
 }
