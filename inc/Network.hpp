@@ -9,6 +9,7 @@
 
 typedef struct s_udata {
   // what should i put?
+  std::string port;
 } t_udata;
 
 class Network {
