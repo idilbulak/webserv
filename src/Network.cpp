@@ -39,7 +39,10 @@ void	Network::start() {
 		{
 			struct sockaddr_in cliaddr;
 			socklen_t clilen = sizeof(cliaddr);
-			int clientfd = accept(events[i].ident, (struct sockaddr *)&cliaddr, &clilen);
+			int clientfd;
+			if(clientfd == accept(events[i].ident, (struct sockaddr *)&cliaddr, &clilen) < 0){
+				std::cout << "clientfd kapot"<<std::endl;
+								break;}
 			int optval = 1;
 			setsockopt(clientfd,SOL_SOCKET,SO_REUSEADDR,&optval,sizeof(optval));
 			struct kevent new_event;
