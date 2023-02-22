@@ -26,20 +26,20 @@ void	Network::start() {
 		exit(1);
 	}
 	// accept_loop
-	struct kevent events;
+	struct kevent events[1024];
 	int	n_events;
 	while (1) {
 		// n_events = kevent(kq,NULL,0,events,_cf.servers.size(),NULL);
 		// if (n_events == -1) 
 		// 	break;
-		if (kevent(kq,NULL,0,&events,_cf.servers.size(),NULL) < 0) 
+		if (kevent(kq,NULL,0,events,_cf.servers.size(),NULL) < 0) 
 			break;
 		for ( int i = 0; i < _cf.servers.size(); ++i, ++eset )
-			if (eset->ident == events.ident)
+			if (eset->ident == events[i].ident)
 		{
 			struct sockaddr_in cliaddr;
 			socklen_t clilen = sizeof(cliaddr);
-			int clientfd = accept(events.ident, (struct sockaddr *)&cliaddr, &clilen);
+			int clientfd = accept(events[i].ident, (struct sockaddr *)&cliaddr, &clilen);
 			int optval = 1;
 			setsockopt(clientfd,SOL_SOCKET,SO_REUSEADDR,&optval,sizeof(optval));
 			struct kevent new_event;
@@ -52,7 +52,7 @@ void	Network::start() {
 			std::string time_str = getTime();
 			std::cout << "\033[31m" << time_str << "\033[0m\t New connection on port: (how to carry the port?)" << std::endl;
 		}
-		handleConnections(eset, &events);
+		handleConnections(eset, events);
 	}
 	delete[] eset;
 	close(kq);
