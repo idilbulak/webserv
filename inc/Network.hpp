@@ -20,6 +20,8 @@ class Network {
         ~Network();
 
         void start();
+        void	accept_new_connection(int kq,struct kevent &event);
+		    bool		is_in_listen_sockfd(struct kevent *eset,int fd,int len);
         void handleConnections(struct kevent *eset, struct kevent *events);
 
 	// std::ostream	&operator << (std::ostream &out, const Network &n);

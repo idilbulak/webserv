@@ -6,6 +6,33 @@ Network::Network(Config &cf) :_cf(cf) {
 Network::~Network() {
 }
 
+void	Network::accept_new_connection(int kq,struct kevent &event) {
+			struct sockaddr_in cliaddr;
+			socklen_t clilen = sizeof(cliaddr);
+			int clientfd;
+			if(clientfd == accept(event.ident, (struct sockaddr *)&cliaddr, &clilen) < 0)
+				std::cout << "clientfd kapot" << std::strerror(errno)<< std::endl;
+								// break;}
+			int optval = 1;
+			setsockopt(clientfd,SOL_SOCKET,SO_REUSEADDR,&optval,sizeof(optval));
+			struct kevent new_event;
+			t_udata new_udata;
+			EV_SET( &new_event, clientfd, EVFILT_READ, EV_ADD, 0, 0, &new_udata );
+			if (kevent(kq, &new_event, 1, NULL, 0, NULL) < 0) {
+				std::cout << "new connection error" << std::endl;
+				exit(1);
+			}
+		std::string time_str = getTime();
+		std::cout << "\033[31m" << time_str << "\033[0m\t New connection on port: (how to carry the port?)" << std::endl;
+		}
+
+bool		Network::is_in_listen_sockfd(struct kevent *eset,int fd,int len) {
+	for (int i=0; i<len; ++i, ++eset)
+		if (eset->ident == (unsigned long)fd)
+			return true;
+	return false;
+}
+
 void	Network::start() {
 	int kq = kqueue();
 	if (kq == -1) {
@@ -29,32 +56,12 @@ void	Network::start() {
 	struct kevent events[1024];
 	int	n_events;
 	while (1) {
-		// n_events = kevent(kq,NULL,0,events,_cf.servers.size(),NULL);
-		// if (n_events == -1) 
-		// 	break;
 		if (kevent(kq,NULL,0,events,_cf.servers.size(),NULL) < 0) 
 			break;
-		for ( int i = 0; i < _cf.servers.size(); ++i, ++eset )
-			if (eset->ident == events[i].ident)
-		{
-			struct sockaddr_in cliaddr;
-			socklen_t clilen = sizeof(cliaddr);
-			int clientfd;
-			if(clientfd == accept(events[i].ident, (struct sockaddr *)&cliaddr, &clilen) < 0){
-				std::cout << "clientfd kapot"<<std::endl;
-								break;}
-			int optval = 1;
-			setsockopt(clientfd,SOL_SOCKET,SO_REUSEADDR,&optval,sizeof(optval));
-			struct kevent new_event;
-			t_udata new_udata;
-			EV_SET( &new_event, clientfd, EVFILT_READ, EV_ADD, 0, 0, &new_udata );
-			if (kevent(kq, &new_event, 1, NULL, 0, NULL) < 0) {
-				std::cout << "new connection error" << std::endl;
-				exit(1);
-			}
-			std::string time_str = getTime();
-			std::cout << "\033[31m" << time_str << "\033[0m\t New connection on port: (how to carry the port?)" << std::endl;
-		}
+		else if (is_in_listen_sockfd(eset, events->ident, _cf.servers.size()))
+			accept_new_connection(kq, *events);
+		//else if read
+		//else if write
 		handleConnections(eset, events);
 	}
 	delete[] eset;
