@@ -4,6 +4,7 @@ SRCDIR	:= src
 OBJDIR	:= obj
 SRC		:= $(shell find $(SRCDIR) -name '*.cpp')
 OBJ		:= $(SRC:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
+HEAD	:= $(wildcard inc/*.hpp)
 CC		:= g++
 FLAGS	= -std=c++98
 # -Wall -Wextra -Werror
@@ -11,7 +12,7 @@ FLAGS	= -std=c++98
 all: $(NAME)
 $(NAME): $(OBJ)
 	@$(CC) $(FLAGS) $(OBJ) -o $@
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HEAD)
 	@mkdir -p $(@D)
 	@$(CC) -g $(FLAGS) -c $< -o $@
 run: $(NAME)

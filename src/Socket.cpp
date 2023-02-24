@@ -1,44 +1,67 @@
 #include "../inc/Socket.hpp"
 
-Socket::Socket(std::string host, std::string port) :_host(host), _port(port) {
-	create();
-	identify();
-	wait_incomingconnections();
+Socket::Socket() {
+
 }
 
-Socket::~Socket() {}
-std::string	Socket::getHost() {return _host;}
-std::string	Socket::getPort() {return _port;}
-int Socket::getServerfd() {return _serverfd;}
+Socket::Socket(std::string host, std::string port) :_host(host), _port(port) {
 
-void	Socket::create() {
-	if (( _serverfd = socket( AF_INET, SOCK_STREAM, 0)) < 0) {
+	configure();
+	bind();
+	listen();
+}
+
+void	Socket::configure() {
+
+	if (( _fd = socket( AF_INET, SOCK_STREAM, 0)) < 0) {
 		std::cout << "cannot create socket: " << std::string(strerror(errno)) << std::endl;
 		exit(1);
 	}
+    const int port = std::stoi(_port);
+    memset((char *)&_addr, 0, sizeof(_addr));
+    _addr.sin_family = AF_INET;
+    _addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    _addr.sin_port = htons(port);
+	int optval = 1;
+	setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+	fcntl(_fd, F_SETFL, O_NONBLOCK);
 }
 
-void Socket::identify() {
-    struct sockaddr_in servaddr;
-    const int port = std::stoi(_port);
-    memset((char *)&servaddr, 0, sizeof(servaddr));
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = htons(port);
-	// servaddr.sin_zero = memset()
-	// kullanimda olan varsa kapamak icin
-	int optval = 1;
-	setsockopt(_serverfd,SOL_SOCKET,SO_REUSEADDR,&optval,sizeof(optval));
-	if (bind(_serverfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0 ) {
+void Socket::bind() {
+
+	if (::bind(_fd, (struct sockaddr *)&_addr, sizeof(_addr)) < 0 ) {
 		std::cout << "socket bind failed: " << std::string(strerror(errno)) << std::endl;
-		close( _serverfd );
+		close( _fd );
 		exit(1);
 	}
 }
 
-void Socket::wait_incomingconnections() {
-	if (listen(_serverfd, BACKLOG) < 0) {
+void Socket::listen() {
+	if (::listen(_fd, BACKLOG) < 0) {
 		std::cout << "socket listen failed: " << std::string(strerror(errno)) << std::endl;
 		exit(1);
 	}
+}
+
+int	Socket::accept(struct kevent& event) {
+
+	_fd = ::accept(event.ident, (struct sockaddr *)&_addr, &_addrlen); //_addrlen not initiated??
+	if (_fd < 0) {
+		std::perror("accepting new client");
+		return _fd;
+	}
+	std::cout << RED << getTime() << RESET << "\t Connection " << *this << std::endl;	
+	fcntl(_fd, F_SETFL, O_NONBLOCK);
+	return _fd;
+}
+
+std::ostream& operator<<(std::ostream &os, Socket& obj) {
+
+	os << "\tport: " << CYAN << ntohs(obj.getAddr().sin_port) << RESET
+	<< " \tIP address: " << inet_ntoa(obj.getAddr().sin_addr);
+	return os;
+}
+
+Socket::~Socket() {
+
 }

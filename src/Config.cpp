@@ -37,7 +37,7 @@ void	Config::parse() {
 }
 
 void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
-	Server	server;
+	VirtualServer	server;
 	i++;
 	for (;i<tokens.size()-1;) {
 		// std::cout << tokens[i] << "is token " << std::endl;
@@ -136,8 +136,8 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 void Config::display() {
     std::cout << "Config path: " << _path << std::endl;
     std::cout << "Servers: " << std::endl;
-    for (std::vector<Server>::const_iterator it = servers.begin(); it != servers.end(); it++) {
-        const Server server = *it;
+    for (std::vector<VirtualServer>::const_iterator it = servers.begin(); it != servers.end(); it++) {
+        const VirtualServer server = *it;
         std::cout << "\tHost: " << server.host << std::endl;
         std::cout << "\tPort: " << server.port << std::endl;
         std::cout << "\tName: " << server.name << std::endl;
