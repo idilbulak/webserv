@@ -14,14 +14,8 @@ class Server {
 		Server(Config &cf);
 		~Server();
 
-		void	setup();
 		void	run();
 		
-		bool	isListenSockfd(struct kevent& event);
-		void	onClientConnect(struct kevent& event);
-		void	onEOF(struct kevent& event);
-		void	onRead(struct kevent& event);
-
 	private:
 		Config _cf;
 		int _kq;
@@ -29,6 +23,13 @@ class Server {
 		static const int EVENTS_MAX = 2;
 		struct kevent _changeList;
 		struct kevent _eventList[EVENTS_MAX];
+
+		void	setup();
+		bool	isListenSockfd(struct kevent& event);
+		void	onClientConnect(struct kevent& event);
+		void	onEOF(struct kevent& event);
+		void	onRead(struct kevent& event);
+
 };
 
 std::ostream& operator<<(std::ostream &os, struct kevent& event);

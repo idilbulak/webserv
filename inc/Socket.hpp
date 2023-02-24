@@ -24,14 +24,10 @@ class Socket {
 		Socket();
 		~Socket(void);
 
-		void configure();
-		void bind();
-		void listen();
-		// int	 close();
-
 		int	accept(struct kevent& event);
 		// int	send();
 		// int	recv();
+		// int	 close();
 
 		std::string getHost() {return _host;}
 		std::string getPort() {return _port;}
@@ -45,6 +41,11 @@ class Socket {
 		int					_fd;
 		struct sockaddr_in	_addr;
 		socklen_t			_addrlen;
+
+		void configure();
+		void bind();
+		void listen();
+
 };
 
 std::ostream& operator<<(std::ostream &os, Socket& obj);
