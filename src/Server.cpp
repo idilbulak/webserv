@@ -5,12 +5,6 @@ Server::Server(Config &cf) :_cf(cf) {
 
 void Server::setup() {
 
-	// create sockets, bind and listen
-	for (int i = 0; i < _cf.servers.size(); i++) {
-		Socket listen(_cf.servers[i].host, _cf.servers[i].port);
-		_listenSockets.push_back(listen);
-	}
-
 	// create kqueue
 	_kq = kqueue();
 	if (_kq == -1) {
@@ -20,8 +14,12 @@ void Server::setup() {
 	// loop over virtual servers
 	for (int i = 0; i < _cf.servers.size(); i++) {
 
+		// create socket, bind and listen
+		Socket listenSock(_cf.servers[i].host, _cf.servers[i].port);
+		_listenSockets.push_back(listenSock);
+
 		// initialize kevent struct
-		EV_SET(&_changeList, _listenSockets[i].getfd(), EVFILT_READ, EV_ADD, 0, 0, 0);
+		EV_SET(&_changeList, listenSock.getfd(), EVFILT_READ, EV_ADD, 0, 0, 0);
 
 		// attach kevent to kqueue
 		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
