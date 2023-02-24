@@ -38,7 +38,7 @@ void Server::run() {
 	// start kevent monitoring loop
 	int	n_events;
 	for(;;) {
-		// retrieve triggered events
+		// retrieve triggered events // still needs timespec struct for TIMEOUT!
 		n_events = kevent(_kq, NULL, 0, _eventList, EVENTS_MAX, NULL);
 		if (n_events == -1) {
 			ERROR("requesting new kevent");
