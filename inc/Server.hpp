@@ -9,7 +9,7 @@
 // #include "fcntl.h"
 
 class Server {
-	
+
 	public:
 		Server(Config &cf);
 		~Server();
@@ -26,9 +26,8 @@ class Server {
 		Config _cf;
 		int _kq;
 		std::vector<Socket> _listenSockets;
-		std::vector<struct kevent> _changeList;
 		static const int EVENTS_MAX = 2;
-		struct kevent _event;
+		struct kevent _changeList;
 		struct kevent _eventList[EVENTS_MAX];
 };
 
