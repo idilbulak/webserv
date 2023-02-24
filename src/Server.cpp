@@ -107,7 +107,7 @@ void Server::onRead(struct kevent& event) {
 	char buff[1024];
 	recv(event.ident, &buff, sizeof(&buff), 0);
 
-	// display on standard out
+	// display on standard out !! fucked up ATM !!
 	std::cout << RED << getTime() << RESET << event << "\tReceiving... " << CYAN << buff << RESET  << std::endl;
 }
 
