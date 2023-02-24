@@ -9,6 +9,7 @@
 // #include "fcntl.h"
 
 class Server {
+	
 	public:
 		Server(Config &cf);
 		~Server();
@@ -29,9 +30,6 @@ class Server {
 		static const int EVENTS_MAX = 2;
 		struct kevent _event;
 		struct kevent _eventList[EVENTS_MAX];
-		// std::vector<struct kevent> _eventList;
-	// std::ostream	&operator << (std::ostream &out, const Server &n);
-
 };
 
 

@@ -75,14 +75,25 @@ void Server::onClientConnect(struct kevent& event) {
 	if (kevent(_kq, &_event, 1, NULL, 0, NULL) == -1) {
 		std::perror("adding new client to kqueue");
 	}
+	std::string response = "HTTP/1.1 200 OK\r\n";
+    			response += "Content-Type: text/html; charset=UTF-8\r\n";
+    			response += "\r\n";
+    			response += "Hello, world!\r\n";
+	send(newClient.getfd(), response.c_str(), response.size(), 0);
 }
 
 void Server::onEOF(struct kevent& event) {
 
-	
+	EV_SET(&_changeList[0], event.ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+	if (kevent(_kq, &_changeList[0], _changeList.size(), NULL, 0, NULL) < 0)
+		std::perror("removing event from kqueue");
+	::close(event.ident);
+	std::cout << RED << getTime() << RESET << "\t Disconnect" << std::endl;	
 }
 
 void Server::onRead(struct kevent& event) {
 
-
+	// char buff[1024];
+	std::string buff;
+	recv(event.ident, &buff, sizeof(&buff), 0);
 }
