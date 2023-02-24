@@ -17,6 +17,7 @@ void Server::setup() {
 		std::cerr << "creating kqueue" << std::strerror(errno) << std::endl;
 	}
 
+	// loop over virtual servers
 	for (int i = 0; i < _cf.servers.size(); i++) {
 
 		// initialize kevent struct
@@ -37,6 +38,7 @@ void Server::run() {
 	// start kevent monitoring loop
 	int	n_events;
 	for(;;) {
+		// retrieving triggerd events
 		n_events = kevent(_kq, NULL, 0, _eventList, EVENTS_MAX, NULL);
 		if (n_events == -1) {
 			std::perror("requesting new kevent");
@@ -105,7 +107,7 @@ void Server::onRead(struct kevent& event) {
 	recv(event.ident, &buff, sizeof(&buff), 0);
 
 	// display on standard out
-	std::cout << buff << std::endl;
+	std::cout << RED << getTime() << RESET << "\t Received\t" << CYAN << buff << RESET << std::endl;
 }
 
 Server::~Server() {
