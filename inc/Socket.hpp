@@ -24,9 +24,9 @@ class Socket {
 		Socket();
 		~Socket(void);
 
-        void configure();
-        void bind();
-        void listen();
+		void configure();
+		void bind();
+		void listen();
 		// int	 close();
 
 		int	accept(struct kevent& event);

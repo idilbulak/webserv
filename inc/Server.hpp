@@ -9,11 +9,11 @@
 // #include "fcntl.h"
 
 class Server {
-    public:
-        Server(Config &cf);
-        ~Server();
+	public:
+		Server(Config &cf);
+		~Server();
 
-        void	setup();
+		void	setup();
 		void	run();
 		
 		bool	isListenSockfd(struct kevent& event);
@@ -21,7 +21,7 @@ class Server {
 		void	onEOF(struct kevent& event);
 		void	onRead(struct kevent& event);
 
-    private:
+	private:
 		Config	_cf;
 		int		_kq;
 		std::vector<Socket> _listenSockets;
