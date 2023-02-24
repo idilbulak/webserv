@@ -22,8 +22,8 @@ class Server {
 		void	onRead(struct kevent& event);
 
 	private:
-		Config	_cf;
-		int		_kq;
+		Config _cf;
+		int _kq;
 		std::vector<Socket> _listenSockets;
 		std::vector<struct kevent> _changeList;
 		static const int EVENTS_MAX = 2;
