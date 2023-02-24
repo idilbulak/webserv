@@ -25,7 +25,7 @@ void Server::setup() {
 
 		// attach kevent to kqueue
 		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
-			std::perror("adding listen sockets to kqueue");
+			ERROR("adding listen socket to kqueue");
 		}
 		// display on standard out
 		std::cout << RED << getTime() << RESET << _listenSockets[i] << "\tListening... " << std::endl;
@@ -38,10 +38,10 @@ void Server::run() {
 	// start kevent monitoring loop
 	int	n_events;
 	for(;;) {
-		// retrieve triggerd events
+		// retrieve triggered events
 		n_events = kevent(_kq, NULL, 0, _eventList, EVENTS_MAX, NULL);
 		if (n_events == -1) {
-			std::perror("requesting new kevent");
+			ERROR("requesting new kevent");
 		}
 		else if (n_events > 0) {
 			// loop over triggered events
@@ -76,7 +76,7 @@ void Server::onClientConnect(struct kevent& event) {
 	// add event to kqueue
 	EV_SET(&_changeList, newClient.getfd(), EVFILT_READ, EV_ADD, 0, 0, NULL);
 	if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
-		std::perror("adding new client to kqueue");
+		ERROR("adding new client to kqueue");
 	}
 
 	// create HTTP header /w message
@@ -94,7 +94,7 @@ void Server::onEOF(struct kevent& event) {
 	// remove event from kqueue
 	EV_SET(&_changeList, event.ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 	if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0)
-		std::perror("removing event from kqueue");
+		ERROR("removing event from kqueue");
 
 	// close file descriptor
 	::close(event.ident);

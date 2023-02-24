@@ -47,7 +47,7 @@ int Socket::accept(struct kevent& event) {
 
 	_fd = ::accept(event.ident, (struct sockaddr *)&_addr, &_addrlen); //_addrlen not initiated??
 	if (_fd < 0) {
-		std::perror("accepting new client");
+		ERROR("accepting new client connection");
 		return _fd;
 	}
 	std::cout << RED << getTime() << RESET << *this << "\tConnecting... " << std::endl;	

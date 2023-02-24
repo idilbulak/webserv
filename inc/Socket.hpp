@@ -14,8 +14,8 @@
 #define CYAN "\033[0;36m"
 #define BLACK "\033[0;30m"
 #define RESET "\033[0m"
-
-# define BACKLOG 3
+#define ERROR std::perror
+#define BACKLOG 3
 
 class Socket {
 
