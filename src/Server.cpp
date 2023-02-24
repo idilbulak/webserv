@@ -15,18 +15,18 @@ void Server::setup() {
 	for (int i = 0; i < _cf.servers.size(); i++) {
 
 		// create socket, bind and listen
-		Socket listenSock(_cf.servers[i].host, _cf.servers[i].port);
-		_listenSockets.push_back(listenSock);
+		Socket listenSocket(_cf.servers[i].host, _cf.servers[i].port);
+		_listenSockets.push_back(listenSocket);
 
 		// initialize kevent struct
-		EV_SET(&_changeList, listenSock.getfd(), EVFILT_READ, EV_ADD, 0, 0, 0);
+		EV_SET(&_changeList, listenSocket.getfd(), EVFILT_READ, EV_ADD, 0, 0, 0);
 
 		// attach kevent to kqueue
 		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
 			ERROR("adding listen socket to kqueue");
 		}
 		// display on standard out
-		std::cout << RED << getTime() << RESET << _listenSockets[i] << "\tListening... " << std::endl;
+		std::cout << RED << getTime() << RESET << listenSocket << "\tListening... " << std::endl;
 	}
 }
 
