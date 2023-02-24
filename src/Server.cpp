@@ -28,7 +28,7 @@ void Server::setup() {
 			std::perror("adding listen sockets to kqueue");
 		}
 		// display on standard out
-		std::cout << RED << getTime() << RESET << "\t Listening " << _listenSockets[i] << std::endl;
+		std::cout << RED << getTime() << RESET << _listenSockets[i] << "\tListening... " << std::endl;
 	}
 }
 
@@ -38,12 +38,13 @@ void Server::run() {
 	// start kevent monitoring loop
 	int	n_events;
 	for(;;) {
-		// retrieving triggerd events
+		// retrieve triggerd events
 		n_events = kevent(_kq, NULL, 0, _eventList, EVENTS_MAX, NULL);
 		if (n_events == -1) {
 			std::perror("requesting new kevent");
 		}
 		else if (n_events > 0) {
+			// loop over triggered events
 			for (int i = 0; i < n_events; i++) {
 				if (isListenSockfd(_eventList[i]))
 					onClientConnect(_eventList[i]);
@@ -67,7 +68,7 @@ bool Server::isListenSockfd(struct kevent& event) {
 
 void Server::onClientConnect(struct kevent& event) {
 
-	// create new socket
+	// create newClient socket and accept connection
 	Socket newClient;
 	if (newClient.accept(event) < 0)
 		return;
@@ -97,7 +98,7 @@ void Server::onEOF(struct kevent& event) {
 
 	// close file descriptor
 	::close(event.ident);
-	std::cout << RED << getTime() << RESET << "\t Disconnect" << std::endl;	
+	std::cout << RED << getTime() << RESET << event << "\tDisconnecting... " << std::endl;	
 }
 
 void Server::onRead(struct kevent& event) {
@@ -107,7 +108,18 @@ void Server::onRead(struct kevent& event) {
 	recv(event.ident, &buff, sizeof(&buff), 0);
 
 	// display on standard out
-	std::cout << RED << getTime() << RESET << "\t Received\t" << CYAN << buff << RESET << std::endl;
+	std::cout << RED << getTime() << RESET << event << "\tReceiving... " << CYAN << buff << RESET  << std::endl;
+}
+
+std::ostream& operator<<(std::ostream &os, struct kevent& event) {
+
+	struct sockaddr_in addr;
+	socklen_t addrlen = sizeof(addr);
+	getsockname(event.ident, (struct sockaddr *)&addr, &addrlen);
+
+	os << "port: " << CYAN << ntohs(addr.sin_port) << RESET
+	<< " \tIP address: " << inet_ntoa(addr.sin_addr);
+	return os;
 }
 
 Server::~Server() {

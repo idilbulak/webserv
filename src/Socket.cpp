@@ -50,14 +50,14 @@ int	Socket::accept(struct kevent& event) {
 		std::perror("accepting new client");
 		return _fd;
 	}
-	std::cout << RED << getTime() << RESET << "\t Connection " << *this << std::endl;	
+	std::cout << RED << getTime() << RESET << *this << "\tConnecting... " << std::endl;	
 	fcntl(_fd, F_SETFL, O_NONBLOCK);
 	return _fd;
 }
 
 std::ostream& operator<<(std::ostream &os, Socket& obj) {
 
-	os << "\tport: " << CYAN << ntohs(obj.getAddr().sin_port) << RESET
+	os << "port: " << CYAN << ntohs(obj.getAddr().sin_port) << RESET
 	<< " \tIP address: " << inet_ntoa(obj.getAddr().sin_addr);
 	return os;
 }

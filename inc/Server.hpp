@@ -31,5 +31,6 @@ class Server {
 		struct kevent _eventList[EVENTS_MAX];
 };
 
+std::ostream& operator<<(std::ostream &os, struct kevent& event);
 
 #endif

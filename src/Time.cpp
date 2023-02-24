@@ -12,7 +12,7 @@ std::string getTime() {
 
     // Format the timestamp as a string
     char time_str[100];
-    std::strftime(time_str, sizeof(time_str), "[%H:%M:%S]", time_info);
+    std::strftime(time_str, sizeof(time_str), "[%H:%M:%S] ", time_info);
 
     return time_str;
 }
