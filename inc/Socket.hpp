@@ -36,11 +36,11 @@ class Socket {
 		socklen_t getAddrlen() {return _addrlen;}
 
 	private:
-		std::string			_host;
-		std::string			_port;
-		int					_fd;
-		struct sockaddr_in	_addr;
-		socklen_t			_addrlen;
+		std::string _host;
+		std::string _port;
+		int _fd;
+		struct sockaddr_in _addr;
+		socklen_t _addrlen;
 
 		void configure();
 		void bind();
