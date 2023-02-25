@@ -104,8 +104,9 @@ void Server::onEOF(struct kevent& event) {
 void Server::onRead(struct kevent& event) {
 
 	// read message into buffer
-	char buff[1024];
-	recv(event.ident, &buff, sizeof(&buff), 0);
+	std::string buff(1024, '\0'); // char buff[24];
+	int recv_len = recv(event.ident, &buff[0], buff.size(), 0);
+	buff.resize(recv_len); // buff[recv_len] = '\0';
 
 	// display on standard out !! fucked up ATM !!
 	std::cout << RED << getTime() << RESET << event << "\tReceiving... " << CYAN << buff << RESET  << std::endl;
