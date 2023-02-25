@@ -36,16 +36,16 @@ void Server::run() {
 	setup();
 
 	// start kevent monitoring loop
-	int	n_events;
+	int	new_events;
 	for(;;) {
 		// retrieve triggered events !! still needs timespec struct for TIMEOUT !!
-		n_events = kevent(_kq, NULL, 0, _eventList, EVENTS_MAX, NULL);
-		if (n_events == -1) {
+		new_events = kevent(_kq, NULL, 0, _eventList, EVENTS_MAX, NULL);
+		if (new_events == -1) {
 			ERROR("requesting new kevent");
 		}
-		else if (n_events > 0) {
+		else if (new_events > 0) {
 			// loop over triggered events
-			for (int i = 0; i < n_events; i++) {
+			for (int i = 0; i < new_events; i++) {
 				if (isListenSockfd(_eventList[i]))
 					onClientConnect(_eventList[i]);
 				else if (_eventList[i].flags & EV_EOF)
@@ -78,15 +78,6 @@ void Server::onClientConnect(struct kevent& event) {
 	if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
 		ERROR("adding new client to kqueue");
 	}
-
-	// create HTTP header /w message
-	std::string response = "HTTP/1.1 200 OK\r\n";
-				response += "Content-Type: text/html; charset=UTF-8\r\n";
-				response += "\r\n";
-				response += "Hello, world!\r\n";
-
-	// send message to newClient
-	send(newClient.getfd(), response.c_str(), response.size(), 0);
 }
 
 void Server::onEOF(struct kevent& event) {
@@ -110,6 +101,15 @@ void Server::onRead(struct kevent& event) {
 
 	// display on standard out !! fucked up ATM !!
 	std::cout << RED << getTime() << RESET << event << "\tReceiving... " << CYAN << buff << RESET  << std::endl;
+	
+	// create HTTP header /w message
+	std::string response = "HTTP/1.1 200 OK\r\n";
+				response += "Content-Type: text/html; charset=UTF-8\r\n";
+				response += "\r\n";
+				response += "Hello, world!\r\n";
+
+	// send response message
+	send(event.ident, response.c_str(), response.size(), 0);
 }
 
 std::ostream& operator<<(std::ostream &os, struct kevent& event) {

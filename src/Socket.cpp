@@ -24,6 +24,8 @@ void Socket::configure() {
 	_addr.sin_port = htons(port);
 	int optval = 1;
 	setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+
+	// setting FD to NON-BLOCKING
 	fcntl(_fd, F_SETFL, O_NONBLOCK);
 }
 
