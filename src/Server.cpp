@@ -92,13 +92,24 @@ void Server::onEOF(struct kevent& event) {
 	std::cout << RED << getTime() << RESET << event << "\tDisconnecting... " << std::endl;	
 }
 
+// Read the contents of an HTML file into a string
+std::string Server::read_html_file(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open file: " + filename);
+    }
+
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    return content;
+}
+
 void Server::onRead(struct kevent& event) {
 
 	// read message into buffer
 	std::string buff(1024, '\0'); // char buff[24];
 	int recv_len = recv(event.ident, &buff[0], buff.size(), 0);
 	buff.resize(recv_len); // buff[recv_len] = '\0';
-
+	// std::cout << "our buff: " << buff << std::endl;
 	// display on standard out !! fucked up ATM !!
 	std::cout << RED << getTime() << RESET << event << "\tReceiving... " << CYAN << buff << RESET  << std::endl;
 	
@@ -106,7 +117,7 @@ void Server::onRead(struct kevent& event) {
 	std::string response = "HTTP/1.1 200 OK\r\n";
 				response += "Content-Type: text/html; charset=UTF-8\r\n";
 				response += "\r\n";
-				response += "Hello, world!\r\n";
+				response += read_html_file("/Users/ibulak/Desktop/webserv/Conf/html/index.html");
 
 	// send response message
 	send(event.ident, response.c_str(), response.size(), 0);

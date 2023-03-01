@@ -30,6 +30,8 @@ class Server {
 		void	onEOF(struct kevent& event);
 		void	onRead(struct kevent& event);
 
+		std::string read_html_file(const std::string& filename);
+
 };
 
 std::ostream& operator<<(std::ostream &os, struct kevent& event);
