@@ -34,7 +34,13 @@ class Request {
         void findLocation(std::string buff, Config conf);
 
         std::vector<std::string>split_crlf(std::string str);
-
+        
+        //GETTER
+        Location getLocation();
+        std::string getMethod();
+        std::string getHost();
+        std::string getPort();
+        
 };
 
 std::ostream& operator<<(std::ostream &os, Request& obj);
