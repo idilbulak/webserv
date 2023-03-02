@@ -2,6 +2,8 @@
 # define REQUEST_HPP
 
 #include <iostream>
+#include <vector>
+
 
 class Request {
 
@@ -24,6 +26,8 @@ class Request {
         std::string _reqBody;
 //mesela acaba burda bir sikinti oldugunda direk bir error pageine mi yonlendirmeliyiz ona bakalim.
 
+
+        std::vector<std::string> split(std::string s, std::string delimiter);
 
 };
 
