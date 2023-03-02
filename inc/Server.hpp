@@ -4,6 +4,8 @@
 #include <iostream>
 #include "Config.hpp"
 #include "Socket.hpp"
+#include "Request.hpp"
+
 // #include "Time.hpp"
 // #include <sys/event.h>
 // #include "fcntl.h"

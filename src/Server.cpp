@@ -112,15 +112,15 @@ void Server::onRead(struct kevent& event) {
 	// std::cout << "our buff: " << buff << std::endl;
 	// display on standard out !! fucked up ATM !!
 	std::cout << RED << getTime() << RESET << event << "\tReceiving... " << CYAN << buff << RESET  << std::endl;
-	
+	Request req(buff);
 	// create HTTP header /w message
-	std::string response = "HTTP/1.1 200 OK\r\n";
-				response += "Content-Type: text/html; charset=UTF-8\r\n";
-				response += "\r\n";
-				response += read_html_file("/Users/ibulak/Desktop/webserv/Conf/html/index.html");
+	// std::string response = "HTTP/1.1 200 OK\r\n";
+	// 			response += "Content-Type: text/html; charset=UTF-8\r\n";
+	// 			response += "\r\n";
+	// 			response += read_html_file("Conf/html/index.html");
 
-	// send response message
-	send(event.ident, response.c_str(), response.size(), 0);
+	// // send response message
+	// send(event.ident, response.c_str(), response.size(), 0);
 }
 
 std::ostream& operator<<(std::ostream &os, struct kevent& event) {
