@@ -3,17 +3,20 @@
 
 #include <iostream>
 #include <vector>
+#include "Config.hpp"
 
 
 class Request {
 
 	public:
-		Request(std::string buff);
+		Request(std::string buff, Config con);
 		~Request(void);
 
 		// std::string getters() {return _;} ??
 
 	private:
+        //location
+        Location _location;
         std::string _request; //tum bufferi buraya koysak? acaba isimize yarar mi? gereksiz
         //GET / HTTP/1.1
         std::string _reqMethod; // GET
@@ -28,6 +31,9 @@ class Request {
 
 
         std::vector<std::string> split(std::string s, std::string delimiter);
+        void findLocation(std::string buff, Config conf);
+
+        std::vector<std::string>split_crlf(std::string str);
 
 };
 

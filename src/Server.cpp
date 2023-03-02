@@ -112,7 +112,7 @@ void Server::onRead(struct kevent& event) {
 	// std::cout << "our buff: " << buff << std::endl;
 	// display on standard out !! fucked up ATM !!
 	std::cout << RED << getTime() << RESET << event << "\tReceiving... " << CYAN << buff << RESET  << std::endl;
-	Request req(buff);
+	Request req(buff, _cf);
 	// create HTTP header /w message
 	// std::string response = "HTTP/1.1 200 OK\r\n";
 	// 			response += "Content-Type: text/html; charset=UTF-8\r\n";
