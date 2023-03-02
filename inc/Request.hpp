@@ -6,8 +6,7 @@
 class Request {
 
 	public:
-		Request(std::string host, std::string port);
-		Request();
+		Request(std::string buff);
 		~Request(void);
 
 		// std::string getters() {return _;} ??
