@@ -67,6 +67,7 @@
         "utility": "cpp",
         "vector": "cpp",
         "csignal": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "filesystem": "cpp"
     }
 }
