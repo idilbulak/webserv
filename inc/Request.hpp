@@ -22,7 +22,7 @@ class Request {
         std::string _request; //tum bufferi buraya koysak? acaba isimize yarar mi? gereksiz
         //GET / HTTP/1.1
         std::string _reqMethod; // GET
-        std::string _reqUrl; //buna gerek olmayabilir "http:" "//" host [ ":" port ] [ abs_path [ "?" query ]]
+        // std::string _reqUrl; //buna gerek olmayabilir "http:" "//" host [ ":" port ] [ abs_path [ "?" query ]]
         std::string _reqHost;
         std::string _reqPort;
         std::string _reqUri; //yukardaki abs_path

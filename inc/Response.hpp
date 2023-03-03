@@ -2,6 +2,7 @@
 # define RESPONSE_HPP
 
 #include <iostream>
+#include <sys/stat.h>
 #include <map>
 #include "Config.hpp"
 
@@ -10,15 +11,16 @@
 class Response {
 
 	public:
-		Response(Config cf);
+		Response(VirtualServer server);
 		~Response(void);
 
 		std::string read_html_file(const std::string& filename);
 		std::string errRes(int err);
+		std::string getRes(std::string reqUri);
 		std::string statuscode(int cd);
 
 	private:
-		Config	_cf;
+		VirtualServer _server;
 		int		_statusCode;
 		
 };

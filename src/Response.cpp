@@ -1,6 +1,6 @@
 #include "../inc/Response.hpp"
 
-Response::Response(Config cf) :_cf(cf) {
+Response::Response(VirtualServer server) :_server(server) {
 }
 
 Response::~Response(void) {
@@ -20,13 +20,46 @@ std::string Response::read_html_file(const std::string& filename) {
 std::string Response::errRes(int err) {
 
 	this->_statusCode = err;
-	const std::string& filename = "err_html/" + std::to_string(err) + ".html";
+	const std::string& filename = std::to_string(err/100) + "xx_html/" + std::to_string(err) + ".html";
 	std::string res = "HTTP/1.1 ";
 		res += statuscode(err) + CRFL;
 		res += "Content-Type: text/html; charset=UTF-8\r\n";
 		res += "\r\n";
 		res += read_html_file(filename);
 	return (res);
+}
+
+bool fileExists(const char* filename) {
+    struct stat buffer;
+    return (stat(filename, &buffer) == 0);
+}
+
+std::string Response::getRes(std::string reqUri) {
+	Location loc;
+	for(int i=0; i<_server.locations.size(); i++) {
+		if(_server.locations[i].path.compare(reqUri) == 0)
+			loc = _server.locations[i];
+	}
+	if(!loc.cgi_ext.empty())
+		return(errRes(401)); ///cgi ile degistir
+	else if(loc.redirect_cd && !loc.redirect_url.empty())
+		return(errRes(loc.redirect_cd));
+	else if (loc.root.empty())
+		return(errRes(403));
+	else {
+		for(int i=0; i<loc.index.size(); i++) {
+			std::string filename = loc.root + "/" + loc.index[i];
+    		if (fileExists(filename.c_str())) {
+				std::string res = "HTTP/1.1 ";
+					res += "200 OK\r\n";
+					res += "Content-Type: text/html; charset=UTF-8\r\n";
+					res += "\r\n";
+					res += read_html_file(filename);
+				return (res);
+			}
+		}
+    }
+	return (errRes(404));
 }
 
 std::string Response::statuscode(int cd) {

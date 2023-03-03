@@ -16,6 +16,8 @@ struct Location {
 	std::string					cgi_path;
 	std::string					upload_dir;
 	std::vector<std::string>	index;
+	int							redirect_cd;
+	std::string					redirect_url;
 };
 
 struct VirtualServer {

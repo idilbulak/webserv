@@ -7,7 +7,7 @@ OBJ     := $(SRC:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 HEAD    := $(wildcard inc/*.hpp)
 CC      := g++
 FLAGS   = -std=c++98
-ERR   	= err_html
+ERR   	= xx_html
 # -Wall -Wextra -Werror
 
 all: $(NAME) 
@@ -18,13 +18,13 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HEAD)
 	@mkdir -p $(@D)
 	@$(CC) -g $(FLAGS) -c $< -o $@
 $(ERR):
-	@mkdir -p $(ERR)
+	@mkdir -p {1..5}$(ERR)
 	@python3 assets/$(ERR).py
 run: $(NAME)
 	./$(NAME) Conf/test.conf
 clean:
 	@rm -rf $(OBJDIR)
-	@rm -rf $(ERR)
+	@rm -rf {1..5}$(ERR)
 fclean: clean
 	@rm -f $(NAME)
 re: fclean all

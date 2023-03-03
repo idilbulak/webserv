@@ -127,6 +127,10 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 			for (++i;!check_word(tokens[i]); ++i)
 				loc.index.push_back(tokens[i]);			
 		}
+		else if (tokens[i] == "return") {
+			loc.redirect_cd = stoi(tokens[++i]);
+			loc.redirect_url = tokens[++i];
+		}
 		else
 			i++;
 	}
@@ -166,6 +170,8 @@ void Config::display() {
             for (std::vector<std::string>::const_iterator it_ind = location.index.begin(); it_ind != location.index.end(); ++it_ind) {
                 std::cout << "\t\t\t" << *it_ind << std::endl;
             }
+			std::cout << "\t\tRedirection code: " << location.redirect_cd << std::endl;
+			std::cout << "\t\tRedirection url: " << location.redirect_url << std::endl;
         }
 	}
 }
