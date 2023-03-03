@@ -41,7 +41,7 @@ Request::~Request(){}
 
 Request::Request(std::string buff){
 
-    // std::cout << "buff is[" << buff<<"]" << std::endl << std::endl;
+    std::cout << "buff is[" << buff<<"]" << std::endl << std::endl;
     std::vector<std::string> splitBuff = split_crlf(buff);
     _reqMethod = split(splitBuff[0], " ")[0];
     _reqUri = split(splitBuff[0], " ")[1];
@@ -54,7 +54,6 @@ Request::Request(std::string buff){
         _reqPort = findPort[2];
     else
         _reqPort = "80";
-
     std::cout << "info start:" << std::endl << "method is " << _reqMethod <<  "\n host is " << _reqHost << "\n port is[" << _reqPort  << "]" << "url: " << _reqUri << std::endl;
 }
 
@@ -68,6 +67,8 @@ std::string Request::response(Config cf) {
     if(_reqMethod.empty())
         return (res.errRes(405));
     else if(_reqMethod.compare("GET") == 0)
+        return (res.getRes(_reqUri));
+    else if(_reqMethod.compare("POST") == 0)
         return (res.getRes(_reqUri));
     else
        return (res.errRes(500)); 
