@@ -1,7 +1,5 @@
 #include "../inc/Request.hpp"
 
-
-
 std::vector<std::string> Request::split(std::string str, std::string delimiter) {
     std::vector<std::string> words;
     size_t pos = 0;
@@ -18,8 +16,6 @@ std::vector<std::string> Request::split(std::string str, std::string delimiter) 
     }
     return words;
 }
-
-
 
 std::vector<std::string> split_crlf(std::string str) {
     std::vector<std::string> words;
@@ -41,7 +37,6 @@ std::vector<std::string> split_crlf(std::string str) {
     return words;
 }
 
-
 Request::~Request(){}
 
 Request::Request(std::string buff){
@@ -60,12 +55,13 @@ Request::Request(std::string buff){
         _reqPort = "80";
 
     std::cout << "info start:" << std::endl << "method is " << _reqMethod <<  "\n host is " << _reqHost << "\n port is[" << _reqPort << "]" << std::endl;
-      
-    
-
 }
 
-// std::string _request += buff;
-// std::string _request += buff;
-// std::string _request += buff;
-// std::string _request += buff;
+std::string Request::response(Config cf) {
+    Response res(cf);
+    if(_reqMethod.empty()) {
+        return (res.errRes(405));
+    }
+    else
+       return (res.errRes(500)); 
+}

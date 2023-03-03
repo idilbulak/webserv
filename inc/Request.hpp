@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <vector>
+#include "Config.hpp"
+#include "Response.hpp"
 
 
 class Request {
@@ -12,6 +14,9 @@ class Request {
 		~Request(void);
 
 		// std::string getters() {return _;} ??
+
+                std::string response(Config cf);
+                
 
 	private:
         std::string _request; //tum bufferi buraya koysak? acaba isimize yarar mi? gereksiz

@@ -92,17 +92,6 @@ void Server::onEOF(struct kevent& event) {
 	std::cout << RED << getTime() << RESET << event << "\tDisconnecting... " << std::endl;	
 }
 
-// Read the contents of an HTML file into a string
-std::string Server::read_html_file(const std::string& filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        throw std::runtime_error("Failed to open file: " + filename);
-    }
-
-    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    return content;
-}
-
 void Server::onRead(struct kevent& event) {
 
 	// read message into buffer
@@ -113,14 +102,15 @@ void Server::onRead(struct kevent& event) {
 	// display on standard out !! fucked up ATM !!
 	std::cout << RED << getTime() << RESET << event << "\tReceiving... " << CYAN << buff << RESET  << std::endl;
 	Request req(buff);
+	std::string response = req.response(_cf);
 	// create HTTP header /w message
 	// std::string response = "HTTP/1.1 200 OK\r\n";
 	// 			response += "Content-Type: text/html; charset=UTF-8\r\n";
 	// 			response += "\r\n";
 	// 			response += read_html_file("Conf/html/index.html");
 
-	// // send response message
-	// send(event.ident, response.c_str(), response.size(), 0);
+	// send response message
+	send(event.ident, response.c_str(), response.size(), 0);
 }
 
 std::ostream& operator<<(std::ostream &os, struct kevent& event) {
