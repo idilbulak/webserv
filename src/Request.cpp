@@ -42,19 +42,19 @@ Request::~Request(){}
 Request::Request(std::string buff){
 
     std::cout << "buff is[" << buff<<"]" << std::endl << std::endl;
-    std::vector<std::string> splitBuff = split_crlf(buff);
-    _reqMethod = split(splitBuff[0], " ")[0];
-    _reqUri = split(splitBuff[0], " ")[1];
-  
-    _reqHost= split(split(splitBuff[1], " ")[1], ":")[0];
-    std::vector<std::string> findPort = split(splitBuff[1], ":");
-    std::cout << splitBuff[0] << std::endl;
+        std::vector<std::string> splitBuff = split_crlf(buff);
+        _reqMethod = split(splitBuff[0], " ")[0];
+        _reqUri = split(splitBuff[0], " ")[1];
+    
+        _reqHost= split(split(splitBuff[1], " ")[1], ":")[0]; //burda sikinti var
+        std::vector<std::string> findPort = split(splitBuff[1], ":");
+        std::cout << splitBuff[0] << std::endl;
 
-    if (findPort.size() == 3)
-        _reqPort = findPort[2];
-    else
-        _reqPort = "80";
-    std::cout << "info start:" << std::endl << "method is " << _reqMethod <<  "\n host is " << _reqHost << "\n port is[" << _reqPort  << "]" << "url: " << _reqUri << std::endl;
+        if (findPort.size() == 3)
+            _reqPort = findPort[2];
+        else
+            _reqPort = "80";
+        std::cout << "info start:" << std::endl << "method is " << _reqMethod <<  "\n host is " << _reqHost << "\n port is[" << _reqPort  << "]" << "url: " << _reqUri << std::endl;
 }
 
 std::string Request::response(Config cf) {
