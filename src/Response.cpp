@@ -7,12 +7,11 @@ Response::~Response(void) {
 }
 
 // Read the contents of an HTML file into a string
-std::string Response::read_html_file(const std::string& filename) {
-	std::ifstream file(filename);
+std::string Response::read_html_file(const std::string& fileName) {
+	std::ifstream file(fileName);
 	if (!file.is_open()) {
-		throw std::runtime_error("Failed to open file: " + filename);
+		throw std::runtime_error("Failed to open file: " + fileName);
 	}
-
 	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	return content;
 }
@@ -37,28 +36,81 @@ bool fileExists(const char* filename) {
 std::string Response::getRes(std::string reqUri) {
 	Location loc;
 	for(int i=0; i<_server.locations.size(); i++) {
-		if(_server.locations[i].path.compare(reqUri) == 0)
+		if(_server.locations[i].path.compare(reqUri) == 0) {
 			loc = _server.locations[i];
-	}
-	if(!loc.cgi_ext.empty())
-		return(errRes(401)); ///cgi ile degistir
-	else if(loc.redirect_cd && !loc.redirect_url.empty())
-		return(errRes(loc.redirect_cd));
-	else if (loc.root.empty())
-		return(errRes(403));
-	else {
-		for(int i=0; i<loc.index.size(); i++) {
-			std::string filename = loc.root + "/" + loc.index[i];
-    		if (fileExists(filename.c_str())) {
-				std::string res = "HTTP/1.1 ";
-					res += "200 OK\r\n";
-					res += "Content-Type: text/html; charset=UTF-8\r\n";
-					res += "\r\n";
-					res += read_html_file(filename);
-				return (res);
+			for(int i=0; i<loc.methods.size(); i++) {
+				if(loc.methods[i].compare("GET") == 0) {
+					if(!loc.cgi_ext.empty())
+						return(errRes(401)); ///cgi ile degistir
+					else if(loc.redirect_cd && !loc.redirect_url.empty())
+						return(errRes(loc.redirect_cd));
+					else if (loc.root.empty())
+						return(errRes(404));
+					else {
+						for(int i=0; i<loc.index.size(); i++) {
+							std::string filename = loc.root + "/" + loc.index[i];
+							if (fileExists(filename.c_str())) {
+								std::string res = "HTTP/1.1 ";
+									res += "200 OK\r\n";
+									res += "Content-Type: text/html; charset=UTF-8\r\n";
+									res += "\r\n";
+									res += read_html_file(filename);
+								return (res);
+							}
+						}
+					}
+				}
+			return(errRes(405));
 			}
 		}
-    }
+	}
+	return (errRes(404));
+}
+
+static int writeContent(const std::string &content, const std::string &path)
+{
+	std::ofstream	file;
+
+		file.open(path.c_str(), std::ofstream::out | std::ofstream::trunc);
+		if (file.is_open() == false)
+			return (403);
+		return (201);
+	}
+
+std::string Response::postRes(std::string reqUri, std::string reqBody) {
+	Location loc;
+	for(int i=0; i<_server.locations.size(); i++) {
+		if(_server.locations[i].path.compare(reqUri) == 0) {
+			loc = _server.locations[i];
+			for(int i=0; i<loc.methods.size(); i++) {
+				if(loc.methods[i].compare("POST") == 0) {
+					if(!loc.cgi_ext.empty())
+						return(errRes(401)); ///cgi ile degistir
+					else if(loc.redirect_cd && !loc.redirect_url.empty())
+						return(errRes(loc.redirect_cd));
+					else if (loc.root.empty())
+						return(errRes(404));
+					else {
+						int cd = writeContent(reqBody, reqUri);
+						if(cd != 201)
+							return(errRes(cd));
+						for(int i=0; i<loc.index.size(); i++) {
+							std::string filename = loc.root + "/" + loc.index[i];
+							if (fileExists(filename.c_str())) {
+								std::string res = "HTTP/1.1 ";
+									res += "201 Created\r\n";
+									res += "Content-Type: text/html; charset=UTF-8\r\n";
+									res += "\r\n";
+									res += read_html_file(filename);
+								return (res);
+							}
+						}
+					}
+			}
+			return(errRes(405));
+			}
+		}
+	}
 	return (errRes(404));
 }
 

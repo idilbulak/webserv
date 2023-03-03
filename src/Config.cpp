@@ -127,7 +127,7 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 			for (++i;!check_word(tokens[i]); ++i)
 				loc.index.push_back(tokens[i]);			
 		}
-		else if (tokens[i] == "return") {
+		else if (tokens[i] == "return") { //////////birdaha bakimmalisinn 601 gelince mesela patliyo
 			loc.redirect_cd = stoi(tokens[++i]);
 			loc.redirect_url = tokens[++i];
 		}

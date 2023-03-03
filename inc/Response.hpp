@@ -14,9 +14,10 @@ class Response {
 		Response(VirtualServer server);
 		~Response(void);
 
-		std::string read_html_file(const std::string& filename);
+		std::string read_html_file(const std::string& fileName);
 		std::string errRes(int err);
 		std::string getRes(std::string reqUri);
+		std::string postRes(std::string reqUri, std::string reqBody);
 		std::string statuscode(int cd);
 
 	private:
