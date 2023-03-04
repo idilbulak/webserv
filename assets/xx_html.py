@@ -1,5 +1,7 @@
 import os
 
+# Python dictionary(like hash table) named dirs is defined, contains sub-dictionaries.
+# The keys of the sub-dictionaries are the status codes, and the values are the messages.
 dirs = {
     "1xx_html": {
         "100": "100 Continue",
@@ -47,10 +49,14 @@ dirs = {
     }
 }
 
+# Loop through each directory and its codes
 for directory, codes in dirs.items():
+    # Loop through each code and its message
     for code, message in codes.items():
+        # Create a file path for the code
         file_path = os.path.join(directory, f"{code}.html")
 
+        # Create an HTML string with the code and message
         x = f"""
         <!DOCTYPE html>
         <html>
@@ -64,7 +70,9 @@ for directory, codes in dirs.items():
         </html>
         """
 
+        # Write the HTML string to a file
         with open(file_path, "w") as f:
             f.write(x)
-
+            
+    # Print a message to indicate that the files have been created
     print(f"Created {directory}/*")
