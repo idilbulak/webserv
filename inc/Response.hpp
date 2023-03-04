@@ -20,6 +20,7 @@ class Response {
 		std::string findValidFile(Location loc);
 		bool hasValidMethod(Location loc, std::string method);
 		bool findLocation(std::string reqUri, Location* loc);
+		bool fileExists(const char* filename);
 		std::string getRes(std::string reqUri);
 		std::string postRes(std::string reqUri, std::string reqBody);
 		std::string statuscode(int cd);

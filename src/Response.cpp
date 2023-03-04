@@ -6,16 +6,6 @@ Response::Response(VirtualServer server) :_server(server) {
 Response::~Response(void) {
 }
 
-// Read the contents of an HTML file into a string
-std::string Response::read_html_file(const std::string& fileName) {
-	std::ifstream file(fileName);
-	if (!file.is_open()) {
-		throw std::runtime_error("Failed to open file: " + fileName);
-	}
-	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-	return content;
-}
-
 // Returns an HTTP response string that includes the HTTP version, status code, content type,
 // and the content of a file specified by the filename argument. (date and time?)
 std::string	Response::res(std::string vs, int code, std::string type, std::string filename) {
@@ -33,15 +23,6 @@ std::string Response::errRes(int err) {
 	const std::string& filename = std::to_string(err/100) + "xx_html/" + std::to_string(err) + ".html";
 	//type can be dynamic?
 	return (res("HTTP/1.1", err, "Content-Type: text/html; charset=UTF-8", filename));
-}
-
-// stat function to get information about the file specified by filename.
-// If the function returns a value of 0, it means that the file exists,
-// so the function returns true. Otherwise, it means that the file does not exist,
-// so the function returns false.
-bool fileExists(const char* filename) {
-    struct stat buffer;
-    return (stat(filename, &buffer) == 0);
 }
 
 std::string Response::getRes(std::string reqUri) {
@@ -142,6 +123,25 @@ std::string Response::statuscode(int cd) {
 	return codeMap[cd];
 }
 
+// Read the contents of an HTML file into a string
+std::string Response::read_html_file(const std::string& fileName) {
+	std::ifstream file(fileName);
+	if (!file.is_open()) {
+		throw std::runtime_error("Failed to open file: " + fileName);
+	}
+	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	return content;
+}
+
+// stat function to get information about the file specified by filename.
+// If the function returns a value of 0, it means that the file exists,
+// so the function returns true. Otherwise, it means that the file does not exist,
+// so the function returns false.
+bool Response::fileExists(const char* filename) {
+    struct stat buffer;
+    return (stat(filename, &buffer) == 0);
+}
+
 bool Response::findLocation(std::string reqUri, Location* loc) {
     for (int i = 0; i < _server.locations.size(); i++) {
         if (_server.locations[i].path.compare(reqUri) == 0) {
@@ -164,7 +164,6 @@ std::string Response::findValidFile(Location loc) {
     }
     return "";
 }
-
 
 // static int writeContent(const std::string &content, const std::string &path)
 // {
