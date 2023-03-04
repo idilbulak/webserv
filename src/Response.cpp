@@ -16,104 +16,93 @@ std::string Response::read_html_file(const std::string& fileName) {
 	return content;
 }
 
-std::string Response::errRes(int err) {
-
-	this->_statusCode = err;
-	const std::string& filename = std::to_string(err/100) + "xx_html/" + std::to_string(err) + ".html";
-	std::string res = "HTTP/1.1 ";
-		res += statuscode(err) + CRFL;
-		res += "Content-Type: text/html; charset=UTF-8\r\n";
-		res += "\r\n";
+// Returns an HTTP response string that includes the HTTP version, status code, content type,
+// and the content of a file specified by the filename argument. (date and time?)
+std::string	Response::res(std::string vs, int code, std::string type, std::string filename) {
+	std::string res = vs + " ";
+		res += statuscode(code) + CRFL;
+		res += type + CRFL;
+		res += CRFL;
 		res += read_html_file(filename);
 	return (res);
 }
 
+// Returns an HTTP error response string
+std::string Response::errRes(int err) {
+	this->_statusCode = err;
+	const std::string& filename = std::to_string(err/100) + "xx_html/" + std::to_string(err) + ".html";
+	//type can be dynamic?
+	return (res("HTTP/1.1", err, "Content-Type: text/html; charset=UTF-8", filename));
+}
+
+// stat function to get information about the file specified by filename.
+// If the function returns a value of 0, it means that the file exists,
+// so the function returns true. Otherwise, it means that the file does not exist,
+// so the function returns false.
 bool fileExists(const char* filename) {
     struct stat buffer;
     return (stat(filename, &buffer) == 0);
 }
 
 std::string Response::getRes(std::string reqUri) {
-	Location loc;
-	for(int i=0; i<_server.locations.size(); i++) {
-		if(_server.locations[i].path.compare(reqUri) == 0) {
-			loc = _server.locations[i];
-			for(int i=0; i<loc.methods.size(); i++) {
-				if(loc.methods[i].compare("GET") == 0) {
-					if(!loc.cgi_ext.empty())
-						return(errRes(401)); ///cgi ile degistir
-					else if(loc.redirect_cd && !loc.redirect_url.empty())
-						return(errRes(loc.redirect_cd));
-					else if (loc.root.empty())
-						return(errRes(404));
-					else {
-						for(int i=0; i<loc.index.size(); i++) {
-							std::string filename = loc.root + "/" + loc.index[i];
-							if (fileExists(filename.c_str())) {
-								std::string res = "HTTP/1.1 ";
-									res += "200 OK\r\n";
-									res += "Content-Type: text/html; charset=UTF-8\r\n";
-									res += "\r\n";
-									res += read_html_file(filename);
-								return (res);
-							}
-						}
-					}
-				}
-			return(errRes(405));
-			}
-		}
-	}
-	return (errRes(404));
+    Location loc;
+	//find the loc block from conf file with uri
+    if (findLocation(reqUri, &loc)) {
+		// check if that block allows the method
+        if (hasValidMethod(loc , "GET")) {
+			//add cgi in here
+            if (!loc.cgi_ext.empty())
+                return errRes(401); // TODO: replace with CGI
+            //check if the block redirects 
+			else if (loc.redirect_cd && !loc.redirect_url.empty())
+                return errRes(loc.redirect_cd);
+			//if no html files? or can be checked in parser?
+            else if (loc.root.empty())
+                return errRes(404);
+            else {
+				//redirects to another page with get
+                std::string filename = findValidFile(loc);
+                if (!filename.empty())
+                    return res("HTTP/1.1", 200, "Content-Type: text/html; charset=UTF-8", filename);
+            	return errRes(404); //not found
+            }
+        } else
+            return errRes(405); //method not allowed
+    } else
+        return errRes(404); //not found
 }
-
-static int writeContent(const std::string &content, const std::string &path)
-{
-	std::ofstream	file;
-
-		file.open(path.c_str(), std::ofstream::out | std::ofstream::trunc);
-		if (file.is_open() == false)
-			return (403);
-		return (201);
-	}
 
 std::string Response::postRes(std::string reqUri, std::string reqBody) {
 	Location loc;
-	for(int i=0; i<_server.locations.size(); i++) {
-		if(_server.locations[i].path.compare(reqUri) == 0) {
-			loc = _server.locations[i];
-			for(int i=0; i<loc.methods.size(); i++) {
-				if(loc.methods[i].compare("POST") == 0) {
-					if(!loc.cgi_ext.empty())
-						return(errRes(401)); ///cgi ile degistir
-					else if(loc.redirect_cd && !loc.redirect_url.empty())
-						return(errRes(loc.redirect_cd));
-					else if (loc.root.empty())
-						return(errRes(404));
-					else {
-						int cd = writeContent(reqBody, reqUri);
-						if(cd != 201)
-							return(errRes(cd));
-						for(int i=0; i<loc.index.size(); i++) {
-							std::string filename = loc.root + "/" + loc.index[i];
-							if (fileExists(filename.c_str())) {
-								std::string res = "HTTP/1.1 ";
-									res += "201 Created\r\n";
-									res += "Content-Type: text/html; charset=UTF-8\r\n";
-									res += "\r\n";
-									res += read_html_file(filename);
-								return (res);
-							}
-						}
-					}
+	//find the loc block from conf file with uri
+    if (findLocation(reqUri, &loc)) {
+		// check if that block allows the method
+        if (hasValidMethod(loc , "GET")) {
+			//add cgi in here
+            if (!loc.cgi_ext.empty())
+                return errRes(401); // TODO: replace with CGI
+			//check if the block redirects 
+            else if (loc.redirect_cd && !loc.redirect_url.empty())
+                return errRes(loc.redirect_cd);
+			//if no html files? or can be checked in parser?
+            else if (loc.root.empty())
+                return errRes(404);
+            else {
+				// download file in here
+				// return res("HTTP/1.1", 201, "Content-Type: text/html; charset=UTF-8", filename);
+                //redirects to another page with get
+				std::string filename = findValidFile(loc);
+				if (fileExists(filename.c_str()))
+					return res("HTTP/1.1", 200, "Content-Type: text/html; charset=UTF-8", filename);
+				return errRes(404); //not found
 			}
-			return(errRes(405));
-			}
-		}
-	}
-	return (errRes(404));
+        } else
+            return errRes(405); //method not allowed
+    } else
+        return errRes(404); //not found
 }
 
+//making a map for status codes
 std::string Response::statuscode(int cd) {
 	std::map<int, std::string> codeMap;
 	codeMap.insert(std::pair<int, std::string>(100,"100 Continue"));
@@ -152,3 +141,37 @@ std::string Response::statuscode(int cd) {
 	codeMap.insert(std::pair<int, std::string>(505, "505 HTTP Version Not Supported"));
 	return codeMap[cd];
 }
+
+bool Response::findLocation(std::string reqUri, Location* loc) {
+    for (int i = 0; i < _server.locations.size(); i++) {
+        if (_server.locations[i].path.compare(reqUri) == 0) {
+            *loc = _server.locations[i];
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Response::hasValidMethod(Location loc, std::string method) {
+	return std::find(loc.methods.begin(), loc.methods.end(), method) != loc.methods.end();
+}
+
+std::string Response::findValidFile(Location loc) {
+    for (int i = 0; i < loc.index.size(); i++) {
+        std::string filename = loc.root + "/" + loc.index[i];
+        if (fileExists(filename.c_str()))
+            return filename;
+    }
+    return "";
+}
+
+
+// static int writeContent(const std::string &content, const std::string &path)
+// {
+// 	std::ofstream	file;
+
+// 		file.open(path.c_str(), std::ofstream::out | std::ofstream::trunc);
+// 		if (file.is_open() == false)
+// 			return (403);
+// 		return (201);
+// }
