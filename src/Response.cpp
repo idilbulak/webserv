@@ -58,7 +58,7 @@ std::string Response::postRes(std::string reqUri, std::string reqBody) {
 	//find the loc block from conf file with uri
     if (findLocation(reqUri, &loc)) {
 		// check if that block allows the method
-        if (hasValidMethod(loc , "GET")) {
+        if (hasValidMethod(loc , "POST")) {
 			//add cgi in here
             if (!loc.cgi_ext.empty())
                 return errRes(401); // TODO: replace with CGI
