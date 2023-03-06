@@ -2,9 +2,11 @@
 # define RESPONSE_HPP
 
 #include <iostream>
+#include <string.h>
 #include <sys/stat.h>
 #include <map>
 #include "Config.hpp"
+#include "Cgi.hpp"
 
 #define CRFL "\r\n"
 
@@ -17,12 +19,13 @@ class Response {
 		std::string	res(std::string version, int code, std::string type, std::string filename);
 		std::string read_html_file(const std::string& fileName);
 		std::string errRes(int err);
+		std::string cgiRes(Location loc, std::string body, std::string method);
+		std::string getRes(std::string reqUri, std::string body);
+		std::string postRes(std::string reqUri, std::string body);
 		std::string findValidFile(Location loc);
 		bool hasValidMethod(Location loc, std::string method);
 		bool findLocation(std::string reqUri, Location* loc);
 		bool fileExists(const char* filename);
-		std::string getRes(std::string reqUri);
-		std::string postRes(std::string reqUri, std::string reqBody);
 		std::string statuscode(int cd);
 
 
@@ -34,6 +37,7 @@ class Response {
 		std::string		_resCode;
 		std::string		_resType;
 		std::string		_resFile;
+		std::string		_resBody;
 		
 };
 

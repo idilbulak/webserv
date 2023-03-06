@@ -14,6 +14,7 @@ std::string	Response::res(std::string vs, int code, std::string type, std::strin
 		res += type + CRFL;
 		res += CRFL;
 		res += read_html_file(filename);
+	std::cout << res << std::endl;
 	return (res);
 }
 
@@ -25,15 +26,38 @@ std::string Response::errRes(int err) {
 	return (res("HTTP/1.1", err, "Content-Type: text/html; charset=UTF-8", filename));
 }
 
-std::string Response::getRes(std::string reqUri) {
+std::string Response::cgiRes(Location loc, std::string body, std::string method) {
+	std::cout << "idil" << std::endl;
+	std::string res = Cgi(_server, loc, body, method).execute();
+	std::cout << "res: " << res << std::endl;
+
+	size_t pos = res.find("\r\n");
+	if (pos != std::string::npos)
+	{
+		_resBody = res.substr(pos + 4);
+	}
+
+
+	// std::cout <<  "    bu1" << _resCode << std::endl;
+	// std::cout <<  "    bu2" << _resType << std::endl;
+	std::cout <<  "    bu3" << _resBody << std::endl;
+	std::string response = "HTTP/1.1 ";
+		response += statuscode(200) + CRFL;
+		response += "Content-Type: text/html; charset=UTF-8\r\n";
+		response += CRFL;
+		response += _resBody;
+	return (response);
+}
+
+std::string Response::getRes(std::string uri, std::string body) {
     Location loc;
 	//find the loc block from conf file with uri
-    if (findLocation(reqUri, &loc)) {
+    if (findLocation(uri, &loc)) {
 		// check if that block allows the method
         if (hasValidMethod(loc , "GET")) {
 			//add cgi in here
             if (!loc.cgi_ext.empty())
-                return errRes(401); // TODO: replace with CGI
+                return cgiRes(loc, body, "GET"); // TODO: replace with CGI
             //check if the block redirects 
 			else if (loc.redirect_cd && !loc.redirect_url.empty())
                 return errRes(loc.redirect_cd);
@@ -53,15 +77,15 @@ std::string Response::getRes(std::string reqUri) {
         return errRes(404); //not found
 }
 
-std::string Response::postRes(std::string reqUri, std::string reqBody) {
+std::string Response::postRes(std::string uri, std::string body) {
 	Location loc;
 	//find the loc block from conf file with uri
-    if (findLocation(reqUri, &loc)) {
+    if (findLocation(uri, &loc)) {
 		// check if that block allows the method
         if (hasValidMethod(loc , "POST")) {
 			//add cgi in here
             if (!loc.cgi_ext.empty())
-                return errRes(401); // TODO: replace with CGI
+                return cgiRes(loc, body, "POST"); // TODO: replace with CGI
 			//check if the block redirects 
             else if (loc.redirect_cd && !loc.redirect_url.empty())
                 return errRes(loc.redirect_cd);

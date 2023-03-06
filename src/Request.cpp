@@ -89,9 +89,9 @@ std::string Request::response(Config cf) {
     if(_reqMethod.empty())
         return (res.errRes(405));
     else if(_reqMethod.compare("GET") == 0)
-        return (res.getRes(_reqUri));
+        return (res.getRes(_reqUri, _reqBody));
     else if(_reqMethod.compare("POST") == 0)
-        return (res.getRes(_reqUri));
+        return (res.getRes(_reqUri, _reqBody));
     else
        return (res.errRes(500)); 
 }
