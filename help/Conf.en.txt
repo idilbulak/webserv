@@ -33,3 +33,23 @@ from the CGI, EOF will mark the end of the returned data.
 ∗ Your program should call the CGI with the file requested as first argument.
 ∗ The CGI should be run in the correct directory for relative path file access.
 ∗ Your server should work with one CGI (php-CGI, Python, and so forth)
+
+
+# In the location /cgi-get block of the Nginx configuration file, the cgi_ext directive specifies that requests
+# for .cgi files in the assets/cgi-bin directory should be processed as CGI scripts. The file hello.py is specified
+# as the CGI script to execute.
+
+# When a request for /cgi-get is received by Nginx, it first checks if there is a file or directory matching the
+# request path under the root directory specified in the block, which is assets in this case. If a file or directory
+# is found, it will be served directly by Nginx according to its content type.
+
+# However, if the requested URL ends with .cgi, Nginx will treat it as a CGI script and pass the request to the CGI
+# script specified in the cgi_ext directive, which is assets/cgi-bin/hello.py in this case.
+
+# When hello.py is executed, it generates a response, which may include an HTML page. If the CGI script generates
+# an HTML page, it will be sent back to the client as the response to the request. The index directive in the
+# location block has no effect in this case, since the CGI script generates its own response and does not depend
+# on the presence of any specific HTML files.
+
+# So, if hello.py generates an HTML page, that HTML page will be served as the response to the client's request.
+# If hello.py does not generate an HTML page, Nginx will return an empty response to the client.

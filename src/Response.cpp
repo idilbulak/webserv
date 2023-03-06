@@ -27,23 +27,39 @@ std::string Response::errRes(int err) {
 }
 
 std::string Response::cgiRes(Location loc, std::string body, std::string method) {
-	std::cout << "idil" << std::endl;
+	// std::cout << "idil" << std::endl;
 	std::string res = Cgi(_server, loc, body, method).execute();
-	std::cout << "res: " << res << std::endl;
+	// std::cout << "res: " << res << std::endl;
 
-	size_t pos = res.find("\r\n");
+	// Find the index of the empty line
+	size_t pos = res.find("\r\n\r\n");
+
+	// If the empty line was found, extract the substring that follows it
 	if (pos != std::string::npos)
 	{
 		_resBody = res.substr(pos + 4);
+
+		// Find the "Content-type" header and extract the value
+		size_t typePos = res.find("Content-type:");
+		if (typePos != std::string::npos)
+		{
+			size_t endPos = res.find("\r\n", typePos);
+			_resType = res.substr(typePos + 14, endPos - (typePos + 14));
+		}
+		size_t codePos = res.find("Status: ");
+		if (codePos == 0)
+			_statusCode = 200;
+		else if (codePos != std::string::npos)
+		{
+			size_t endPos = res.find("\r\n", codePos);
+			_resType = res.substr(codePos + 8, endPos - (codePos + 8));
+			
+		}
 	}
-
-
-	// std::cout <<  "    bu1" << _resCode << std::endl;
-	// std::cout <<  "    bu2" << _resType << std::endl;
-	std::cout <<  "    bu3" << _resBody << std::endl;
+	// std::cout <<  "    bu3" << _resBody << std::endl;
 	std::string response = "HTTP/1.1 ";
-		response += statuscode(200) + CRFL;
-		response += "Content-Type: text/html; charset=UTF-8\r\n";
+		response += statuscode(_statusCode) + CRFL;
+		response += _resType + CRFL;
 		response += CRFL;
 		response += _resBody;
 	return (response);
