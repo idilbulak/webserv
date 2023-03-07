@@ -7,6 +7,11 @@
 #include <map>
 #include <vector>
 
+#define RED "\033[31m"
+#define CYAN "\033[0;36m"
+#define BLACK "\033[0;30m"
+#define RESET "\033[0m"
+
 struct Location {
     std::string					path;
 	std::vector<std::string>	methods;

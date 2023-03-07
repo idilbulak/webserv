@@ -2,41 +2,86 @@
 # define REQUEST_HPP
 
 #include <iostream>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <vector>
+#include <map>
 #include "Config.hpp"
-#include "Response.hpp"
+#include "Time.hpp"
 
+#define CRFL "\r\n"
+#define SIZE 65536 //64kilobytes
+
+struct HttpRequest {
+    std::string method;
+    std::string host;
+    std::string port;
+    std::string uri;
+    std::string version;
+    std::string body;
+};
+
+struct Response {
+    std::string	version;
+    std::string type;
+    std::string	body;
+    std::string	filename;
+    std::string res;
+    int		code;
+};
 
 class Request {
-
 	public:
 		Request(std::string buff);
 		~Request(void);
+		
+		VirtualServer	findServer(Config cf);
+		std::string	response(Config cf);
+		void	setFilePath();
+		bool	findLocation(std::string reqUri, Location* loc);
+		bool	ValidMethod(Location loc, std::string method);
+		bool	fileExists(const char* filename);
+		bool	endsWithSlash(const std::string& str);
+		bool	checkIndx();
+		bool	hasCgiExtension(const std::string& filename);
 
-		// std::string getters() {return _;} ??
+		
+		std::string findBody(std::string buff);
+		std::vector<std::string> split_crlf(std::string str);
+		std::vector<std::string> split(std::string str, std::string delimiter);
 
-                std::string response(Config cf);
-                
-
+		
+		std::string	errRes(int err);
+		std::string	cgiRes(HttpRequest req);
+		std::string	getRes();
+		std::string	res();
+		std::string	read_html_file(const std::string& fileName);
+		std::string	postRes();
+		std::string	statuscode(int cd);
+		std::string	generate();
+		void		makeCodeMap();
 	private:
-        std::string _request; //tum bufferi buraya koysak? acaba isimize yarar mi? gereksiz
-        //GET / HTTP/1.1
-        std::string _reqMethod; // GET
-        // std::string _reqUrl; //buna gerek olmayabilir "http:" "//" host [ ":" port ] [ abs_path [ "?" query ]]
-        std::string _reqHost;
-        std::string _reqPort;
-        std::string _reqUri; //yukardaki abs_path
-        std::string _reqVersion; // HTTP/1.1
-//bizim bastirdigimiz header da body yok simdilik  bunu yapalim. body eklememiz lazim POST icin gerekli
-        std::string _reqBody;
-//mesela acaba burda bir sikinti oldugunda direk bir error pageine mi yonlendirmeliyiz ona bakalim.
-
-
-        std::vector<std::string> split(std::string s, std::string delimiter);
-
+		VirtualServer   _server;
+		Location        _loc;
+		std::string     _indxFile;
+		HttpRequest     _req;
+		Response        _res;
+		std::map<int, std::string> _codeMap;
 };
 
-std::ostream& operator<<(std::ostream &os, Request& obj);
+class Cgi {
+	public:
+		Cgi(HttpRequest req);
+		~Cgi(void);
 
+		std::string execute();
+	private:
+		std::map<std::string, std::string> _env;
+		HttpRequest _req;
+};
 
 #endif

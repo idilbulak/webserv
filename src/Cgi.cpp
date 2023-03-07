@@ -1,9 +1,7 @@
-#include "../inc/Cgi.hpp"
+#include "../inc/Request.hpp"
 
-Cgi::Cgi(VirtualServer server, Location loc, std::string body, std::string method) {
-	_server = server;
-	_body = body;
-	_cgiPath = loc.cgi_path;
+Cgi::Cgi(HttpRequest req) {
+	this->_req = req;
     // any env variable??
 }
 
@@ -49,7 +47,7 @@ std::string Cgi::execute()
     long fdOut = fileno(fOut);
 
     // Write the body of the HTTP request to the input file
-    write(fdIn, _body.c_str(), _body.length());
+    write(fdIn, _req.body.c_str(), _req.body.length());
     // Move the file position indicator to the beginning of the file
     lseek(fdIn, 0, 0);
 
@@ -73,8 +71,7 @@ std::string Cgi::execute()
 
         // Execute the CGI program with environment variables
         char * const * _null = NULL;
-        std::cout << _cgiPath << std::endl;
-        execve(_cgiPath.c_str(), _null, env);
+        execve(_req.uri.c_str(), _null, env);
         // Error: failed to execute the CGI program
         std::cout << "Status: 502\r\n\r\n" << std::endl;
         exit(1);
