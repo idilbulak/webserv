@@ -55,12 +55,11 @@ std::string Request::cgiRes() {
 		}
 		size_t codePos = buff.find("Status: ");
 		if (codePos == 0)
-			_res.code = 200; ////bunu degistir
+			_res.code = 201;
 		else if (codePos != std::string::npos)
 		{
 			size_t endPos = buff.find("\r\n", codePos);
 			_res.type = buff.substr(codePos + 8, endPos - (codePos + 8));
-			
 		}
 	}
 	_res.version = "HTTP/1.1 ";

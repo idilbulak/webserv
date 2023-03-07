@@ -36,7 +36,6 @@ std::string Request::executeCgi()
     long fdIn = fileno(fIn);
     FILE *fOut = tmpfile();
     long fdOut = fileno(fOut);
-
     // Write the body of the HTTP request to the input file
     write(fdIn, _req.body.c_str(), _req.body.length());
     // Move the file position indicator to the beginning of the file
@@ -62,7 +61,7 @@ std::string Request::executeCgi()
 
         // Execute the CGI program with environment variables
         char * const * _null = NULL;
-        execve(_req.uri.c_str(), _null, env);
+        execve(_indxFile.c_str(), _null, env);
         // Error: failed to execute the CGI program
         std::cout << "Status: 502\r\n\r\n" << std::endl;
         exit(1);

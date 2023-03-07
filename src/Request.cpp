@@ -39,13 +39,11 @@ std::string Request::response(Config cf) {
     //return 301 falan koymayi unutma
     if(!fileExists(_loc.root.c_str()))
         return(errRes(415)); //unsopported media type
-    std::cout <<"requri: "<< _req.uri <<std::endl;
     // choose the .html path
     setFilePath();
-    std::cout << _indxFile << std::endl;
     if(_indxFile.empty())
         return(errRes(401));
-    else if(hasCgiExtension(_indxFile))
+    else if(_cgiOn)
         return(cgiRes());
     else
         return(generate());
@@ -53,22 +51,27 @@ std::string Request::response(Config cf) {
 
 // if uri ends with '/', first search in index, then try cgi scripts.
 void Request::setFilePath() {
-    if(endsWithSlash(_req.uri))
-    {
-        if(checkIndx())
-            return ;
-        else if (fileExists(_loc.cgi_path.c_str())) {
-                _indxFile = _loc.cgi_path;
-                return ;
-        }
-    }
-    else if (hasCgiExtension(_req.uri)) {
+    if (hasCgiExtension(_req.uri)) {
         if (fileExists(_loc.cgi_path.c_str())) {
             _indxFile = _loc.cgi_path;
+            _cgiOn = 1;
             return ;
         }
         else if (checkIndx()) {
+            _cgiOn = 0;
             return ;
+        }
+    }
+    else
+    {
+        if(checkIndx()) {
+            _cgiOn = 0;
+            return ;
+        }
+        else if (fileExists(_loc.cgi_path.c_str())) {
+                _indxFile = _loc.cgi_path;
+                _cgiOn = 1;
+                return ;
         }
     }
 }

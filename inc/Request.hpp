@@ -69,6 +69,7 @@ class Request {
 		VirtualServer   _server;
 		Location        _loc;
 		std::string     _indxFile;
+		int			    _cgiOn;
 		HttpRequest     _req;
 		Response        _res;
 		std::map<int, std::string> _codeMap;
