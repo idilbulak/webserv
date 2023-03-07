@@ -3,9 +3,9 @@
 // Returns an HTTP response string that includes the HTTP version, status code, content type,
 // and the content of a file specified by the filename argument. (date and time?)
 std::string	Request::res() {
-	std::cout << _res.version << "|" << std::endl;
-	std::cout << _res.type << std::endl;
-// exit(1);
+// 	std::cout << _res.version << "|" << std::endl;
+// 	std::cout << _res.type << std::endl;
+// // exit(1);
 	// if(_res.version.compare("HTTP/1.1") == 0){
 	// 	std::cout << _res.code << std::endl;
 	// 	return(errRes(505)); //version not supported
@@ -38,8 +38,8 @@ std::string Request::errRes(int err) {
 	return (res());
 }
 
-std::string Request::cgiRes(HttpRequest req) {
-	std::string buff = Cgi(req).execute();
+std::string Request::cgiRes() {
+	std::string buff = executeCgi();
 	// Find the index of the empty line
 	size_t pos = buff.find("\r\n\r\n");
 	// If the empty line was found, extract the substring that follows it

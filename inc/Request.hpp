@@ -56,7 +56,7 @@ class Request {
 
 		
 		std::string	errRes(int err);
-		std::string	cgiRes(HttpRequest req);
+		std::string	cgiRes();
 		std::string	getRes();
 		std::string	res();
 		std::string	read_html_file(const std::string& fileName);
@@ -64,6 +64,7 @@ class Request {
 		std::string	statuscode(int cd);
 		std::string	generate();
 		void		makeCodeMap();
+		std::string 	executeCgi();
 	private:
 		VirtualServer   _server;
 		Location        _loc;
@@ -71,17 +72,7 @@ class Request {
 		HttpRequest     _req;
 		Response        _res;
 		std::map<int, std::string> _codeMap;
-};
-
-class Cgi {
-	public:
-		Cgi(HttpRequest req);
-		~Cgi(void);
-
-		std::string execute();
-	private:
 		std::map<std::string, std::string> _env;
-		HttpRequest _req;
 };
 
 #endif

@@ -1,15 +1,5 @@
 #include "../inc/Request.hpp"
 
-// cancel this function get rid of the cgi class
-Cgi::Cgi(HttpRequest req) {
-	this->_req = req;
-    // any env variable??
-}
-
-Cgi::~Cgi(void) {
-
-}
-
 char** maptoarray(std::map<std::string, std::string>& map)
 {
     char** arr = new char*[map.size() + 1];
@@ -34,7 +24,7 @@ static void freearr(char **arr)
 	delete[] arr;
 }
 
-std::string Cgi::execute()
+std::string Request::executeCgi()
 {
     std::string output;
     char **env = maptoarray(_env);

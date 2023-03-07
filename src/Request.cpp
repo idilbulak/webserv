@@ -36,6 +36,7 @@ std::string Request::response(Config cf) {
     //auto index on ise directory listing yapilabilecek bir link koy
     // if autoindex is enabled put a directory listing
     //check if root directory exist
+    //return 301 falan koymayi unutma
     if(!fileExists(_loc.root.c_str()))
         return(errRes(415)); //unsopported media type
     std::cout <<"requri: "<< _req.uri <<std::endl;
@@ -45,7 +46,7 @@ std::string Request::response(Config cf) {
     if(_indxFile.empty())
         return(errRes(401));
     else if(hasCgiExtension(_indxFile))
-        return(cgiRes(_req));
+        return(cgiRes());
     else
         return(generate());
 }
