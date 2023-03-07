@@ -1,5 +1,6 @@
 #include "../inc/Request.hpp"
 
+// cancel this function get rid of the cgi class
 Cgi::Cgi(HttpRequest req) {
 	this->_req = req;
     // any env variable??
