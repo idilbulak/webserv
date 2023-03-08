@@ -24,6 +24,22 @@ static void freearr(char **arr)
 	delete[] arr;
 }
 
+std::string itos(int num) {
+    std::stringstream ss;
+    ss << num;
+    return ss.str();
+}
+
+void    Request::envCgi()
+{
+    _env.insert(std::make_pair("SERVER_PROTOCOL", "HTTP/1.1"));
+    _env.insert(std::make_pair("PATH_INFO", _req.uri));
+    _env.insert(std::make_pair("SCRIPT_FILENAME", _indxFile));
+    _env.insert(std::make_pair("QUERY_STRING", _req.uri));
+    _env.insert(std::make_pair("BODY", _req.body));
+    _env.insert(std::make_pair("CONTENT_LENGTH", itos(_req.body.length())));
+}
+
 std::string Request::executeCgi()
 {
     std::string output;
@@ -61,6 +77,7 @@ std::string Request::executeCgi()
 
         // Execute the CGI program with environment variables
         char * const * _null = NULL;
+        std::cout << _indxFile << std::endl;
         execve(_indxFile.c_str(), _null, env);
         // Error: failed to execute the CGI program
         std::cout << "Status: 502\r\n\r\n" << std::endl;

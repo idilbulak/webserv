@@ -2,7 +2,7 @@
 
 // Returns an HTTP response string that includes the HTTP version, status code, content type,
 // and the content of a file specified by the filename argument. (date and time?)
-std::string	Request::res() {
+std::string	Request::htmlRes() {
 // 	std::cout << _res.version << "|" << std::endl;
 // 	std::cout << _res.type << std::endl;
 // // exit(1);
@@ -35,7 +35,7 @@ std::string Request::errRes(int err) {
 	_res.version = "HTTP/1.1";
 	_res.type = "Content-Type: text/html; charset=UTF-8";
 	_res.filename = std::to_string(err/100) + "xx_html/" + std::to_string(err) + ".html";
-	return (res());
+	return (htmlRes());
 }
 
 std::string Request::cgiRes() {
@@ -53,6 +53,7 @@ std::string Request::cgiRes() {
 			size_t endPos = buff.find("\r\n", typePos);
 			_res.type = buff.substr(typePos + 14, endPos - (typePos + 14));
 		}
+		// Find the "Status" header and extract the value
 		size_t codePos = buff.find("Status: ");
 		if (codePos == 0)
 			_res.code = 201;
@@ -62,8 +63,9 @@ std::string Request::cgiRes() {
 			_res.type = buff.substr(codePos + 8, endPos - (codePos + 8));
 		}
 	}
+	std::cout << buff << "body" << std::endl;
 	_res.version = "HTTP/1.1 ";
-	return (res());
+	return htmlRes();
 }
 
 std::string Request::getRes() {
@@ -71,7 +73,7 @@ std::string Request::getRes() {
 	_res.code = 200;
 	_res.type = "Content-Type: text/html; charset=UTF-8";
 	_res.filename = _indxFile;
-    return res();
+    return htmlRes();
 }
 
 std::string Request::postRes() {
@@ -80,7 +82,7 @@ std::string Request::postRes() {
 	_res.code = 201;
 	_res.type = "Content-Type: text/html; charset=UTF-8";
 	_res.filename = _indxFile;
-	return res();
+	return htmlRes();
 }
 
 

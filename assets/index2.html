@@ -1,35 +1,40 @@
 <!-- HTML file that allows a user to select a file from their
 	local system and upload it to a server using XMLHttpRequest (XHR). -->
-	<!DOCTYPE html>
-	<html>
-	  <head>
-		<title>File Upload</title>
-		<script>
-		  function uploadFile() {
-			// Get the file input field and retrieve the first file from the input
-			var fileInput = document.getElementById("fileInput");
-			var file = fileInput.files[0];
-			// Create a new XMLHttpRequest object
-			var xhr = new XMLHttpRequest();
-			// Initialize the XHR request with the HTTP POST method and the URL of the server-side script
-			xhr.open("POST", "backend.cgi");
-			xhr.onreadystatechange = function() {
-			  // Check if the operation is complete (readyState=4) and the server successfully processed the request (status=200)
-			  if (xhr.readyState === 4 && xhr.status === 200) {
-				// If successful, display an alert message with the response text
-				alert(xhr.responseText);
-			  }
-			};
-			// Send the selected file to the server
-			xhr.send(file);
-		  }
-		</script>
-	  </head>
-	  <body>
-		<!-- Create a file input field with an ID of "fileInput" -->
-		<input type="file" id="fileInput">
-		<!-- Create a button that calls the uploadFile function when clicked -->
-		<button onclick="uploadFile()">Upload File</button>
-	  </body>
-	</html>
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>File Upload</title>
+    <script>
+      function uploadFile() {
+        // Get the file input field and retrieve the first file from the input
+        var fileInput = document.getElementById("fileInput");
+        var file = fileInput.files[0];
+        // Create a new FormData object
+        var formData = new FormData();
+        // Add the file to the FormData object, using the "file" field name
+        formData.append("file", file);
+        // Create a new XMLHttpRequest object
+        var xhr = new XMLHttpRequest();
+        // Initialize the XHR request with the HTTP POST method and the URL of the server-side script
+        xhr.open("POST", "backend.cgi");
+        xhr.onreadystatechange = function() {
+          // Check if the operation is complete (readyState=4) and the server successfully processed the request (status=200)
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            // If successful, display an alert message with the response text
+            alert(xhr.responseText);
+          }
+        };
+        // Send the FormData object to the server
+        xhr.send(formData);
+      }
+    </script>
+  </head>
+  <body>
+    <!-- Create a file input field with an ID of "fileInput" -->
+    <input type="file" id="fileInput">
+    <!-- Create a button that calls the uploadFile function when clicked -->
+    <button onclick="uploadFile()">Upload File</button>
+  </body>
+</html>
+
 	

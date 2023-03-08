@@ -27,7 +27,7 @@ std::string Request::response(Config cf) {
     this->_server = findServer(cf);
     if (_server.port.empty())
         return(errRes(500)); //internal server error
-    // find the location block 
+    // find the location block
     if(!findLocation(_req.uri, &_loc))
         return(errRes(404));
     // check if allowed method 
@@ -41,6 +41,7 @@ std::string Request::response(Config cf) {
         return(errRes(415)); //unsopported media type
     // choose the .html path
     setFilePath();
+    std::cout << _indxFile << "||||"<< std::endl;
     if(_indxFile.empty())
         return(errRes(401));
     else if(_cgiOn)
@@ -123,11 +124,12 @@ bool Request::checkIndx() {
 
 bool Request::hasCgiExtension(const std::string& filename) {
     std::string extension = ".cgi";
+    std::string extensionpy = ".py";
     std::string fileExtension = "";
     size_t dotPos = filename.find_last_of(".");
     if (dotPos != std::string::npos)
         fileExtension = filename.substr(dotPos);
-    return (fileExtension == extension);
+    return (fileExtension == extension || fileExtension == extensionpy);
 }
 
 std::vector<std::string> Request::split(std::string str, std::string delimiter) {

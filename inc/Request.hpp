@@ -58,13 +58,15 @@ class Request {
 		std::string	errRes(int err);
 		std::string	cgiRes();
 		std::string	getRes();
-		std::string	res();
+		std::string	htmlRes();
 		std::string	read_html_file(const std::string& fileName);
 		std::string	postRes();
 		std::string	statuscode(int cd);
 		std::string	generate();
 		void		makeCodeMap();
 		std::string 	executeCgi();
+		void	envCgi();
+
 	private:
 		VirtualServer   _server;
 		Location        _loc;
