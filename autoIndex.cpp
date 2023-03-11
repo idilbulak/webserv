@@ -7,6 +7,7 @@
 #include <cstring>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <iomanip>
 
 // Define a function to list the contents of a directory and its subdirectories
 void list_directory(const std::string& dir_path) {
@@ -47,10 +48,10 @@ void list_directory(const std::string& dir_path) {
             std::cout << "[DIR] ";
         }
         // If the item is a file, add its path to the files vector
-        // and print the prefix "[FILE]" before the path
+        // and print the prefix "[FILE]" before the path, along with file size, modification time, and permissions
         else {
             files.push_back(path);
-            std::cout << "[FILE] ";
+            std::cout << "[FILE] " << std::setw(8) << statbuf.st_size << "  " << std::put_time(std::localtime(&statbuf.st_mtime), "%Y-%m-%d %H:%M:%S") << "  " << std::oct << (statbuf.st_mode & 0777) << std::dec << "  ";
         }
         // Print the full path of the item to the console
         std::cout << path << std::endl;
@@ -67,11 +68,11 @@ void list_directory(const std::string& dir_path) {
     std::for_each(directories.begin(), directories.end(), list_directory);
 }
 
-
 int main() {
-    std::string assets_path = "/Users/ib/Desktop/webserv/assets";
+    // Call the list_directory function on the "assets" directory on the Desktop
+    std::string assets_path = "assets";
     list_directory(assets_path);
+
     return 0;
 }
-
 
