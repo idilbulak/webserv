@@ -120,8 +120,9 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 			loc.cgi_ext = tokens[++i];
 			loc.cgi_path = tokens[++i];
 		}
-		else if (tokens[i] == "upload_dir")
+		else if (tokens[i] == "upload_dir") {
 			loc.upload_dir = tokens[++i];
+		}
 		else if (tokens[i] == "index")
 		{
 			for (++i;!check_word(tokens[i]); ++i)

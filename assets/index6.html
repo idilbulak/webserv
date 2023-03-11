@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Assets Directory Listing</title>
+  </head>
+  <body>
+    <h1>Assets Directory Listing</h1>
+    <ul id="file-list"></ul>
+
+    <script>
+      // Get a reference to the file list element
+      const fileList = document.getElementById("file-list");
+
+      // Define the assets directory path
+      const directoryPath = "assets/";
+
+      // Make an AJAX request to get the directory contents
+      const xhr = new XMLHttpRequest();
+      xhr.open("GET", directoryPath);
+      xhr.onload = function() {
+        // Parse the directory listing from the response
+        const parser = new DOMParser();
+        const html = parser.parseFromString(xhr.responseText, "text/html");
+        const links = html.querySelectorAll("a");
+
+        // Iterate over the links and add them to the file list
+        for (let i = 0; i < links.length; i++) {
+          const link = links[i];
+          const fileName = link.textContent;
+          const isDirectory = link.href.endsWith("/");
+
+          // Skip the current directory and parent directory links
+          if (fileName === "." || fileName === "..") {
+            continue;
+          }
+
+          // Create a new list item for the file or directory
+          const listItem = document.createElement("li");
+          if (isDirectory) {
+            listItem.textContent = "[DIR] " + fileName;
+          } else {
+            listItem.textContent = fileName;
+          }
+          fileList.appendChild(listItem);
+        }
+      };
+      xhr.send();
+    </script>
+  </body>
+</html>

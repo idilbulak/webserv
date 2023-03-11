@@ -1,104 +1,99 @@
-#include "../inc/Request.hpp"
+#include "../inc/Response.hpp"
 
-// Returns an HTTP response string that includes the HTTP version, status code, content type,
-// and the content of a file specified by the filename argument. (date and time?)
-std::string	Request::htmlRes() {
-// 	std::cout << _res.version << "|" << std::endl;
-// 	std::cout << _res.type << std::endl;
-// // exit(1);
-	// if(_res.version.compare("HTTP/1.1") == 0){
-	// 	std::cout << _res.code << std::endl;
-	// 	return(errRes(505)); //version not supported
-	// 	/////////////buraya
-	// 	}
-	// if(_res.type.compare("Content-Type: text/html; charset=UTF-8") == 0 || _res.type.compare("Content-Type: text/html") == 0)
-	// 	return(errRes(503)); //service unavailable
-	// if (_codeMap.find(_res.code) != _codeMap.end())
-	// 	return(errRes(404)); //not found
-	_res.res = _res.version + " ";
-		_res.res += statuscode(_res.code) + CRFL;
-		_res.res += _res.type + CRFL;
-		_res.res += CRFL;
-		if(_res.body.empty())
-			_res.res += read_html_file(_res.filename);
-		else if (_res.body.empty() == 0)
-			_res.res += _res.body;
+Response::Response(std::string buff, Config cf) : _cf(cf), _req(HttpRequest(buff)){
+	makeCodeMap();
+}
+
+Response::~Response(void) {
+
+}
+
+std::string	Response::generate() {
+	// if (findServer(_req).port.empty())
+    //     return(errRes(500));
+	if(!findLocation(_req.getUri(), &_loc, findServer(_req)))
+        return(codeRes(404));
+	if(!validMethod(_loc, _req.getMethod()))
+        return(codeRes(405));
+	// autoindex
+	// return?
+	if(!fileExists(_loc.root.c_str()))
+        return(codeRes(415));
+	setIndxFile();
+	std::cout << "index file path:\t" << _indxFile << std::endl;
+	if(_indxFile.empty())
+        return(codeRes(401));
+    // else if(_cgiOn)
+    //     return(cgiRes());
+    else {
+		if(_req.getMethod().compare("GET") == 0)
+        	return (getRes());
+		else if(_req.getMethod().compare("POST") == 0)
+			return (postRes());
+		else if(_req.getMethod().compare("DELETE") == 0)
+		    return (delRes());
 		else
-			return(errRes(404)); 
-	std::cout << RED << getTime() << RESET << "\tResponse: \n" << CYAN << _res.res << RESET  << std::endl;
-	return (_res.res);
-}
-
-// Returns an HTTP error response string
-std::string Request::errRes(int err) {
-	_res.code = err;
-	_res.version = "HTTP/1.1";
-	_res.type = "Content-Type: text/html; charset=UTF-8";
-	_res.filename = std::to_string(err/100) + "xx_html/" + std::to_string(err) + ".html";
-	return (htmlRes());
-}
-
-std::string Request::cgiRes() {
-	std::string buff = executeCgi();
-	// Find the index of the empty line
-	size_t pos = buff.find("\r\n\r\n");
-	// If the empty line was found, extract the substring that follows it
-	if (pos != std::string::npos)
-	{
-		_res.body = buff.substr(pos + 4);
-		// Find the "Content-type" header and extract the value
-		size_t typePos = buff.find("Content-type:");
-		if (typePos != std::string::npos)
-		{
-			size_t endPos = buff.find("\r\n", typePos);
-			_res.type = buff.substr(typePos + 14, endPos - (typePos + 14));
-		}
-		// Find the "Status" header and extract the value
-		size_t codePos = buff.find("Status: ");
-		if (codePos == 0)
-			_res.code = 201;
-		else if (codePos != std::string::npos)
-		{
-			size_t endPos = buff.find("\r\n", codePos);
-			_res.type = buff.substr(codePos + 8, endPos - (codePos + 8));
-		}
+			return (codeRes(502));
 	}
-	std::cout << buff << "body" << std::endl;
-	_res.version = "HTTP/1.1 ";
-	return htmlRes();
 }
 
-std::string Request::getRes() {
-    _res.version = "HTTP/1.1";
-	_res.code = 200;
-	_res.type = "Content-Type: text/html; charset=UTF-8";
-	_res.filename = _indxFile;
-    return htmlRes();
+std::string Response::getRes() {
+    _version = "HTTP/1.1";
+	_code = 200;
+	_type = "Content-Type: text/html; charset=UTF-8";
+	_filename = _indxFile;
+    return res();
 }
 
-std::string Request::postRes() {
+std::string Response::postRes() {
 	// upload file
-	_res.version = "HTTP/1.1";
-	_res.code = 201;
-	_res.type = "Content-Type: text/html; charset=UTF-8";
-	_res.filename = _indxFile;
-	return htmlRes();
+	// std::cout << _loc.upload_dir << std::endl;
+	if (_loc.upload_dir.empty())
+		return(codeRes(503));
+	if (_req.getBody().empty())
+		return(codeRes(200));
+	else if (_req.getCntName().compare("file") == 0) {
+		if (_req.getCntFileName().empty())
+			return(codeRes(404));
+		if(!fileExists(_loc.upload_dir.c_str())) {
+			std::cout << "No upload_dir" << std::endl;
+			return(codeRes(500));
+		}
+		std::string path = _loc.upload_dir + "/" + _req.getCntFileName();
+		// std::cout << path << "this is path" << std::endl;
+		std::ofstream outfile(path);
+    	if (outfile.is_open()) {
+        outfile << _req.getContent();
+        outfile.close();
+        std::cout << "File created successfully.\n";
+		return(codeRes(201));
+		} 
+	}
+	else {
+		std::cout << "Failed to create file.\n";
+		return(codeRes(415));
+	}
 }
 
-
-std::string Request::generate() {
-	if(_req.method.compare("GET") == 0)
-        return (getRes());
-    else if(_req.method.compare("POST") == 0)
-        return (postRes());
-	// else if(_req.method.compare("DELETE") == 0)
-    //     return (getDel());
-	else
-        return (errRes(502));
+std::string Response::delRes() {
+	if (_loc.upload_dir.empty())
+		return(codeRes(503));
+	if(!fileExists(_loc.upload_dir.c_str())) {
+		std::cout << "No upload_dir" << std::endl;
+		return(codeRes(500));
+	}
+	std::string path = _loc.upload_dir + "/" + _req.getFileToDelete();
+	if (std::remove(path.c_str()) == 0) {
+    std::cout << "Deleted file " << path << std::endl;
+	} else {
+		std::cout << "Failed to delete file: " << path << std::endl;
+		return(codeRes(404));
+	}
+    return codeRes(204);
 }
 
 //making a map for status codes
-void Request::makeCodeMap() {
+void Response::makeCodeMap() {
 	_codeMap.insert(std::pair<int, std::string>(100,"100 Continue"));
 	_codeMap.insert(std::pair<int, std::string>(101,"101 Switching Protocols"));
 	_codeMap.insert(std::pair<int, std::string>(200,"200 OK"));
@@ -135,12 +130,37 @@ void Request::makeCodeMap() {
 	_codeMap.insert(std::pair<int, std::string>(505, "505 HTTP Version Not Supported"));
 }
 
-std::string Request::statuscode(int cd) {
-	return _codeMap[cd];
+// Returns an HTTP response string that includes the HTTP version, status code, content type,
+// and the content of a file specified by the filename argument. (date and time?)
+std::string	Response::res() {
+// 	std::cout << _res.version << "|" << std::endl;
+// 	std::cout << _res.type << std::endl;
+// // exit(1);
+	// if(_res.version.compare("HTTP/1.1") == 0){
+	// 	std::cout << _res.code << std::endl;
+	// 	return(errRes(505)); //version not supported
+	// 	/////////////buraya
+	// 	}
+	// if(_res.type.compare("Content-Type: text/html; charset=UTF-8") == 0 || _res.type.compare("Content-Type: text/html") == 0)
+	// 	return(errRes(503)); //service unavailable
+	// if (_codeMap.find(_res.code) != _codeMap.end())
+	// 	return(errRes(404)); //not found
+	std::string res = _version + " ";
+		res += statuscode(_code) + CRFL;
+		res += _type + CRFL;
+		res += CRFL;
+		if(_body.empty())
+			res += read_html_file(_filename);
+		else if (_body.empty() == 0)
+			res += _body;
+		else
+			return(codeRes(404)); 
+	std::cout << RED << getTime() << RESET << "\tResponse: \n" << CYAN << res << RESET  << std::endl;
+	return (res);
 }
 
 // Read the contents of an HTML file into a string
-std::string Request::read_html_file(const std::string& fileName) {
+std::string Response::read_html_file(const std::string& fileName) {
 	std::ifstream file(fileName);
 	if (!file.is_open()) {
 		throw std::runtime_error("Failed to open file: " + fileName);
@@ -149,30 +169,65 @@ std::string Request::read_html_file(const std::string& fileName) {
 	return content;
 }
 
-// stat function to get information about the file specified by filename.
-// If the function returns a value of 0, it means that the file exists,
-// so the function returns true. Otherwise, it means that the file does not exist,
-// so the function returns false.
-// bool Request::fileExists(const char* filename) {
-//     struct stat buffer;
-//     return (stat(filename, &buffer) == 0);
-// }
+VirtualServer Response::findServer(HttpRequest req) {
+    VirtualServer server;
+    for(int i=0; i<_cf.servers.size(); i++) {
+        if(_cf.servers[i].port == req.getPort())
+            server = _cf.servers[i];
+    }
+    return (server);
+}
 
-// std::string Request::findValidFile(Location loc) {
-//     for (int i = 0; i < loc.index.size(); i++) {
-//         std::string filename = loc.root + "/" + loc.index[i];
-//         if (fileExists(filename.c_str()))
-//             return filename;
-//     }
-//     return "";
-// }
+bool Response::findLocation(std::string reqUri, Location* loc, VirtualServer server) {
+    for (int i = 0; i < server.locations.size(); i++) {
+        if (server.locations[i].path.compare(reqUri) == 0) {
+            *loc = server.locations[i];
+            return true;
+        }
+    }
+    return false;
+}
 
-// static int writeContent(const std::string &content, const std::string &path)
-// {
-// 	std::ofstream	file;
+bool Response::validMethod(Location loc, std::string method) {
+	return std::find(loc.methods.begin(), loc.methods.end(), method) != loc.methods.end();
+}
 
-// 		file.open(path.c_str(), std::ofstream::out | std::ofstream::trunc);
-// 		if (file.is_open() == false)
-// 			return (403);
-// 		return (201);
-// }
+bool Response::fileExists(const char* filename) {
+    struct stat buffer;
+    return (stat(filename, &buffer) == 0);
+}
+
+void Response::setIndxFile() {
+    if(checkIndx()) {
+        _cgiOn = 0;
+        return ;
+    }
+    else if (fileExists(_loc.cgi_path.c_str())) {
+        _indxFile = _loc.cgi_path;
+        _cgiOn = 1;
+        return ;
+    }
+}
+
+bool Response::checkIndx() {
+    for (int i = 0; i < _loc.index.size(); i++) {
+        std::string filename = _loc.root + "/" + _loc.index[i];
+        if (fileExists(filename.c_str()))
+            _indxFile = filename;
+            return true;
+    }
+    return false;
+}
+
+std::string Response::statuscode(int cd) {
+	return _codeMap[cd];
+}
+
+// Returns an HTTP error response string
+std::string Response::codeRes(int err) {
+	_code = err;
+	_version = "HTTP/1.1";
+	_type = "Content-Type: text/html; charset=UTF-8";
+	_filename = std::to_string(err/100) + "xx_html/" + std::to_string(err) + ".html";
+	return (res());
+}
