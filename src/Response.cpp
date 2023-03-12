@@ -25,6 +25,11 @@ std::string	Response::generate() {
     else if(_cgiOn)
         return(cgiRes());
     else {
+		return(chooseMethod());
+	}
+}
+
+std::string Response::chooseMethod() {
 		if(_req.getMethod().compare("GET") == 0)
         	return (getRes());
 		else if(_req.getMethod().compare("POST") == 0)
@@ -33,7 +38,6 @@ std::string	Response::generate() {
 		    return (delRes());
 		else
 			return (codeRes(502));
-	}
 }
 
 std::string Response::getRes() {
@@ -244,7 +248,8 @@ void Response::setIndxFile() {
         _indxFile = _loc.cgi_path;
         _cgiOn = 1;
     }
-	// bunu cgi in ustune almayi unutmmaaaaaa!!!!!!!!!!
+	// else if (_loc.redirect_url)
+	// autoindex of check etmeti unutmaaaaaaaaaa!!!!!!!!!!
 	else
 		std::cout << RED << getTime() << RESET << "\tPage not found. \n" << RESET  << std::endl; 
 }

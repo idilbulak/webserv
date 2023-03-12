@@ -27,6 +27,7 @@ class Response {
 		std::string		read_html_file(const std::string& fileName);
 		std::string		statuscode(int cd);
 		std::string		codeRes(int err);
+		std::string		chooseMethod();
 		void			moveFile(const std::string& source_path, const std::string& destination_path);
 
 	private:
