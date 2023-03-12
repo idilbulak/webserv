@@ -15,7 +15,6 @@ std::string	Response::generate() {
         return(codeRes(404));
 	if(!validMethod(_loc, _req.getMethod()))
         return(codeRes(405));
-	// autoindex
 	// return?
 	if(!fileExists(_loc.root.c_str()))
         return(codeRes(415));
@@ -202,6 +201,13 @@ void Response::setIndxFile() {
         _cgiOn = 0;
         return ;
     }
+	else if (_loc.autoindex) {
+		std::cout << _loc.autoindex << std::endl;
+		AutoIndex listing(_loc.root);
+		std::string dst= _loc.root + "/listing.html";
+		moveFile("listing.html", dst);
+		_indxFile = _loc.root + "/listing.html";
+	}
     else if (fileExists(_loc.cgi_path.c_str())) {
         _indxFile = _loc.cgi_path;
         _cgiOn = 1;
@@ -230,4 +236,11 @@ std::string Response::codeRes(int err) {
 	_type = "Content-Type: text/html; charset=UTF-8";
 	_filename = std::to_string(err/100) + "xx_html/" + std::to_string(err) + ".html";
 	return (res());
+}
+
+void Response::moveFile(const std::string& source_path, const std::string& destination_path) {
+    int result = std::rename(source_path.c_str(), destination_path.c_str());
+    if (result != 0) {
+        std::cerr << "Error: Failed to move file from " << source_path << " to " << destination_path << std::endl;
+    }
 }

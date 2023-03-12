@@ -2,6 +2,7 @@
 # define RESPONSE_HPP
 
 #include "HttpRequest.hpp"
+#include "AutoIndex.hpp"
 
 class Response {
 	public:
@@ -24,6 +25,7 @@ class Response {
 		std::string		read_html_file(const std::string& fileName);
 		std::string		statuscode(int cd);
 		std::string		codeRes(int err);
+		void			moveFile(const std::string& source_path, const std::string& destination_path);
 
 	private:
 		std::map<int, std::string>	_codeMap;
