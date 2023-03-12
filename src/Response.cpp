@@ -277,3 +277,12 @@ void Response::moveFile(const std::string& source_path, const std::string& desti
         std::cerr << "Error: Failed to move file from " << source_path << " to " << destination_path << std::endl;
     }
 }
+
+// std::string Request::findValidFile(Location loc) {
+//     for (int i = 0; i < loc.index.size(); i++) {
+//         std::string filename = loc.root + "/" + loc.index[i];
+//         if (fileExists(filename.c_str()))
+//             return filename;
+//     }
+//     return "";
+// }
