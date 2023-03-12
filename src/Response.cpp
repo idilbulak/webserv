@@ -72,6 +72,7 @@ std::string Response::postRes() {
 		std::cout << "Failed to create file.\n";
 		return(codeRes(415));
 	}
+	return(codeRes(200));
 }
 
 std::string Response::delRes() {
@@ -197,10 +198,8 @@ bool Response::fileExists(const char* filename) {
 }
 
 void Response::setIndxFile() {
-    if(checkIndx()) {
+    if(checkIndx())
         _cgiOn = 0;
-        return ;
-    }
 	else if (_loc.autoindex) {
 		std::cout << _loc.autoindex << std::endl;
 		AutoIndex listing(_loc.root);
@@ -211,8 +210,9 @@ void Response::setIndxFile() {
     else if (fileExists(_loc.cgi_path.c_str())) {
         _indxFile = _loc.cgi_path;
         _cgiOn = 1;
-        return ;
     }
+	else
+		std::cout << RED << getTime() << RESET << "\tPage not found. \n" << RESET  << std::endl; 
 }
 
 bool Response::checkIndx() {
