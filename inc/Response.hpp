@@ -2,6 +2,7 @@
 # define RESPONSE_HPP
 
 #include "HttpRequest.hpp"
+#include "Cgi.hpp"
 #include "AutoIndex.hpp"
 
 class Response {
@@ -21,6 +22,7 @@ class Response {
 		std::string		getRes();
 		std::string		postRes();
 		std::string		delRes();
+		std::string		cgiRes();
 		std::string		res();
 		std::string		read_html_file(const std::string& fileName);
 		std::string		statuscode(int cd);
@@ -39,6 +41,7 @@ class Response {
     	std::string					_body;
     	std::string					_filename;
     	int							_code;
+    	std::string					_cgiRes;
 		// Response        _res;
 		// std::map<std::string, std::string> _env;
 };

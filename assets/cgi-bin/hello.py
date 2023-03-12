@@ -2,18 +2,16 @@
 
 import cgi
 
-print("Content-type: text/html\n")
+# specify that we're returning HTML content
+print("Content-Type: text/html")
+# print a blank line to indicate the end of the header
 print("\r\n\r\n")
+# print the HTML content
 print("<html>")
-print("<head><title>upload</title></head>")
+print("<head>")
+print("<title>CGI Python Script</title>")
+print("</head>")
 print("<body>")
-print("<h1>New user:</h1>")
-print("<form method='post' action=''>")
-print("First Name: <input type='text' name='first_name'><br>")
-print("Last Name: <input type='text' name='last_name'><br>")
-print("<input type='submit' value='Add'>")
-print("</form>")
+print("<h1>Cgi Python Script is successfully executed.</h1>")
 print("</body>")
 print("</html>")
-
-

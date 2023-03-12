@@ -22,8 +22,8 @@ std::string	Response::generate() {
 	std::cout << "index file path:\t" << _indxFile << std::endl;
 	if(_indxFile.empty())
         return(codeRes(401));
-    // else if(_cgiOn)
-    //     return(cgiRes());
+    else if(_cgiOn)
+        return(cgiRes());
     else {
 		if(_req.getMethod().compare("GET") == 0)
         	return (getRes());
@@ -90,6 +90,37 @@ std::string Response::delRes() {
 		return(codeRes(404));
 	}
     return codeRes(204);
+}
+
+std::string Response::cgiRes() {
+	_cgiRes = Cgi(_indxFile, _req).execute();
+	// Find the index of the empty line
+	size_t pos = _cgiRes.find("\r\n\r\n");
+	// If the empty line was found, extract the substring that follows it
+	if (pos != std::string::npos)
+	{
+		_body = _cgiRes.substr(pos + 4);
+		// Find the "Content-type" header and extract the value
+		size_t typePos = _cgiRes.find("Content-type:");
+		if (typePos != std::string::npos)
+		{
+			size_t endPos = _cgiRes.find("\r\n", typePos);
+			_type = _cgiRes.substr(typePos + 14, endPos - (typePos + 14));
+		}
+		// Find the "Status" header and extract the value
+		size_t codePos = _cgiRes.find("Status: ");
+		if (codePos == 0)
+			_code = 201; ///fix this
+		else if (codePos != std::string::npos)
+		{
+			size_t endPos = _cgiRes.find("\r\n", codePos);
+			_type = _cgiRes.substr(codePos + 8, endPos - (codePos + 8));
+		}
+	}
+	//if cgi status is not 200 return error
+	//then check methods and send to there...
+	_version = "HTTP/1.1 ";
+	return res();
 }
 
 //making a map for status codes
@@ -200,6 +231,12 @@ bool Response::fileExists(const char* filename) {
 void Response::setIndxFile() {
     if(checkIndx())
         _cgiOn = 0;
+    else if (fileExists(_loc.cgi_path.c_str())) {
+		std::cout << _loc.cgi_path << "bu path" << std::endl;
+        _indxFile = _loc.cgi_path;
+        _cgiOn = 1;
+    }
+	// bunu cgi in ustune almayi unutmmaaaaaa!!!!!!!!!!
 	else if (_loc.autoindex) {
 		std::cout << _loc.autoindex << std::endl;
 		AutoIndex listing(_loc.root);
@@ -207,10 +244,6 @@ void Response::setIndxFile() {
 		moveFile("listing.html", dst);
 		_indxFile = _loc.root + "/listing.html";
 	}
-    else if (fileExists(_loc.cgi_path.c_str())) {
-        _indxFile = _loc.cgi_path;
-        _cgiOn = 1;
-    }
 	else
 		std::cout << RED << getTime() << RESET << "\tPage not found. \n" << RESET  << std::endl; 
 }
