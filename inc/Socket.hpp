@@ -12,6 +12,7 @@
 
 #define RED "\033[31m"
 #define CYAN "\033[0;36m"
+#define YELLOW "\033[0;33m"
 #define BLACK "\033[0;30m"
 #define RESET "\033[0m"
 #define ERROR std::perror
@@ -25,12 +26,13 @@ class Socket {
 		~Socket(void);
 
 		int	accept(struct kevent& event);
+		int	recv(struct kevent& event);
 		// int	send();
-		// int	recv();
 		// int	 close();
 
 		std::string getHost() {return _host;}
 		std::string getPort() {return _port;}
+		std::string getHttpRequest() {return _httpRequest;}
 		int getfd() {return _fd;}
 		struct sockaddr_in getAddr() {return _addr;}
 		socklen_t getAddrlen() {return _addrlen;}
@@ -41,6 +43,10 @@ class Socket {
 		int _fd;
 		struct sockaddr_in _addr;
 		socklen_t _addrlen;
+
+		char _buffer[1024];
+		std::string _httpRequest;
+		// bool complete;
 
 		void configure();
 		void bind();

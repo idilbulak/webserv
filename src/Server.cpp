@@ -52,6 +52,8 @@ void Server::run() {
 					onEOF(_eventList[i]);
 				else if (_eventList[i].flags & EVFILT_READ)
 					onRead(_eventList[i]);
+				else if (_eventList[i].flags & EVFILT_WRITE)
+					onWrite(_eventList[i]);
 			}
 		}
 	}
@@ -72,15 +74,20 @@ void Server::onClientConnect(struct kevent& event) {
 	Socket newClient;
 	if (newClient.accept(event) < 0)
 		return;
+	
+	// add newCLient to map
+	_clients[newClient.getfd()] = newClient;
 
-	// add event to kqueue
+	// add socket to kqueue ready for reading
 	EV_SET(&_changeList, newClient.getfd(), EVFILT_READ, EV_ADD, 0, 0, NULL);
 	if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
-		ERROR("adding new client to kqueue");
+		ERROR("adding new client to kqueue for reading");
 	}
 }
 
 void Server::onEOF(struct kevent& event) {
+
+	std::cout << RED << getTime() << RESET << event << "\tDisconnecting... " << std::endl;
 
 	// remove event from kqueue
 	EV_SET(&_changeList, event.ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
@@ -89,25 +96,41 @@ void Server::onEOF(struct kevent& event) {
 
 	// close file descriptor
 	::close(event.ident);
-	std::cout << RED << getTime() << RESET << event << "\tDisconnecting... " << std::endl;	
+
+	// remove client from map
+	_clients.erase(event.ident);
+	
 }
 
 void Server::onRead(struct kevent& event) {
+	
+	// retrieve socket from map by filedescriptor
+	_clients[event.ident].recv(event);
 
-	// read message into buffer
-	std::string buff(1024, '\0'); // char buff[24];
-	int recv_len = recv(event.ident, &buff[0], buff.size(), 0);
-	buff.resize(recv_len); // buff[recv_len] = '\0';
-	// std::cout << "our buff: " << buff << std::endl;
-	// display on standard out !! fucked up ATM !!
-	// sleep(20);
-	std::cout << RED << getTime() << RESET << event << "\tReceiving... " << CYAN << buff << RESET  << std::endl;
-	std::string res = Response(buff, _cf).generate();
-	// create HTTP header /w message
-	// std::string response = "HTTP/1.1 200 OK\r\n";
-	// 			response += "Content-Type: text/html; charset=UTF-8\r\n";
-	// 			response += "\r\n";
-	// 			response += read_html_file("Conf/html/index.html");
+	// write request HTTP to terminal
+	std::cout << RED << getTime() << RESET << event << "\tReceiving... \n\n" << YELLOW << _clients[event.ident].getHttpRequest() << RESET  << std::endl;
+
+	// remove event from kqueue
+	// EV_SET(&_changeList, event.ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+	// if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0)
+	// 	ERROR("removing event from kqueue");
+
+	// add socket to kqueue ready for writing
+	// if (_clients[event.ident].isComplete())
+	EV_SET(&_changeList, event.ident, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
+	if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
+		ERROR("adding new client to kqueue for writing");
+	}
+
+}
+
+void Server::onWrite(struct kevent& event) {
+
+	std::cout << "HELLOOOOA!!!!!!!!!!!!!!!!!!" << std::endl;
+
+	// create response HTTP header /w message
+	std::string httpRequest = _clients[event.ident].getHttpRequest();
+	std::string res = Response(httpRequest, _cf).generate();
 
 	// send response message
 	send(event.ident, res.c_str(), res.size(), 0);

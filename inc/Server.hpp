@@ -22,7 +22,8 @@ class Server {
 		Config _cf;
 		int _kq;
 		std::vector<Socket> _listenSockets;
-		static const int EVENTS_MAX = 2;
+		std::map<int, Socket> _clients;
+		static const int EVENTS_MAX = 1;
 		struct kevent _changeList;
 		struct kevent _eventList[EVENTS_MAX];
 
@@ -31,6 +32,7 @@ class Server {
 		void	onClientConnect(struct kevent& event);
 		void	onEOF(struct kevent& event);
 		void	onRead(struct kevent& event);
+		void	onWrite(struct kevent& event);
 
 };
 
