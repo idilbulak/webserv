@@ -235,7 +235,7 @@ bool Response::fileExists(const char* filename) {
 void Response::setIndxFile() {
     if(checkIndx())
         _cgiOn = 0;
-	else if (_loc.autoindex == 1) {
+	else if (_loc.autoindex) {
 		std::cout << _loc.autoindex << std::endl;
 		AutoIndex listing(_loc.root);
 		std::string dst= _loc.root + "/listing.html";

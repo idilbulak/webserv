@@ -62,7 +62,7 @@ void Config::CheckPath(std::string path){
 void Config::CheckAllow(std::vector<std::string> methods){
     for (int i = 0; i < methods.size(); i++)
     {
-        if (!(methods[i].compare("GET") == 0 || methods[i].compare("POST") == 0))
+        if (!(methods[i].compare("GET") == 0 || methods[i].compare("POST") == 0 || methods[i].compare("DELETE") == 0))
         {
             throw std::invalid_argument("Methods error");}
     }

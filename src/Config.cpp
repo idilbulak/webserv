@@ -130,10 +130,11 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 		if ( tokens[i] == "root" )
 			loc.root = tokens[++i];
 		else if ( tokens[i] == "autoindex" ) {
-			if (tokens[++i].compare("on") == 0 || tokens[++i].compare("offs") == 0){
-			if (tokens[++i]== "on")
+			std::string str = tokens[++i];
+			if (str.compare("on") == 0 || str.compare("off") == 0){
+			if (str== "on")
 				loc.autoindex = 1;
-			else if (tokens[++i]== "off")
+			else if (str== "off")
 				loc.autoindex = 0;
 			}
 			else
