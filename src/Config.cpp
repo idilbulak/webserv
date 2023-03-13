@@ -43,18 +43,29 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 		// std::cout << tokens[i] << "is token " << std::endl;
 		if(tokens[i] == "server")
 			break;
-		if (tokens[i] == "listen") 
+		if (tokens[i] == "listen") {
             parseHostPort(server.host, server.port, tokens[++i]);
+			CheckPort(server.port);
+		}
 		else if (tokens[i] == "server_name")
+		{
+			CheckServerName(tokens[++i]);
 			server.name = tokens[++i];
+		}
 		else if (tokens[i] == "root")
 			server.root = tokens[++i];
-		else if (tokens[i] == "client_max_body_size" )
-		    server.max_body_size = tokens[++i];
-		else if (tokens[i] == "error_page" )
+		else if (tokens[i] == "client_max_body_size" ){
+			CheckClientMaxBodySize(tokens[++i]);
+			server.max_body_size = tokens[++i];
+			}
+		else if (tokens[i] == "error_page" ){
 			parseErrorPage(server.error_pages, tokens, i);
-		else if (tokens[i] == "location" )
+			
+			}
+		else if (tokens[i] == "location" ){
 			parseLocation(server.locations, tokens, i);
+			CheckLocation(server.locations);
+		}
 		else
 			i++;
 	}
@@ -69,7 +80,7 @@ void	Config::parseHostPort(std::string &host, std::string &port, std::string &to
     ss >> port;
 }
 
-bool	check_word(const std::string &word) {
+bool	Config::check_word(const std::string &word) {
 	if (word.empty())
 		return true;
 	if (word == "index" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return")
@@ -92,7 +103,15 @@ void	Config::parseErrorPage(std::map<int,std::string> &error_pages, std::vector<
 		++j;
 	std::string path = tokens[--j];
 	while (str_isdigit(tokens[i])) {
-		error_pages[std::atoi(tokens[i].c_str())] = path;
+		try
+		{
+			error_pages[std::atoi(tokens[i].c_str())] = path;
+		}
+		catch(const std::exception& e)
+		{
+			throw std::invalid_argument("error pages atoi error!");
+		}
+		
 		i++;
 	}
 }
@@ -111,10 +130,14 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 		if ( tokens[i] == "root" )
 			loc.root = tokens[++i];
 		else if ( tokens[i] == "autoindex" ) {
+			if (tokens[++i].compare("on") == 0 || tokens[++i].compare("offs") == 0){
 			if (tokens[++i]== "on")
 				loc.autoindex = 1;
 			else if (tokens[++i]== "off")
 				loc.autoindex = 0;
+			}
+			else
+				throw std::invalid_argument("autoindex error!");
 		}
 		else if (tokens[i] == "cgi_ext") {
 			loc.cgi_ext = tokens[++i];
