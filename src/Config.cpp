@@ -1,6 +1,12 @@
 #include "../inc/Config.hpp"
 
 Config::Config(const std::string &path) :_path(path) {
+	// for(int i=0; i<servers.size(); i++) {
+	// 	for(int j=0; j<servers[i].locations.size(); j++) {
+	// 		servers[i].locations[j].autoindex = 0;
+	// 		servers[i].locations[j].redirect_cd = 0;
+	// 	}
+	// }
     this->parse();
 }
 
@@ -118,6 +124,8 @@ void	Config::parseErrorPage(std::map<int,std::string> &error_pages, std::vector<
 
 void	Config::parseLocation(std::vector<Location> &locations, const std::vector<std::string> &tokens, size_t &i) {
 	Location	loc;
+	loc.autoindex = 0;
+	loc.redirect_cd = 0;
 	loc.path = tokens[++i];
 	//what do you mean? if for work, first if doesnt always work :))))
 	for (; i<tokens.size()-1 && (tokens[i] != "location" || tokens[i] != "server");) {
@@ -134,8 +142,6 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 			if (str.compare("on") == 0 || str.compare("off") == 0){
 			if (str== "on")
 				loc.autoindex = 1;
-			else if (str== "off")
-				loc.autoindex = 0;
 			}
 			else
 				throw std::invalid_argument("autoindex error!");
