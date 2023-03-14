@@ -1,51 +1,38 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Assets Directory Listing</title>
-  </head>
-  <body>
-    <h1>Assets Directory Listing</h1>
-    <ul id="file-list"></ul>
-
-    <script>
-      // Get a reference to the file list element
-      const fileList = document.getElementById("file-list");
-
-      // Define the assets directory path
-      const directoryPath = "assets/";
-
-      // Make an AJAX request to get the directory contents
-      const xhr = new XMLHttpRequest();
-      xhr.open("GET", directoryPath);
-      xhr.onload = function() {
-        // Parse the directory listing from the response
-        const parser = new DOMParser();
-        const html = parser.parseFromString(xhr.responseText, "text/html");
-        const links = html.querySelectorAll("a");
-
-        // Iterate over the links and add them to the file list
-        for (let i = 0; i < links.length; i++) {
-          const link = links[i];
-          const fileName = link.textContent;
-          const isDirectory = link.href.endsWith("/");
-
-          // Skip the current directory and parent directory links
-          if (fileName === "." || fileName === "..") {
-            continue;
-          }
-
-          // Create a new list item for the file or directory
-          const listItem = document.createElement("li");
-          if (isDirectory) {
-            listItem.textContent = "[DIR] " + fileName;
-          } else {
-            listItem.textContent = fileName;
-          }
-          fileList.appendChild(listItem);
+<!-- HTML file that allows a user to select a file from their
+	local system and upload it to a server using XMLHttpRequest (XHR). -->
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>File Upload</title>
+      <script>
+        function uploadFile() {
+          // Get the file input field and retrieve the first file from the input
+          var fileInput = document.getElementById("fileInput");
+          var file = fileInput.files[0];
+          // Create a new FormData object
+          var formData = new FormData();
+          // Add the file to the FormData object, using the "file" field name
+          formData.append("file", file);
+          // Create a new XMLHttpRequest object
+          var xhr = new XMLHttpRequest();
+          // Initialize the XHR request with the HTTP POST method and the URL of the server-side script
+          xhr.open("POST", "upload.cgi");
+          xhr.onreadystatechange = function() {
+            // Check if the operation is complete (readyState=4) and the server successfully processed the request (status=200)
+            if (xhr.readyState === 4 && xhr.status === 200) {
+              // If successful, display an alert message with the response text
+              alert(xhr.responseText);
+            }
+          };
+          // Send the FormData object to the server
+          xhr.send(formData);
         }
-      };
-      xhr.send();
-    </script>
-  </body>
-</html>
+      </script>
+    </head>
+    <body>
+      <!-- Create a file input field with an ID of "fileInput" -->
+      <input type="file" id="fileInput">
+      <!-- Create a button that calls the uploadFile function when clicked -->
+      <button onclick="uploadFile()">Upload File</button>
+    </body>
+  </html>
