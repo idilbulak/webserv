@@ -23,6 +23,7 @@ class Response {
 		std::string		postRes();
 		std::string		delRes();
 		std::string		cgiRes();
+		void 			extractCgiRes();
 		std::string		res();
 		std::string		read_html_file(const std::string& fileName);
 		std::string		statuscode(int cd);
@@ -42,6 +43,7 @@ class Response {
     	std::string					_body;
     	std::string					_filename;
     	int							_code;
+    	int							_contentLength;
     	std::string					_cgiRes;
 		// Response        _res;
 		// std::map<std::string, std::string> _env;

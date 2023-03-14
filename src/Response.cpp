@@ -12,6 +12,7 @@ std::string	Response::generate() {
 	// if (findServer(_req).port.empty())
     //     return(errRes(500));
 	if(!findLocation(_req.getUri(), &_loc, findServer(_req)))
+		// std::cout << _req.getUri()<< std::endl;
         return(codeRes(404));
 	if(!validMethod(_loc, _req.getMethod()))
         return(codeRes(405));
@@ -41,16 +42,17 @@ std::string Response::chooseMethod() {
 }
 
 std::string Response::getRes() {
-    _version = "HTTP/1.1";
+	if(_version.empty())
+ 	   _version = "HTTP/1.1";
 	_code = 200;
-	_type = "Content-Type: text/html; charset=UTF-8";
+	// _type = "Content-Type: text/html; charset=UTF-8";
 	_filename = _indxFile;
     return res();
 }
 
 std::string Response::postRes() {
 	// upload file
-	// std::cout << _loc.upload_dir << std::endl;
+	std::cout << _loc.upload_dir << std::endl;
 	if (_loc.upload_dir.empty())
 		return(codeRes(503));
 	if (_req.getBody().empty())
@@ -63,18 +65,31 @@ std::string Response::postRes() {
 			return(codeRes(500));
 		}
 		std::string path = _loc.upload_dir + "/" + _req.getCntFileName();
-		// std::cout << path << "this is path" << std::endl;
 		std::ofstream outfile(path);
     	if (outfile.is_open()) {
         outfile << _req.getContent();
         outfile.close();
-        std::cout << "File created successfully.\n";
+        std::cout << "File created successfully.\n" << _indxFile;
+		if(_indxFile.empty() == 0) {
+			_version = "HTTP/1.1";
+			_code = 200;
+			_type = "Content-Type: text/html; charset=UTF-8";
+			_filename = _indxFile;
+			return res();
+		}
 		return(codeRes(201));
 		} 
 	}
 	else {
 		std::cout << "Failed to create file.\n";
 		return(codeRes(415));
+	}
+	if(_indxFile.empty() == 0) {
+		_version = "HTTP/1.1";
+		_code = 200;
+		_type = "Content-Type: text/html; charset=UTF-8";
+		_filename = _indxFile;
+		return res();
 	}
 	return(codeRes(200));
 }
@@ -96,35 +111,58 @@ std::string Response::delRes() {
     return codeRes(204);
 }
 
+void Response::extractCgiRes()
+{
+	size_t versionPos = _cgiRes.find("HTTP/");
+    if (versionPos != std::string::npos)
+    {
+        size_t versionEndPos = _cgiRes.find(" ", versionPos);
+        if (versionEndPos != std::string::npos)
+            _version = _cgiRes.substr(versionPos, versionEndPos - versionPos);
+    }
+	else
+		_version = "HTTP/1.1";
+    size_t typePos = _cgiRes.find("Content-type: ");
+	std::cout <<typePos <<std::endl;
+    if (typePos != std::string::npos)
+    {
+        size_t typeEndPos = _cgiRes.find("\r\n", typePos);
+        if (typeEndPos != std::string::npos)
+            _type = _cgiRes.substr(typePos + 14, typeEndPos - typePos - 14);
+    }
+	else
+		_type = "text/html";
+    size_t bodyPos = _cgiRes.find("\r\n\r\n");
+    if (bodyPos != std::string::npos)
+        _body = _cgiRes.substr(bodyPos + 4);
+	size_t lengthPos = _cgiRes.find("Content-length: ");
+    if (lengthPos != std::string::npos)
+    {
+        size_t lengthEndPos = _cgiRes.find("\r\n", lengthPos);
+        if (lengthEndPos != std::string::npos)
+        {
+            std::string length_str = _cgiRes.substr(lengthPos + 16, lengthEndPos - lengthPos - 16);
+            _contentLength = atoi(length_str.c_str());
+        }
+    }
+	else
+		_contentLength = _body.size();
+}
+
+
 std::string Response::cgiRes() {
 	_cgiRes = Cgi(_indxFile, _req).execute();
-	// Find the index of the empty line
-	size_t pos = _cgiRes.find("\r\n\r\n");
-	// If the empty line was found, extract the substring that follows it
-	if (pos != std::string::npos)
-	{
-		_body = _cgiRes.substr(pos + 4);
-		// Find the "Content-type" header and extract the value
-		size_t typePos = _cgiRes.find("Content-type:");
-		if (typePos != std::string::npos)
-		{
-			size_t endPos = _cgiRes.find("\r\n", typePos);
-			_type = _cgiRes.substr(typePos + 14, endPos - (typePos + 14));
-		}
-		// Find the "Status" header and extract the value
-		size_t codePos = _cgiRes.find("Status: ");
-		if (codePos == 0)
-			_code = 201; ///fix this
-		else if (codePos != std::string::npos)
-		{
-			size_t endPos = _cgiRes.find("\r\n", codePos);
-			_type = _cgiRes.substr(codePos + 8, endPos - (codePos + 8));
-		}
-	}
+	extractCgiRes();
+	return(chooseMethod());
+	std::cout << "cgires:" << _cgiRes << std::endl;
+	std::cout << "body: " << _body << std::endl;
+	std::cout << "type: " << _type << std::endl;
+	std::cout << "version: " << _version << std::endl;
+	std::cout << "length: " << _contentLength << std::endl;
 	//if cgi status is not 200 return error
 	//then check methods and send to there...
-	_version = "HTTP/1.1 ";
-	return res();
+	// _version = "HTTP/1.1 ";
+	// return res();
 }
 
 //making a map for status codes

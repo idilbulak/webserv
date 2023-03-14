@@ -27,6 +27,7 @@ run: $(NAME)
 clean:
 	@rm -rf $(OBJDIR)
 	@rm -rf {1..5}$(ERR)
+	@echo 0 > assets/cgi-bin/count.txt
 # @rm -rf $(UPLOADDIR)
 fclean: clean
 	@rm -f $(NAME)

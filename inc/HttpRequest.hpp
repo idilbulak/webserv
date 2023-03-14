@@ -31,12 +31,15 @@ class HttpRequest {
 		std::string getCntName();
 		std::string getCntFileName();
 		std::string getFileToDelete();
+		std::string getQueryStr();
+		std::string getVersion();
 
 		
 		std::string findBody(std::string buff);
+		void		findUri(std::string str);
+		void		findFileToDelete();
 		void parseBody();
 		std::string find(const std::string& buff, std::string lookfor, std::string end);
-		void parseDeleteUri(const std::string& str);
 		std::string getContentBetweenBoundaries(std::string &str, std::string &boundary);
 		std::vector<std::string> split_crlf(std::string str);
 		std::vector<std::string> split(std::string str, std::string delimiter);
@@ -48,12 +51,14 @@ class HttpRequest {
 		std::string _uri;
 		std::string _version;
 		std::string _type;
+		std::string	_queryStr;
 		std::string _boundry;
 		std::string _body;
 		std::string _content;
 		std::string _cntDisposition;
 		std::string _cntType;
 		std::string _cntName;
+		std::string _cntLength;
 		std::string _cntFileName;
 		std::string _fileToDelete;
 		// VirtualServer   _server;
