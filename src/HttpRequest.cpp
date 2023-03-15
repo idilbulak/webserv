@@ -5,15 +5,13 @@ HttpRequest::HttpRequest(std::string buff) {
 		this->_type = find(buff, "Content-Type:", ";");
 		// 	this->_boundry = find(buff, "boundary=", "\n");
 		// 	// this->_content = getContentBetweenBoundaries(_body, _boundry);
-		std::cout << _type << _type.compare(" multipart/form-data") << "multipart/form-data" << std::endl;
 		if (_type.compare(" multipart/form-data") == 0)
 			parseBody();
         std::vector<std::string> splitBuff = split_crlf(buff);
         this->_method = split(splitBuff[0], " ")[0];
-		if (_method.compare("DELETE"))
-    	    this->_uri = split(splitBuff[0], " ")[1];
-		else
-			parseDeleteUri(split(splitBuff[0], " ")[1]);
+        findUri(split(splitBuff[0], " ")[1]);
+		if (_method.compare("DELETE") == 0)
+    	    findFileToDelete();
         this->_host= split(split(splitBuff[1], " ")[1], ":")[0]; //burda sikinti var
         std::vector<std::string> findPort = split(splitBuff[1], ":");
         if (findPort.size() == 3)
@@ -21,7 +19,7 @@ HttpRequest::HttpRequest(std::string buff) {
         else
             this->_port = "80";
         // std::cout << "HttpRequest:\nmethod:\t" << this->_method <<  "\nhost:\t" << _host << std::endl; 
-		// std::cout << "port:\t" << _port << "\nurl:\t" << _uri << "\nbody:\t" << _body << std::endl;
+		// std::cout << "port:\t" << _port << "\nurl:\t" << _uri << "\nbody:\t" << _queryStr << std::endl;
 		// std::cout << "type:\t" << _type << "\nboundry:\t" << _boundry << "\ncontent:\t" << _content << std::endl;
 }
 
@@ -138,22 +136,24 @@ std::string HttpRequest::find(const std::string& buff, std::string lookfor, std:
     return contentType;
 }
 
-void HttpRequest::parseDeleteUri(const std::string& str) {
-  // Find the position of the '?' character in the input string
-  std::string::size_type pos = str.find('?');
-  // Extract the URI from the input string
-  if (pos != std::string::npos) {
-    _uri = str.substr(0, pos);
-  }
-  // Extract the file name to delete from the input string
-  if (pos != std::string::npos && pos < str.size() - 1) {
-    std::string query = str.substr(pos + 1);
-    std::string::size_type pos2 = query.find('=');
-    if (pos2 != std::string::npos) {
-      _fileToDelete = query.substr(pos2 + 1);
-    }
-  }
+// "/search.cgi?q=python&category=tutorials&sort=date"
+void HttpRequest::findUri(std::string str) {
+    std::size_t queryPos = str.find('?');
+    _queryStr = str.substr(queryPos + 1);
+    _uri = str.substr(0, queryPos);
+    // std::cout << "Script name: " << reqUri << '\n';
+    // std::cout << "Query string: " << queryString << '\n';
 }
+
+void HttpRequest::findFileToDelete() {
+    std::size_t pos = _queryStr.find('=');
+    if (pos == std::string::npos) {
+        // If there is no equal sign, return an empty string
+        _fileToDelete =  "";
+    }
+    // Extract the substring that comes after the equal sign
+    _fileToDelete = _queryStr.substr(pos + 1);
+  }
 
 std::string HttpRequest::getContentBetweenBoundaries(std::string &input, std::string &boundary) {
     std::string content;
@@ -183,4 +183,6 @@ std::string HttpRequest::getCntType() {return _cntType;}
 std::string HttpRequest::getCntName() {return _cntName;}
 std::string HttpRequest::getCntFileName() {return _cntFileName;}
 std::string HttpRequest::getFileToDelete() {return _fileToDelete;}
+std::string HttpRequest::getQueryStr() {return _queryStr;}
+std::string HttpRequest::getVersion() {return _version;}
 

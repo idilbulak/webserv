@@ -3,7 +3,7 @@
 import cgi
 
 # specify that we're returning HTML content
-print("Content-Type: text/html")
+print("Content-type: text/html")
 # print a blank line to indicate the end of the header
 print("\r\n\r\n")
 # print the HTML content

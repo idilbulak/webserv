@@ -1,40 +1,29 @@
 #!/usr/bin/python3
 
+import cgi
+import cgitb
 import os
 
-# Set the content type
-print("Content-type: text/html\r\n")
+cgitb.enable()
 
-# Get the query string
-query_string = os.environ.get("QUERY_STRING", "")
+print("Content-type: text/html")
+print("\r\n\r\n")
 
-# Parse the query string
-params = {}
-for param in query_string.split("&"):
-    key, value = param.split("=")
-    params[key] = value
-
-# Generate the HTML response
-html = """
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Hello from backend.cgi</title>
-</head>
-<body>
-    <h1>Hello from backend.cgi</h1>
-    <p>The following parameters were passed in the query string:</p>
-    <ul>
-"""
-
-for key, value in params.items():
-    html += f"<li>{key}={value}</li>"
-
-html += """
-    </ul>
-</body>
-</html>
-"""
-
-print(html)
+# Check if the form has been submitted
+form = cgi.FieldStorage()
+if "file" not in form:
+    print("<h1>No file was uploaded.</h1>")
+else:
+    # Get the file data from the form
+    fileitem = form["file"]
+    
+    # Check if the file was uploaded
+    if fileitem.filename:
+        # Create a new file in the uploads directory
+        filepath = os.path.join("uploadDir", os.path.basename(fileitem.filename))
+        with open(filepath, "wb") as f:
+            # Write the file data to the new file
+            f.write(fileitem.file.read())
+        print("<h1>File uploaded successfully.</h1>")
+    else:
+        print("<h1>No file was uploaded.</h1>")

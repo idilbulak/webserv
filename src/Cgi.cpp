@@ -39,12 +39,23 @@ std::string itos(int num) {
 void    Cgi::envCgi()
 {
     // BURAYI EKLEMEYIIII UNUTMAAAAAAAAAAAAA
-    _env.insert(std::make_pair("SERVER_PROTOCOL", "HTTP/1.1"));
+    _env.insert(std::make_pair("SERVER_SOFTWARE", _req.getVersion()));
+    _env.insert(std::make_pair("SERVER_NAME", ""));
+    _env.insert(std::make_pair("CONTENT_TYPE", _req.getCntType()));
+    // _env.insert(std::make_pair("CONTENT_LENGTH", itos(_req.getContentLength)));
+    _env.insert(std::make_pair("HTTP_COOKIE", ""));
+    _env.insert(std::make_pair("HTTP_USER_AGENT", ""));
+    _env.insert(std::make_pair("PATH_INFO", _indxFile));
+    _env.insert(std::make_pair("QUERY_STRING", _req.getQueryStr()));
+    _env.insert(std::make_pair("REMOTE_ADDR", ""));
+    _env.insert(std::make_pair("REMOTE_HOST", ""));
+    _env.insert(std::make_pair("REQUEST_METHOD", ""));
+    _env.insert(std::make_pair("REQUEST_METHOD", ""));
+    _env.insert(std::make_pair("SCRIPT_FILENAME", _indxFile));
+    _env.insert(std::make_pair("SCRIPT_NAME", _indxFile));
+
     // _env.insert(std::make_pair("PATH_INFO", _req.uri));
-    // _env.insert(std::make_pair("SCRIPT_FILENAME", _indxFile));
-    // _env.insert(std::make_pair("QUERY_STRING", _req.uri));
     // _env.insert(std::make_pair("BODY", _req.body));
-    // _env.insert(std::make_pair("CONTENT_LENGTH", itos(_req.body.length())));
 }
 
 std::string Cgi::execute()
