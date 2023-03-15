@@ -1,4 +1,5 @@
 #include "../inc/Config.hpp"
+#include "../inc/CheckConfFile.hpp"
 
 Config::Config(const std::string &path) :_path(path) {
 	// for(int i=0; i<servers.size(); i++) {
@@ -7,6 +8,8 @@ Config::Config(const std::string &path) :_path(path) {
 	// 		servers[i].locations[j].redirect_cd = 0;
 	// 	}
 	// }
+
+	CheckConfFile confCheck(path);
     this->parse();
 }
 
