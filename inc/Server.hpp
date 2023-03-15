@@ -21,11 +21,10 @@ class Server {
 	private:
 		Config _cf;
 		int _kq;
-		std::vector<Socket> _listenSockets;
-		std::map<int, Socket> _clients;
-		static const int EVENTS_MAX = 1;
+		std::map<int, Socket> _listenSockets;
+		std::map<int, std::string> _connectionSockets;
 		struct kevent _changeList;
-		struct kevent _eventList[EVENTS_MAX];
+		struct kevent _eventList;
 
 		void	setup();
 		bool	isListenSockfd(struct kevent& event);

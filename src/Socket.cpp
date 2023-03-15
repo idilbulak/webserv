@@ -40,35 +40,48 @@ void Socket::bind() {
 }
 
 void Socket::listen() {
+
 	if (::listen(_fd, BACKLOG) < 0) {
 		std::cout << "socket listen failed: " << std::string(strerror(errno)) << std::endl;
 		exit(1);
 	}
 }
 
-int Socket::accept(struct kevent& event) {
+int Socket::accept() {
 
-	_addrlen = sizeof(_addr);
-	_fd = ::accept(event.ident, (struct sockaddr *)&_addr, (socklen_t *)&_addrlen); //_addrlen not initiated??
-	if (_fd < 0)
-		ERROR("accepting new client connection");
-	else
-		fcntl(_fd, F_SETFL, O_NONBLOCK);
-	std::cout << RED << getTime() << RESET << *this << "\tConnecting... " << std::endl;
-	return _fd;
-}
-
-int Socket::recv(struct kevent& event) {
-
-	int num_bytes = ::recv(event.ident, _buffer, sizeof(_buffer), 0);
-	if (num_bytes == -1) {
-		ERROR("recv");
-		close(event.ident);
+	int connectionSocket = ::accept(_fd, NULL, NULL);
+	if (connectionSocket < 0) {
+		ERROR("socket accept failed");
 		return -1;
 	}
-	_httpRequest.append(_buffer, num_bytes);
-	return 0;
+	fcntl(connectionSocket, F_SETFL, O_NONBLOCK);
+	std::cout << RED << getTime() << RESET << *this << "\tConnecting... " << std::endl;
+	return connectionSocket;
 }
+
+// int Socket::accept(struct kevent& event) {
+
+// 	_addrlen = sizeof(_addr);
+// 	_fd = ::accept(event.ident, (struct sockaddr *)&_addr, (socklen_t *)&_addrlen); //_addrlen not initiated??
+// 	if (_fd < 0)
+// 		ERROR("accepting new client connection");
+// 	else
+// 		fcntl(_fd, F_SETFL, O_NONBLOCK);
+// 	std::cout << RED << getTime() << RESET << *this << "\tConnecting... " << std::endl;
+// 	return _fd;
+// }
+
+// int Socket::recv(struct kevent& event) {
+
+// 	int num_bytes = ::recv(event.ident, _buffer, sizeof(_buffer), 0);
+// 	if (num_bytes == -1) {
+// 		ERROR("recv");
+// 		close(event.ident);
+// 		return -1;
+// 	}
+// 	_httpRequest.append(_buffer, num_bytes);
+// 	return 0;
+// }
 
 std::ostream& operator<<(std::ostream &os, Socket& obj) {
 
