@@ -51,12 +51,12 @@ void Server::run() {
 			// for (int i = 0; i < new_events; i++) {
 				if (isListenSockfd(_eventList))
 					onClientConnect(_eventList);
-				else if (_eventList.flags & EV_EOF)
+				else if (_eventList.flags == EV_EOF)
 					onEOF(_eventList);
-				else if (_eventList.flags & EVFILT_WRITE)
-					onWrite(_eventList);
-				else if (_eventList.flags & EVFILT_READ)
+				else if (_eventList.filter == EVFILT_READ)
 					onRead(_eventList);
+				else if (_eventList.filter == EVFILT_WRITE)
+					onWrite(_eventList);
 			// }
 		}
 	}
@@ -88,25 +88,6 @@ void Server::onClientConnect(struct kevent& event) {
 	if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
 		ERROR("adding EVFILT_READ to kqueue");
 	}
-
-	// EV_SET(&_changeList, connectionSocket, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
-	// if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
-	// 	ERROR("adding EVFILT_READ to kqueue");
-	// }
-
-	// // create newClient socket and accept connection
-	// Socket newClient;
-	// if (newClient.accept(event) < 0)
-	// 	return;
-	
-	// // add newCLient to map
-	// _clients[newClient.getfd()] = newClient;
-
-	// // add socket to kqueue ready for reading
-	// EV_SET(&_changeList, newClient.getfd(), EVFILT_READ, EV_ADD, 0, 0, NULL);
-	// if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
-	// 	ERROR("adding EVFILT_READ to kqueue");
-	// }
 }
 
 void Server::onEOF(struct kevent& event) {
@@ -123,17 +104,10 @@ void Server::onEOF(struct kevent& event) {
 
 	// close connectionSocket file descriptor
 	::close(event.ident);
-
-	// // remove client from map
-	// _clients.erase(event.ident);
 }
 
 void Server::onRead(struct kevent& event) {
 		
-	// remove event from kqueue
-	EV_SET(&_changeList, event.ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-	if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0)
-		ERROR("removing EVFILT_READ from kqueue");
 
 	std::vector<char> buffer(4096);
 	// char buffer[4096];
@@ -151,43 +125,28 @@ void Server::onRead(struct kevent& event) {
 	// write request HTTP to terminal
 	std::cout << RED << getTime() << RESET << event << "\tReceiving... \n\n" << YELLOW << _connectionSockets[event.ident] << RESET  << std::endl;
 
-	// // retrieve socket from map by filedescriptor
-	// _clients[event.ident].recv(event);
-
-	// // write request HTTP to terminal
-	// std::cout << RED << getTime() << RESET << event << "\tReceiving... \n\n" << YELLOW << _clients[event.ident].getHttpRequest() << RESET  << std::endl;
-
-
-	// // add socket to kqueue ready for writing
-	// // if (_clients[event.ident].isComplete())
-	// EV_SET(&_changeList, event.ident, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
-	// if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0) {
-	// 	ERROR("adding EVFILT_WRITE to kqueue");
-	// }
-
-	// // create response HTTP header /w message
-	// std::string httpRequest = _connectionSockets[event.ident];
-	// std::string res = Response(httpRequest, _cf).generate();
-
-	// create response HTTP header /w message
-	std::string httpRequest = _connectionSockets[event.ident];
-	std::string res = Response(httpRequest, _cf).generate();
-
-	// send response message
-	send(event.ident, res.c_str(), res.size(), 0);
+	// add socket to kqueue ready for writing
+	// if (_clients[event.ident].isComplete())
+	EV_SET(&_changeList, event.ident, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
+	if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0) {
+		ERROR("adding EVFILT_WRITE to kqueue");
+	}
 }
 
 void Server::onWrite(struct kevent& event) {
 
-	std::cout << "HELLOOOOA!!!!!!!!!!!!!!!!!!" << std::endl;
-	// // send response message
-	// send(event.ident, res.c_str(), res.size(), 0);
 	// create response HTTP header /w message
+	// sleep(5);
 	std::string httpRequest = _connectionSockets[event.ident];
 	std::string res = Response(httpRequest, _cf).generate();
 
 	// send response message
-	send(event.ident, res.c_str(), res.size(), 0);
+	std::cout << res << std::endl;
+	int num_bytes = send(event.ident, res.c_str(), res.size(), 0);
+	if (num_bytes == res.size()) {
+		close(event.ident);
+		_connectionSockets[event.ident].erase();
+	}
 
 }
 
