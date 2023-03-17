@@ -22,7 +22,9 @@ class Server {
 		Config _cf;
 		int _kq;
 		std::map<int, Socket> _listenSockets;
-		std::map<int, std::string> _connectionSockets;
+		std::map<int, std::string> _request;
+		std::map<int, bool> _state;
+		// std::map<int, bool> _isChunked;
 		struct kevent _changeList;
 		struct kevent _eventList;
 
@@ -32,6 +34,7 @@ class Server {
 		void	onEOF(struct kevent& event);
 		void	onRead(struct kevent& event);
 		void	onWrite(struct kevent& event);
+		bool 	isComplete(struct kevent& event);
 
 };
 
