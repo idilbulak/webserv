@@ -27,7 +27,7 @@ std::vector<std::string> CheckConfFile::split(std::string str, std::string delim
 
 void CheckConfFile::checkArgument(const std::string line){
     std::vector<std::string> parse = split(line, " ");
-    std::cout << "burda" << parse.size() << std::endl;
+    // std::cout << "burda" << parse.size() << line << std::endl;
     for (int i = 0; parse.size() > i; i++)
         parse[i] = deleteSpace(parse[i]);
 
@@ -144,7 +144,7 @@ bool CheckConfFile::checkServerKey(std::string word)
     }
     else if (getLocationBrackets())
         return checkLocationKey(word);
-    else if (word == "root" || word == "server" || word == "{" || word == "}" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" )
+    else if (word == "ext" || word == "root" || word == "server" || word == "{" || word == "}" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" )
         return true;
     return false;
 }

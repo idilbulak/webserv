@@ -34,6 +34,7 @@ struct VirtualServer {
 	std::string					max_body_size;
 	std::map<int,std::string>   error_pages;
 	std::vector<Location>		locations;
+	std::vector<std::string>	ext;
 };
 
 class Config {
@@ -51,7 +52,7 @@ class Config {
 		void parseErrorPage(std::map<int,std::string> &error_pages, std::vector<std::string> &tokens, size_t &i);
 		void parseLocation(std::vector<Location> &locations, const std::vector<std::string> &tokens, size_t &i);
 		bool	check_word(const std::string &word);
-
+		void parseExt(std::vector<std::string> &ext, std::vector<std::string> &tokens, size_t &i);
 
 		//check all data..
 

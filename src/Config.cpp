@@ -45,6 +45,16 @@ void	Config::parse() {
 	}
 }
 
+void Config::parseExt(std::vector<std::string> &ext, std::vector<std::string> &tokens, size_t &i){
+	std::vector<std::string> newExt;
+	for (int i = 0; tokens.size() > i; i++)
+	{
+		if(!check_word(tokens[i])){
+			newExt.push_back(tokens[i]);}
+	}
+	ext = newExt;
+}
+
 void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 	VirtualServer	server;
 	i++;
@@ -71,6 +81,9 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 			parseErrorPage(server.error_pages, tokens, i);
 			
 			}
+		else if (tokens[i] == "ext"){
+			parseExt(server.ext,tokens, i);
+		}
 		else if (tokens[i] == "location" ){
 			parseLocation(server.locations, tokens, i);
 			CheckLocation(server.locations);
@@ -92,7 +105,7 @@ void	Config::parseHostPort(std::string &host, std::string &port, std::string &to
 bool	Config::check_word(const std::string &word) {
 	if (word.empty())
 		return true;
-	if (word == "cgi_ext" || word == "index" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return" || word == "autoindex" || word == "upload_dir")
+	if (word == "ext" || word == "cgi_ext" || word == "index" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return" || word == "autoindex" || word == "upload_dir")
 		return true;
 	return false;
 }
@@ -181,6 +194,10 @@ void Config::display() {
         std::cout << "\tName: " << server.name << std::endl;
         std::cout << "\tRoot: " << server.root << std::endl;
         std::cout << "\tMax Body Size: " << server.max_body_size << std::endl;
+		// std::cout << "\ext: " << std::endl;	
+		// for (std::vector<std::string>::const_iterator ext = server.ext.begin(); ext != server.ext.end(); ++ext) {
+        //     std::cout << "\t\t\t" << *ext << std::endl;
+        // }
         std::cout << "\tError Pages: " << std::endl;
         for (std::map<int, std::string>::const_iterator it_err = server.error_pages.begin(); it_err != server.error_pages.end(); ++it_err) {
             std::cout << "\t\tCode: " << it_err->first << std::endl;
