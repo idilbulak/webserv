@@ -21,6 +21,8 @@ public:
     bool checkLocationKey(std::string word);
     void checkKey(const std::string path);
     std::vector<std::string> split(std::string str, std::string delimiter) ;
+    void checkArgument(const std::string line);
+    std::string deleteSpace(std::string word);
 
     //getter setter
     void setServerBrackets(bool isOpen);

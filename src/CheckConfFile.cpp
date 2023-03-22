@@ -25,6 +25,21 @@ std::vector<std::string> CheckConfFile::split(std::string str, std::string delim
     return words;
 }
 
+void CheckConfFile::checkArgument(const std::string line){
+    std::vector<std::string> parse = split(line, " ");
+    std::cout << "burda" << parse.size() << std::endl;
+    for (int i = 0; parse.size() > i; i++)
+        parse[i] = deleteSpace(parse[i]);
+
+    if (parse[0].compare("listen") == 0 || parse[0].compare("server_name") == 0 || parse[0].compare("root") == 0 || parse[0].compare("client_max_body_size") == 0 ||  parse[0].compare("autoindex") == 0 ){
+        if (parse.size() != 2)
+            throw std::invalid_argument(parse[0] + ": argument error");
+    }
+    if (parse[0].compare("return") == 0 || parse[0].compare("error_page") == 0){
+        if (parse.size() != 3)
+            throw std::invalid_argument(parse[0] + ": argument error");
+    }
+}
 
 void CheckConfFile::checkKey(const std::string path)
 {
@@ -41,6 +56,7 @@ void CheckConfFile::checkKey(const std::string path)
             std::cout << "{"<<split(line, " ")[0] << "}"<< std::endl;
             throw std::invalid_argument("invalid Key");
         }
+        checkArgument(line);
     }
 
 }
@@ -73,12 +89,10 @@ CheckConfFile::CheckConfFile(const std::string path) : serverBrackets(false), lo
 }
 
 
-
-bool CheckConfFile::checkLocationKey(std::string word)
+std::string CheckConfFile::deleteSpace(std::string word)
 {
      int count = 0;
-    if (!getLocationBrackets())
-        return false;
+
     for (int i = 0; word[i]; i++)
     {
         if (word[i] == ' ' || word[i] == '\t')
@@ -87,8 +101,18 @@ bool CheckConfFile::checkLocationKey(std::string word)
             break;
     }
     if (word.size() == count)
-        return true;
+        return "";
     word.erase(0, count);
+    return word;
+}
+
+bool CheckConfFile::checkLocationKey(std::string word)
+{
+    if (!getLocationBrackets())
+        return false;
+    word = deleteSpace(word);
+    if(word.empty())
+        return true;
     if (word == "root" || word == "allow" || word == "autoindex" || word == "index" || word == "upload_dir" || word == "cgi_ext"  || word == "return")
         return true;
     return false;
@@ -99,18 +123,9 @@ bool CheckConfFile::checkLocationKey(std::string word)
 //server key have "root"???????? @idil
 bool CheckConfFile::checkServerKey(std::string word)
 {
-    int count = 0;
-    
-    for (int i = 0; word[i]; i++)
-    {
-        if (word[i] == ' ' || word[i] == '\t')
-            count++;
-        else
-            break;
-    }
-    if (word.size() == count)
+    word = deleteSpace(word);
+    if (word.empty())
         return true;
-    word.erase(0, count);
     if (word == "{")
         return true;
     else if(word == "}")
