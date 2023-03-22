@@ -95,9 +95,10 @@ std::string Cgi::execute()
 
         // Execute the CGI program with environment variables
         char * const * _null = NULL;
-        std::cout << _indxFile << std::endl;
+        std::cout << _indxFile.c_str() << std::endl;
         execve(_indxFile.c_str(), _null, env);
         // Error: failed to execute the CGI program
+        std::cout <<  std::strerror(errno) << std::endl;
         std::cout << "Status: 502\r\n\r\n" << std::endl;
         exit(1);
     }
