@@ -17,8 +17,8 @@ std::string	Response::generate() {
 	if(!validMethod(_loc, _req.getMethod()))
         return(codeRes(405));
 	// return?
-	if(!fileExists(_loc.root.c_str()))
-        return(codeRes(415));
+	// if(!fileExists(_loc.root.c_str()))
+    //     return(codeRes(415));
 	setIndxFile();
 	std::cout << "index file path:\t" << _indxFile << std::endl;
 	if(_indxFile.empty())
@@ -253,8 +253,11 @@ VirtualServer Response::findServer(HttpRequest req) {
 
 bool Response::findLocation(std::string reqUri, Location* loc, VirtualServer server) {
     for (int i = 0; i < server.locations.size(); i++) {
+		// std::string	root = server.root;
         if (server.locations[i].path.compare(reqUri) == 0) {
             *loc = server.locations[i];
+			if (loc->root.empty())
+				loc->root = server.root;
             return true;
         }
     }
@@ -294,10 +297,13 @@ void Response::setIndxFile() {
 
 bool Response::checkIndx() {
     for (int i = 0; i < _loc.index.size(); i++) {
+		std::cout << _loc.root << std::endl;
         std::string filename = _loc.root + "/" + _loc.index[i];
-        if (fileExists(filename.c_str()))
+        if (fileExists(filename.c_str())) {
             _indxFile = filename;
+			std::cout << filename << std::endl;
             return true;
+		}
     }
     return false;
 }

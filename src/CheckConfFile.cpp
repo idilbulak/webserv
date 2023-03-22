@@ -89,7 +89,7 @@ bool CheckConfFile::checkLocationKey(std::string word)
     if (word.size() == count)
         return true;
     word.erase(0, count);
-    if (word == "allow" || word == "autoindex" || word == "index" || word == "upload_dir" || word == "cgi_ext"  || word == "return")
+    if (word == "root" || word == "allow" || word == "autoindex" || word == "index" || word == "upload_dir" || word == "cgi_ext"  || word == "return")
         return true;
     return false;
 }
