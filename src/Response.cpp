@@ -276,6 +276,11 @@ bool Response::fileExists(const char* filename) {
 void Response::setIndxFile() {
     if(checkIndx())
         _cgiOn = 0;
+    else if (fileExists(_loc.cgi_path.c_str())) {
+		std::cout << _loc.cgi_path << "bu path" << std::endl;
+        _indxFile = _loc.cgi_path;
+        _cgiOn = 1;
+    }
 	else if (_loc.autoindex) {
 		std::cout << _loc.autoindex << std::endl;
 		AutoIndex listing(_loc.root);
@@ -284,11 +289,6 @@ void Response::setIndxFile() {
 		_indxFile = _loc.root + "/listing.html";
 		_cgiOn = 0;
 	}
-    else if (fileExists(_loc.cgi_path.c_str())) {
-		std::cout << _loc.cgi_path << "bu path" << std::endl;
-        _indxFile = _loc.cgi_path;
-        _cgiOn = 1;
-    }
 	// else if (_loc.redirect_url)
 	// autoindex of check etmeti unutmaaaaaaaaaa!!!!!!!!!!
 	else
