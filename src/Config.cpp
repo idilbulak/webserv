@@ -92,7 +92,7 @@ void	Config::parseHostPort(std::string &host, std::string &port, std::string &to
 bool	Config::check_word(const std::string &word) {
 	if (word.empty())
 		return true;
-	if (word == "index" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return")
+	if (word == "cgi_ext" || word == "index" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return" || word == "autoindex" || word == "upload_dir")
 		return true;
 	return false;
 }
@@ -135,12 +135,12 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 		if (tokens[i] == "location" || tokens[i] == "server")
 			break;
 		if ( tokens[i] == "allow" ) {
-			for ( ++i; !check_word(tokens[i]); ++i)
-				loc.methods.push_back(tokens[i]);
+			for ( ++i; !check_word(tokens[i]); ++i){
+				loc.methods.push_back(tokens[i]);}
 		}
 		if ( tokens[i] == "root" )
 			loc.root = tokens[++i];
-		else if ( tokens[i] == "autoindex" ) {
+		if ( tokens[i] == "autoindex" ) {
 			std::string str = tokens[++i];
 			if (str.compare("on") == 0 || str.compare("off") == 0){
 			if (str== "on")
