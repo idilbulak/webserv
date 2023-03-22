@@ -64,6 +64,7 @@ void Config::CheckAllow(std::vector<std::string> methods){
     {
         if (!(methods[i].compare("GET") == 0 || methods[i].compare("POST") == 0 || methods[i].compare("DELETE") == 0))
         {
+            std::cout << methods[i] << std::endl;
             throw std::invalid_argument("Methods error");}
     }
 }
