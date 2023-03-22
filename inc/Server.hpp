@@ -23,8 +23,6 @@ class Server {
 		int _kq;
 		std::map<int, Socket> _listenSockets;
 		std::map<int, std::string> _request;
-		std::map<int, bool> _state;
-		// std::map<int, bool> _isChunked;
 		struct kevent _changeList;
 		struct kevent _eventList;
 

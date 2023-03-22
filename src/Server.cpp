@@ -79,6 +79,12 @@ void Server::onClientConnect(struct kevent& event) {
 	int connectionSocket = _listenSockets[event.ident].accept();
 	if (connectionSocket < 0)
 		return ;
+
+	struct sockaddr_in addr;
+	socklen_t addrlen = sizeof(addr);
+	getsockname(connectionSocket, (struct sockaddr *)&addr, &addrlen);
+	std::cout << "port: " << CYAN << ntohs(addr.sin_port) << RESET
+	<< " \tIP address: " << inet_ntoa(addr.sin_addr) << std::endl;
 	
 	// add new connection to kqueue for receiving
 	EV_SET(&_changeList, connectionSocket, EVFILT_READ, EV_ADD, 0, 0, NULL);
@@ -88,8 +94,6 @@ void Server::onClientConnect(struct kevent& event) {
 
 	// save http request received on new connection
 	_request.insert(std::make_pair(connectionSocket, ""));
-
-	_state.insert(std::make_pair(connectionSocket, true));
 }
 
 void Server::onRead(struct kevent& event) {
@@ -117,14 +121,10 @@ void Server::onRead(struct kevent& event) {
 		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0) {
 			ERROR("adding EVFILT_WRITE to kqueue");
 		}
-
-		_state[event.ident] = false;
 	}
 }
 
 void Server::onWrite(struct kevent& event) {
-
-	// if (_state[event.ident] != true) {
 
 	// create response HTTP header /w message
 	std::string httpRequest = _request[event.ident];
@@ -133,16 +133,12 @@ void Server::onWrite(struct kevent& event) {
 	// send response message
 	int num_bytes = send(event.ident, res.c_str(), res.size(), 0);
 	if (num_bytes == res.size()) {
-		close(event.ident);
+		// close(event.ident);
 		_request[event.ident].erase();
-		_state[event.ident] = true;
-		// EV_SET(&_changeList, event.ident, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-		// if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0)
-		// 	ERROR("removing event from kqueue");
+		EV_SET(&_changeList, event.ident, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0)
+			ERROR("removing event from kqueue");
 	}
-
-	// }
-
 }
 
 void Server::onEOF(struct kevent& event) {
@@ -166,6 +162,17 @@ std::ostream& operator<<(std::ostream &os, struct kevent& event) {
 	struct sockaddr_in addr;
 	socklen_t addrlen = sizeof(addr);
 	getsockname(event.ident, (struct sockaddr *)&addr, &addrlen);
+
+	os << "port: " << CYAN << ntohs(addr.sin_port) << RESET
+	<< " \tIP address: " << inet_ntoa(addr.sin_addr);
+	return os;
+}
+
+std::ostream& operator<<(std::ostream &os, int SocketFd) {
+
+	struct sockaddr_in addr;
+	socklen_t addrlen = sizeof(addr);
+	getsockname(SocketFd, (struct sockaddr *)&addr, &addrlen);
 
 	os << "port: " << CYAN << ntohs(addr.sin_port) << RESET
 	<< " \tIP address: " << inet_ntoa(addr.sin_addr);
