@@ -12,11 +12,13 @@
         // Initialize the XHR request with the HTTP DELETE method and the URL of the server-side script, with the filename as a parameter
         xhr.open("DELETE", "/delete?filename=" + file.name);
         xhr.onreadystatechange = function() {
-          // Check if the operation is complete (readyState=4) and the server successfully processed the request (status=200)
-          if (xhr.readyState === 4 && xhr.status === 200) {
-            // If successful, display an alert message with the response text
-            alert(xhr.responseText);
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+          if (xhr.status === 200) {
+            window.location.href = '/successdelete';
+          } else {
+            window.location.href = '/failure';
           }
+        }
         };
         // Send the DELETE request to the server
         xhr.send();
@@ -30,4 +32,3 @@
     <button onclick="deleteFile()">Delete File</button>
   </body>
 </html>
-

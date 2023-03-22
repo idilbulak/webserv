@@ -18,8 +18,11 @@
 
 class HttpRequest {
 	public:
+		HttpRequest();
 		HttpRequest(std::string buff);
 		~HttpRequest(void);
+
+		bool isComplete(std::string buff);
 		
 		std::string	getPort();
 		std::string	getUri();

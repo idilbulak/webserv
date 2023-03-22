@@ -51,12 +51,12 @@ void Server::run() {
 			// for (int i = 0; i < new_events; i++) {
 				if (isListenSockfd(_eventList))
 					onClientConnect(_eventList);
-				else if (_eventList.flags & EV_EOF)
+				else if (_eventList.flags == EV_EOF)
 					onEOF(_eventList);
-				else if (_eventList.flags & EVFILT_WRITE)
-					onWrite(_eventList);
-				else if (_eventList.flags & EVFILT_READ)
+				else if (_eventList.filter == EVFILT_READ)
 					onRead(_eventList);
+				else if (_eventList.filter == EVFILT_WRITE)
+					onWrite(_eventList);
 			// }
 		}
 	}
@@ -80,33 +80,69 @@ void Server::onClientConnect(struct kevent& event) {
 	if (connectionSocket < 0)
 		return ;
 	
-	// save new connection to map<socket, httpRequest>
-	_connectionSockets.insert(std::pair<int, std::string>(connectionSocket, ""));
-
 	// add new connection to kqueue for receiving
 	EV_SET(&_changeList, connectionSocket, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
 		ERROR("adding EVFILT_READ to kqueue");
 	}
 
-	// EV_SET(&_changeList, connectionSocket, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
-	// if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
-	// 	ERROR("adding EVFILT_READ to kqueue");
+	// save http request received on new connection
+	_request.insert(std::make_pair(connectionSocket, ""));
+
+	_state.insert(std::make_pair(connectionSocket, true));
+}
+
+void Server::onRead(struct kevent& event) {
+		
+	std::vector<char> buffer(4096);
+	// char buffer[4096];
+	int num_bytes = recv(event.ident, buffer.data(), buffer.size(), 0);
+	if (num_bytes == -1) {
+		ERROR("recv");
+		close(event.ident); // remove from kqueue and map still
+		return;
+	}
+	if (num_bytes == 0)
+		return ;
+	buffer.resize(num_bytes);
+	_request[event.ident].append(buffer.data(), buffer.size());
+
+	if (HttpRequest().isComplete(_request[event.ident])) {
+
+		// write request HTTP to terminal
+		std::cout << RED << getTime() << RESET << event << "\tReceiving... \n\n" << YELLOW << _request[event.ident] << RESET  << std::endl;
+		
+		// add socket to kqueue ready for writing
+		EV_SET(&_changeList, event.ident, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
+		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0) {
+			ERROR("adding EVFILT_WRITE to kqueue");
+		}
+
+		_state[event.ident] = false;
+	}
+}
+
+void Server::onWrite(struct kevent& event) {
+
+	// if (_state[event.ident] != true) {
+
+	// create response HTTP header /w message
+	std::string httpRequest = _request[event.ident];
+	std::string res = Response(httpRequest, _cf).generate();
+
+	// send response message
+	int num_bytes = send(event.ident, res.c_str(), res.size(), 0);
+	if (num_bytes == res.size()) {
+		close(event.ident);
+		_request[event.ident].erase();
+		_state[event.ident] = true;
+		// EV_SET(&_changeList, event.ident, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+		// if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0)
+		// 	ERROR("removing event from kqueue");
+	}
+
 	// }
 
-	// // create newClient socket and accept connection
-	// Socket newClient;
-	// if (newClient.accept(event) < 0)
-	// 	return;
-	
-	// // add newCLient to map
-	// _clients[newClient.getfd()] = newClient;
-
-	// // add socket to kqueue ready for reading
-	// EV_SET(&_changeList, newClient.getfd(), EVFILT_READ, EV_ADD, 0, 0, NULL);
-	// if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
-	// 	ERROR("adding EVFILT_READ to kqueue");
-	// }
 }
 
 void Server::onEOF(struct kevent& event) {
@@ -119,76 +155,10 @@ void Server::onEOF(struct kevent& event) {
 		ERROR("removing event from kqueue");
 
 	// remove connectionSocket from map
-	_connectionSockets.erase(event.ident);
+	_request.erase(event.ident);
 
 	// close connectionSocket file descriptor
 	::close(event.ident);
-
-	// // remove client from map
-	// _clients.erase(event.ident);
-}
-
-void Server::onRead(struct kevent& event) {
-		
-	// remove event from kqueue
-	EV_SET(&_changeList, event.ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-	if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0)
-		ERROR("removing EVFILT_READ from kqueue");
-
-	std::vector<char> buffer(4096);
-	// char buffer[4096];
-	int num_bytes = recv(event.ident, buffer.data(), buffer.size(), 0);
-	if (num_bytes == -1) {
-		ERROR("recv");
-		close(event.ident); // remove from kqueue and map still
-		return;
-	}
-	if (num_bytes == 0)
-		return ;
-	buffer.resize(num_bytes);
-	_connectionSockets[event.ident].append(buffer.data(), buffer.size());
-
-	// write request HTTP to terminal
-	std::cout << RED << getTime() << RESET << event << "\tReceiving... \n\n" << YELLOW << _connectionSockets[event.ident] << RESET  << std::endl;
-
-	// // retrieve socket from map by filedescriptor
-	// _clients[event.ident].recv(event);
-
-	// // write request HTTP to terminal
-	// std::cout << RED << getTime() << RESET << event << "\tReceiving... \n\n" << YELLOW << _clients[event.ident].getHttpRequest() << RESET  << std::endl;
-
-
-	// // add socket to kqueue ready for writing
-	// // if (_clients[event.ident].isComplete())
-	// EV_SET(&_changeList, event.ident, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
-	// if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0) {
-	// 	ERROR("adding EVFILT_WRITE to kqueue");
-	// }
-
-	// // create response HTTP header /w message
-	// std::string httpRequest = _connectionSockets[event.ident];
-	// std::string res = Response(httpRequest, _cf).generate();
-
-	// create response HTTP header /w message
-	std::string httpRequest = _connectionSockets[event.ident];
-	std::string res = Response(httpRequest, _cf).generate();
-
-	// send response message
-	send(event.ident, res.c_str(), res.size(), 0);
-}
-
-void Server::onWrite(struct kevent& event) {
-
-	std::cout << "HELLOOOOA!!!!!!!!!!!!!!!!!!" << std::endl;
-	// // send response message
-	// send(event.ident, res.c_str(), res.size(), 0);
-	// create response HTTP header /w message
-	std::string httpRequest = _connectionSockets[event.ident];
-	std::string res = Response(httpRequest, _cf).generate();
-
-	// send response message
-	send(event.ident, res.c_str(), res.size(), 0);
-
 }
 
 std::ostream& operator<<(std::ostream &os, struct kevent& event) {
