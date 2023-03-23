@@ -10,6 +10,12 @@
 // #include <sys/event.h>
 // #include "fcntl.h"
 
+struct SocketData {
+
+	std::string request;
+	std::string response;
+};
+
 class Server {
 
 	public:
@@ -22,12 +28,18 @@ class Server {
 		Config _cf;
 		int _kq;
 		std::map<int, Socket> _listenSockets;
-		std::map<int, std::string> _request;
+		std::vector<int> _ListenSockets;
+		std::vector<int> _ConnectionSockets;
+		std::map<int, struct SocketData> _SocketData;
+		// std::vector<int> _ConnectionSockets;
+		// std::map<int, std::string> _request;
+		// std::map<int, std::string> _response;
 		struct kevent _changeList;
 		struct kevent _eventList;
 
 		void	setup();
 		bool	isListenSockfd(struct kevent& event);
+		bool	isConnectionSockfd(struct kevent& event);
 		void	onClientConnect(struct kevent& event);
 		void	onEOF(struct kevent& event);
 		void	onRead(struct kevent& event);

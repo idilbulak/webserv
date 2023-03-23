@@ -10,10 +10,11 @@
 #include <fcntl.h>
 #include "Time.hpp"
 
-#define RED "\033[31m"
-#define CYAN "\033[0;36m"
-#define YELLOW "\033[0;33m"
 #define BLACK "\033[0;30m"
+#define RED "\033[31m"
+#define YELLOW "\033[0;33m"
+#define PURPLE "\033[0;35m"
+#define CYAN "\033[0;36m"
 #define RESET "\033[0m"
 #define ERROR std::perror
 #define BACKLOG 3

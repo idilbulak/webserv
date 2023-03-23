@@ -55,7 +55,6 @@ int Socket::accept() {
 		return -1;
 	}
 	fcntl(connectionSocket, F_SETFL, O_NONBLOCK);
-	std::cout << RED << getTime() << RESET << *this << "\tConnecting... " << std::endl;
 	return connectionSocket;
 }
 
