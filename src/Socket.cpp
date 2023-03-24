@@ -23,8 +23,10 @@ void Socket::configure() {
 	_addr.sin_family = AF_INET;
 	_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	_addr.sin_port = htons(port);
+	
 	int optval = 1; //?????
 	setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)); //????
+	setsockopt(_fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)); //????
 
 	// setting FD to NON-BLOCKING
 	fcntl(_fd, F_SETFL, O_NONBLOCK);

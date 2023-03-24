@@ -3,12 +3,13 @@
 Server::Server(Config &cf) :_cf(cf) {
 }
 
-void Server::setup() {
+int Server::setup() {
 
 	// create kqueue
 	_kq = kqueue();
 	if (_kq == -1) {
 		std::cerr << "creating kqueue" << std::strerror(errno) << std::endl;
+		return -1;
 	}
 
 	// loop over virtual servers
@@ -26,16 +27,20 @@ void Server::setup() {
 		// attach kevent to kqueue
 		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
 			ERROR("adding listenSocket to kqueue");
+			return -1;
 		}
 		// display on standard out
 		std::cout << RED << getTime() << RESET << listenSocket << "\tListening... " << std::endl;
 	}
+	return 0;
 }
 
 void Server::run() {
 
 	// run setup !! still need error checking !!
-	setup();
+	if (!setup()) {
+		exit(1);
+	}
 
 	// start kevent monitoring loop
 	int	new_events;
@@ -49,7 +54,7 @@ void Server::run() {
 		else if (new_events > 0) {
 			// check what type of event triggered
 				if (_eventList.flags & EV_EOF)
-					onEOF(_eventList);
+					onCloseConnection(_eventList);
 				else if (isListenSockfd(_eventList))
 					onClientConnect(_eventList);
 				else if (_eventList.filter == EVFILT_READ)
@@ -73,18 +78,11 @@ bool Server::isListenSockfd(struct kevent& event) {
 
 bool Server::isConnectionSockfd(struct kevent& event) {
 
-	// std::cout << "HERE>>>>>>>>>>>" << event.ident << std::endl;
-	std::map<int, struct SocketData>::iterator it = _SocketData.find(event.ident);
-	if (it != _SocketData.end()) {
+	std::map<int, struct SocketData>::iterator it = _Clients.find(event.ident);
+	if (it != _Clients.end()) {
 		return true;
 	}
 	return false;
-	// std::vector<int>::iterator it = _ConnectionSockets.begin();
-	// for (; it!= _ConnectionSockets.end(); ++it) {
-	// 	if (*it == event.ident)
-	// 		return true;
-	// }
-	// return false;
 }
 
 void Server::onClientConnect(struct kevent& event) {
@@ -111,7 +109,7 @@ void Server::onClientConnect(struct kevent& event) {
 
 	// save http request received on new connection
 	struct SocketData data;
-	_SocketData.insert(std::make_pair(connectionSocket, data));
+	_Clients.insert(std::make_pair(connectionSocket, data));
 }
 
 void Server::onRead(struct kevent& event) {
@@ -122,21 +120,21 @@ void Server::onRead(struct kevent& event) {
 	int num_bytes = recv(event.ident, buffer, sizeof(buffer), 0);
 	if (num_bytes == -1) {
 		ERROR("recv");
-		onEOF(event);
+		onCloseConnection(event);
 		return;
 	}
 	if (num_bytes == 0)
 		return ;
 	buffer[num_bytes] = '\0';
-	_SocketData[event.ident].request.append(buffer, num_bytes);
+	_Clients[event.ident].request.append(buffer, num_bytes);
 
-	if (HttpRequest().isComplete(_SocketData[event.ident].request)) {
+	if (HttpRequest().isComplete(_Clients[event.ident].request)) {
 
 		// write request HTTP to terminal
-		std::cout << RED << getTime() << RESET << event << "\tReceiving... " << PURPLE << event.ident << RESET  << "\n\n" << YELLOW << _SocketData[event.ident].request << RESET  << std::endl;
+		std::cout << RED << getTime() << RESET << event << "\tReceiving... " << PURPLE << event.ident << RESET  << "\n\n" << YELLOW << _Clients[event.ident].request << RESET  << std::endl;
 		
 		// parse request and create response 
-		_SocketData[event.ident].response = Response(_SocketData[event.ident].request, _cf).generate();
+		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf).generate();
 
 		// add socket to kqueue ready for writing
 		EV_SET(&_changeList, event.ident, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
@@ -151,11 +149,17 @@ void Server::onWrite(struct kevent& event) {
 	std::cout << "HEREonWrite>>>>>>>>>>>" << event.ident << std::endl;
 
 	// send response message
-	int num_bytes = send(event.ident, _SocketData[event.ident].response.c_str(), _SocketData[event.ident].response.size(), 0);
-	_SocketData[event.ident].response.erase(0, num_bytes);
+	int num_bytes = send(event.ident, _Clients[event.ident].response.c_str(), _Clients[event.ident].response.size(), 0);
+	if (num_bytes <= 0) {
+
+		ERROR("send()");
+		onCloseConnection(event);
+		return;
+	}
+	_Clients[event.ident].response.erase(0, num_bytes);
 
 	//check if sending complete
-	if (_SocketData[event.ident].response.empty()) {
+	if (_Clients[event.ident].response.empty()) {
 
 		EV_SET(&_changeList, event.ident, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
 		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0)
@@ -163,7 +167,7 @@ void Server::onWrite(struct kevent& event) {
 	}
 }
 
-void Server::onEOF(struct kevent& event) {
+void Server::onCloseConnection(struct kevent& event) {
 
 	std::cout << RED << getTime() << RESET << event << "\tDisconnecting... " << PURPLE << event.ident << RESET << std::endl;
 
@@ -173,7 +177,7 @@ void Server::onEOF(struct kevent& event) {
 		ERROR("removing EVFILT_READ event from kqueue");
 	
 	// free SocketData connected to event
-	_SocketData.erase(event.ident);
+	_Clients.erase(event.ident);
 
 	// close connectionSocket file descriptor
 	::close(event.ident);
