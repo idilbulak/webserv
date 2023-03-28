@@ -27,13 +27,9 @@ class Socket {
 		~Socket(void);
 
 		int	accept();
-		// int	recv(struct kevent& event);
-		// int	send();
-		// int	 close();
 
 		std::string getHost() {return _host;}
 		std::string getPort() {return _port;}
-		// std::string getHttpRequest() {return _httpRequest;}
 		int getfd() {return _fd;}
 		struct sockaddr_in getAddr() {return _addr;}
 		socklen_t getAddrlen() {return _addrlen;}
@@ -45,17 +41,13 @@ class Socket {
 		struct sockaddr_in _addr;
 		socklen_t _addrlen;
 
-		// char _buffer[1024];
-		// std::string _httpRequest;
-		// bool complete;
-
-		void configure();
+		void createSocket();
+		void setSocketAddr();
+		void setFiledOptions();
 		void bind();
 		void listen();
-
 };
 
 std::ostream& operator<<(std::ostream &os, Socket& obj);
-
 
 #endif

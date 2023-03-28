@@ -14,6 +14,7 @@ struct SocketData {
 
 	std::string request;
 	std::string response;
+	std::string port;
 };
 
 class Server {
@@ -22,6 +23,7 @@ class Server {
 		Server(Config &cf);
 		~Server();
 
+		void	setup();
 		void	run();
 		
 	private:
@@ -37,14 +39,15 @@ class Server {
 		struct kevent _changeList;
 		struct kevent _eventList;
 
-		int		setup();
 		bool	isListenSockfd(struct kevent& event);
-		bool	isConnectionSockfd(struct kevent& event);
+		// bool	isConnectionSockfd(struct kevent& event);
 		void	onClientConnect(struct kevent& event);
-		void	onCloseConnection(struct kevent& event);
 		void	onRead(struct kevent& event);
 		void	onWrite(struct kevent& event);
-		bool 	isComplete(struct kevent& event);
+		void	closeConnection(struct kevent& event);
+		// bool 	isComplete(struct kevent& event);
+
+		// void	UpdateKqueue()
 
 };
 
