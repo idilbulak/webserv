@@ -1,181 +1,13 @@
 #include "../inc/HttpRequest.hpp"
 
-HttpRequest::HttpRequest() {
-
-}
-
-HttpRequest::HttpRequest(std::string buff) {
-		this->_body = findBody(buff);
-		this->_type = find(buff, "Content-Type:", ";");
-		// 	this->_boundry = find(buff, "boundary=", "\n");
-		// 	// this->_content = getContentBetweenBoundaries(_body, _boundry);
-		if (_type.compare(" multipart/form-data") == 0)
-			parseBody();
-		std::vector<std::string> splitBuff = split_crlf(buff);
-		this->_method = split(splitBuff[0], " ")[0];
-		findUri(split(splitBuff[0], " ")[1]);
-		if (_method.compare("DELETE") == 0)
-			findFileToDelete();
-		this->_host= split(split(splitBuff[1], " ")[1], ":")[0]; //burda sikinti var
-		std::vector<std::string> findPort = split(splitBuff[1], ":");
-		if (findPort.size() == 3)
-			this->_port = findPort[2];
-		else
-			this->_port = "80";
-		// std::cout << "HttpRequest:\nmethod:\t" << this->_method <<  "\nhost:\t" << _host << std::endl; 
-		// std::cout << "port:\t" << _port << "\nurl:\t" << _uri << "\nbody:\t" << _queryStr << std::endl;
-		// std::cout << "type:\t" << _type << "\nboundry:\t" << _boundry << "\ncontent:\t" << _content << std::endl;
-}
-
+// =====================DAN==============================================
+HttpRequest::HttpRequest() {}
 HttpRequest::~HttpRequest(void) {}
-
-std::vector<std::string> HttpRequest::split(std::string str, std::string delimiter) {
-	std::vector<std::string> words;
-	size_t pos = 0;
-	std::string token;
-	while ((pos = str.find(delimiter)) != std::string::npos) {
-		token = str.substr(0, pos);
-		if (!token.empty()) {
-			words.push_back(token);
-		}
-		str.erase(0, pos + delimiter.length());
-	}
-	if (!str.empty()) {
-		words.push_back(str);
-	}
-	return words;
-}
-
-// static void isChunked(struct kevent& event) {
-
-// 	if (_isChunked(event.ident)._isChunked)
-// 		return true;
-// 	else if ()
-
-// }
-
-// bool Server::isComplete(struct kevent& event) {
-
-// // 	if (isChunked())
-// // 		if (decodeNextChunk())
-// // 			return false;
-// // 	// if (request.find("Transfer-Encoding: "))
-
-
-// 	std::stringstream request_stream(_request[event.ident]);
-// 	std::string line;
-// 	std::size_t content_length;
-// 	std::size_t headerLength;
-
-//     while (std::getline(request_stream, line) && line != "\r") {
-//         if (line.substr(0, 15) == "Content-Length") {
-//             content_length = std::stoi(line.substr(16));
-// 			headerLength = _request[event.ident].find("\r\n\r\n") + 4;
-// 			if (content_length + headerLength > _request[event.ident].size())
-// 				return false;
-//         }
-//     }
-// 	return true;
-// }
-
-bool HttpRequest::isComplete(std::string buff) {
-
-	// if (buff.find("Transfer-Encoding: ") != std::string::npos) {
-	// 	// find()
-	// }
-
-	if (buff.find("Content-Length: ") != std::string::npos) {
-
-		size_t contentLength = std::stoi(find(buff, "Content-Length: ", "\r\n"));
-		size_t headerLength = buff.find("\r\n\r\n") + 4;
-		if (contentLength + headerLength > buff.size())
-			return false;
-	}
-	return true;
-}
-
-std::vector<std::string> HttpRequest::split_crlf(std::string str) {
-	std::vector<std::string> words;
-	size_t pos = 0;
-	std::string delimiter = "\r\n";
-
-	while ((pos = str.find(delimiter)) != std::string::npos) {
-		std::string token = str.substr(0, pos);
-		if (!token.empty()) {
-			words.push_back(token);
-		}
-		str.erase(0, pos + delimiter.length());
-	}
-
-	if (!str.empty()) {
-		words.push_back(str);
-	}
-
-	return words;
-}
-
-std::string HttpRequest::findBody(std::string buff) {
-	std::string body;
-	// Find the start of the request body
-	size_t body_start = buff.find("\r\n\r\n");
-	if (body_start != std::string::npos)
-		body_start += 4;
-	// Extract the request body
-	if (buff.find("Content-Length:") != std::string::npos) {
-		size_t length_start = buff.find("Content-Length:") + 16;
-		size_t length_end = buff.find("\r\n", length_start);
-		std::string length_str = buff.substr(length_start, length_end - length_start);
-		int content_length = std::atoi(length_str.c_str());
-		if (content_length > 0)
-			body = buff.substr(body_start, content_length);
-	}
-	return body;
-}
-
-void HttpRequest::parseBody() {
-	std::string boundary = _body.substr(0, _body.find('\n'));
-	size_t startPos = _body.find('\n') + 1; // Skip the boundary and newline characters
-	// Find the Content-Disposition header and extract the name and filename values
-	std::string contentDispositionHeader = "Content-Disposition: form-data; name=\"";
-	size_t dispositionPos = _body.find(contentDispositionHeader, startPos);
-	if (dispositionPos == std::string::npos) {
-		return; // Content-Disposition header not found
-	}
-	_cntDisposition = "form-data"; // Set the disposition to form-data
-	size_t namePos = dispositionPos + contentDispositionHeader.length();
-	size_t nameEndPos = _body.find('"', namePos);
-	_cntName = _body.substr(namePos, nameEndPos - namePos);
-	size_t filenamePos = _body.find("filename=\"", nameEndPos);
-	if (filenamePos != std::string::npos) {
-		size_t filenameEndPos = _body.find('"', filenamePos + 10); // Skip "filename="
-		_cntFileName = _body.substr(filenamePos + 10, filenameEndPos - filenamePos - 10);
-	}
-	// Find the Content-Type header and extract the type value
-	std::string contentTypeHeader = "\nContent-Type: ";
-	size_t typePos = _body.find(contentTypeHeader, startPos);
-	if (typePos != std::string::npos) {
-		size_t typeEndPos = _body.find('\n', typePos + contentTypeHeader.length());
-		_cntType = _body.substr(typePos + contentTypeHeader.length(), typeEndPos - typePos - contentTypeHeader.length());
-	}
-	size_t start = _body.find("\r\n\r\n");
-	if (start != std::string::npos) {
-		start += 4;  // move past the empty lines
-		size_t end = _body.find("\r\n------", start);
-		if (end != std::string::npos) {
-			_content = _body.substr(start, end - start);
-		}
-	}
-	// std::cout << _content << "|" << std::endl;
-	// std::cout << _cntDisposition << _cntFileName << _cntType << std::endl;
-}
-
 std::string HttpRequest::find(const std::string& buff, std::string lookfor, std::string end) {
 	std::string contentType;
-
 	// Find the start of the Content-Type header
 	std::string contentTypeHeaderStart = lookfor;
 	std::string::size_type contentTypeHeaderPos = buff.find(contentTypeHeaderStart);
-
 	if (contentTypeHeaderPos != std::string::npos) {
 		// Extract the value of the Content-Type header
 		std::string contentTypeHeaderValue = buff.substr(contentTypeHeaderPos + contentTypeHeaderStart.length());
@@ -184,57 +16,164 @@ std::string HttpRequest::find(const std::string& buff, std::string lookfor, std:
 			contentType = contentTypeHeaderValue.substr(0, contentTypeHeaderValueEndPos);
 		}
 	}
-
 	return contentType;
 }
 
-// "/search.cgi?q=python&category=tutorials&sort=date"
-void HttpRequest::findUri(std::string str) {
-	std::size_t queryPos = str.find('?');
-	_queryStr = str.substr(queryPos + 1);
-	_uri = str.substr(0, queryPos);
-	// std::cout << "Script name: " << reqUri << '\n';
-	// std::cout << "Query string: " << queryString << '\n';
+bool HttpRequest::isComplete(std::string buff) {
+	if (buff.find("Content-Length: ") != std::string::npos) {
+
+		size_t contentLength = std::stoi(find(buff, "Content-Length: ", "\r\n"));
+		size_t headerLength = buff.find("\r\n\r\n") + 4;
+		if (contentLength + headerLength > buff.size())
+			return false;
+	}
+	else if (buff.find("\r\n\r\n") == std::string::npos)
+		return false;
+	return true;
 }
 
-void HttpRequest::findFileToDelete() {
-	std::size_t pos = _queryStr.find('=');
-	if (pos == std::string::npos) {
-		// If there is no equal sign, return an empty string
-		_fileToDelete =  "";
-	}
-	// Extract the substring that comes after the equal sign
-	_fileToDelete = _queryStr.substr(pos + 1);
-  }
 
-std::string HttpRequest::getContentBetweenBoundaries(std::string &input, std::string &boundary) {
-	std::string content;
-	// Find the starting boundary
-	size_t startPos = input.find(boundary);
-	if (startPos == std::string::npos) {
-		return content; // Boundary not found
-	}
-	startPos += boundary.length() + 2; // Skip the boundary and newline characters
-	// Find the ending boundary
-	size_t endPos = input.find(boundary, startPos);
-	if (endPos == std::string::npos) {
-		return content; // Ending boundary not found
-	}
-	// Extract the content between the boundaries
-	content = input.substr(startPos, endPos - startPos);
-	return content;
+// =========================IDIL============================================
+
+HttpRequest::HttpRequest(std::string buff, std::string port) : _buff(buff), _port(port) {
+	parseHeader();
+	parseBody();
 }
 
-std::string HttpRequest::getPort() {return _port;}
-std::string HttpRequest::getUri() {return _uri;}
+void HttpRequest::parseHeader() {
+	// parse first line
+	std::string firstLine = getFirstLine();
+	std::vector<std::string> tokensFirtLine = split(firstLine, ' ');
+	this->_method = tokensFirtLine[0]; 
+	this->_uri = parseUri(tokensFirtLine[1]);
+	this->_version = tokensFirtLine[2];
+	// parse other lines and put them in to map<str,str>
+	std::vector<std::string> lines = getLines();
+	for (std::vector<std::string>::iterator it = lines.begin() + 1; it != lines.end(); ++it) {
+        std::string::size_type pos = it->find(": ");
+        if (pos != std::string::npos) {
+            std::string headerName = it->substr(0, pos);
+            std::string headerValue = it->substr(pos + 2);
+            this->_headers[headerName] = headerValue;
+        }
+    }
+}
+
+void HttpRequest::parseBody() {
+	// Find the start of the request body
+	size_t body_start = _buff.find("\r\n\r\n");
+	if (body_start != std::string::npos)
+		body_start += 4;
+	// Extract the request body
+	if (_buff.find("Content-Length:") != std::string::npos) {
+		size_t length_start = _buff.find("Content-Length:") + 16;
+		size_t length_end = _buff.find("\r\n", length_start);
+		std::string length_str = _buff.substr(length_start, length_end - length_start);
+		int content_length = std::atoi(length_str.c_str());
+		if (content_length > 0)
+			_body = _buff.substr(body_start, content_length);
+	}
+}
+
+// https://www.example.com/path/to/resource?param1=value1&param2=value2#section1
+Uri HttpRequest::parseUri(std::string token) {
+    Uri uri;
+    if (token.length() == 0)
+        return uri;
+    std::string::iterator uriEnd = token.end();
+    std::string::iterator queryStart = std::find(token.begin(), uriEnd, '?');
+    std::string::iterator protocolStart = token.begin();
+    std::string::iterator protocolEnd = std::find(protocolStart, uriEnd, ':');
+    if (protocolEnd != uriEnd) {
+        std::string prot = std::string(protocolEnd, protocolEnd + 3);
+        if (prot == "://") {
+            uri.protocol = std::string(protocolStart, protocolEnd);
+            protocolEnd += 3;
+        } else {
+            protocolEnd = token.begin();
+        }
+    } else {
+        protocolEnd = token.begin();
+    }
+    std::string::iterator hostStart = protocolEnd;
+    std::string::iterator pathStart = std::find(hostStart, uriEnd, '/');
+    std::string::iterator hostEnd = std::find(protocolEnd, (pathStart != uriEnd) ? pathStart : queryStart, ':');
+    uri.host = std::string(hostStart, hostEnd);
+    if ((hostEnd != uriEnd) && (*(hostEnd++) == ':')) {
+        std::string::iterator portEnd = (pathStart != uriEnd) ? pathStart : queryStart;
+        uri.port = std::string(hostEnd, portEnd);
+    }
+    if (pathStart != uriEnd)
+        uri.path = std::string(pathStart, queryStart);
+    if (queryStart != uriEnd)
+        uri.queryStr = std::string(queryStart, uriEnd);
+    return uri;
+}
+
+Uri HttpRequest::getUri() {return _uri;}
 std::string HttpRequest::getMethod() {return _method;}
-std::string HttpRequest::getBody() {return _body;}
-std::string HttpRequest::getContent() {return _content;}
-std::string HttpRequest::getCntDisposition() {return _cntDisposition;}
-std::string HttpRequest::getCntType() {return _cntType;}
-std::string HttpRequest::getCntName() {return _cntName;}
-std::string HttpRequest::getCntFileName() {return _cntFileName;}
-std::string HttpRequest::getFileToDelete() {return _fileToDelete;}
-std::string HttpRequest::getQueryStr() {return _queryStr;}
 std::string HttpRequest::getVersion() {return _version;}
+std::string HttpRequest::getBody() {return _body;}
+std::string HttpRequest::getQueryStr() {return _uri.queryStr;}
+std::string HttpRequest::getPort() {return _port;}
+
+std::string HttpRequest::getFirstLine() {
+    size_t pos = _buff.find("\r\n");
+    if (pos == std::string::npos) {
+        return _buff; // return the whole message if there are no line breaks
+    }
+    return _buff.substr(0, pos);
+}
+
+std::string trim(const std::string& s) {
+    std::string::const_iterator left = s.begin();
+    while (left != s.end() && std::isspace(*left)) {
+        ++left;
+    }
+    std::string::const_reverse_iterator right = s.rbegin();
+    while (right != s.rend() && std::isspace(*right)) {
+        ++right;
+    }
+    return std::string(left, right.base());
+}
+
+std::vector<std::string> HttpRequest::getLines() {
+    std::vector<std::string> lines;
+    std::istringstream iss(_buff);
+    std::string line;
+    while (std::getline(iss, line, '\r')) {
+        if (!line.empty() && line[line.length()-1] == '\n')
+            line.erase(line.length()-1);
+        lines.push_back(trim(line)); // Remove leading/trailing whitespace and add to vector
+    }
+    return lines;
+}
+
+std::vector<std::string> split(std::string str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::istringstream iss(str);
+    std::string token;
+    while (getline(iss, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+std::vector<std::string> splitFromCrlf(std::string str)
+{
+	std::string delimiters = "\r\n";
+	std::vector<std::string> tokens;
+	size_t pos, lastPos = 0, length = str.length();
+
+	while (lastPos < length + 1)
+	{
+		pos = str.find_first_of(delimiters, lastPos);
+		if (pos == std::string::npos)
+			pos = length;
+		if (pos != lastPos)
+			tokens.push_back(std::string(str.data() + lastPos, pos - lastPos));
+		lastPos = pos + 1;
+	}
+	return (tokens);
+}
 
