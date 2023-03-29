@@ -14,8 +14,8 @@ void Server::setup() {
 
 	for (int i = 0; i < _cf.servers.size(); i++) {
 
-		Socket listenSocket(_cf.servers[i].host, _cf.servers[i].port);
-		_listenSockets.insert(std::pair<int, Socket>(listenSocket.getfd(), listenSocket));
+		Socket listenSocket(_cf.servers[i]);//.host, _cf.servers[i].port);
+		_listenSockets.insert(std::make_pair(listenSocket.getfd(), listenSocket));
 		UpdateKqueue(listenSocket.getfd(), EVFILT_READ, EV_ADD, 0);
 		printLog(listenSocket, "listening... ");
 	}
@@ -88,8 +88,8 @@ void Server::onRead(struct kevent& event) {
 		closeConnection(event);
 		return;
 	}
-	if (num_bytes == 0) { //??
-		// printLog(event.ident, )
+	if (num_bytes == 0) {
+
 		closeConnection(event);
 		return;
 	}
