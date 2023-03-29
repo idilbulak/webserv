@@ -27,7 +27,7 @@ std::vector<std::string> CheckConfFile::split(std::string str, std::string delim
 
 void CheckConfFile::checkArgument(const std::string line){
     std::vector<std::string> parse = split(line, " ");
-    std::cout << "burda" << parse.size() << std::endl;
+    // std::cout << "burda" << parse.size() << std::endl;
     for (int i = 0; parse.size() > i; i++)
         parse[i] = deleteSpace(parse[i]);
 
@@ -170,7 +170,7 @@ void CheckConfFile::checkBrackets(std::vector<std::string> tokens)
             }
             else
             {
-                std::cout << " burda " << tokens[i] << tokens[i - 1] << getServerBrackets() << getLocationBrackets() << std::endl;
+                // std::cout << " burda " << tokens[i] << tokens[i - 1] << getServerBrackets() << getLocationBrackets() << std::endl;
                 throw std::invalid_argument("brackets error 2");
             }
         }
