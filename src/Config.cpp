@@ -52,7 +52,7 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 		// std::cout << tokens[i] << "is token " << std::endl;
 		if(tokens[i] == "server")
 			break;
-		if (tokens[i] == "listen") {
+		else if (tokens[i] == "listen") {
             parseHostPort(server.host, server.port, tokens[++i]);
 			CheckPort(server.port);
 		}
@@ -71,6 +71,9 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 			parseErrorPage(server.error_pages, tokens, i);
 			
 			}
+		else if (tokens[i] == "cgi_ext"){
+			parseCgiExt(server.cgi_ext,tokens, ++i);
+		}
 		else if (tokens[i] == "location" ){
 			parseLocation(server.locations, tokens, i);
 			CheckLocation(server.locations);
@@ -79,6 +82,16 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 			i++;
 	}
 	servers.push_back(server);
+}
+
+void Config::parseCgiExt(std::vector<std::string>  &cgi_ext, const std::vector<std::string> &tokens, size_t &i){
+	for(;tokens.size() > i; i++)
+	{
+		if(!check_word(tokens[i]))
+			cgi_ext.push_back(tokens[i]);
+		else
+			break;
+	}
 }
 
 void	Config::parseHostPort(std::string &host, std::string &port, std::string &tokens) {
@@ -92,7 +105,7 @@ void	Config::parseHostPort(std::string &host, std::string &port, std::string &to
 bool	Config::check_word(const std::string &word) {
 	if (word.empty())
 		return true;
-	if (word == "cgi_ext" || word == "index" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return" || word == "autoindex" || word == "upload_dir")
+	if (word == "cgi_ext" || word == "cgi_path" || word == "index" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return" || word == "autoindex" || word == "upload_dir")
 		return true;
 	return false;
 }
@@ -134,13 +147,13 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 	for (; i<tokens.size()-1 && (tokens[i] != "location" || tokens[i] != "server");) {
 		if (tokens[i] == "location" || tokens[i] == "server")
 			break;
-		if ( tokens[i] == "allow" ) {
+		else if ( tokens[i] == "allow" ) {
 			for ( ++i; !check_word(tokens[i]); ++i){
 				loc.methods.push_back(tokens[i]);}
 		}
-		if ( tokens[i] == "root" )
+		else if ( tokens[i] == "root" )
 			loc.root = tokens[++i];
-		if ( tokens[i] == "autoindex" ) {
+		else if ( tokens[i] == "autoindex" ) {
 			std::string str = tokens[++i];
 			if (str.compare("on") == 0 || str.compare("off") == 0){
 			if (str== "on")
@@ -149,9 +162,9 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 			else
 				throw std::invalid_argument("autoindex error!");
 		}
-		else if (tokens[i] == "cgi_ext") {
-			loc.cgi_ext = tokens[++i];
+		else if (tokens[i] == "cgi_path") {
 			loc.cgi_path = tokens[++i];
+			std::cout << "path is "<< loc.cgi_path<< std::endl;
 		}
 		else if (tokens[i] == "upload_dir") {
 			loc.upload_dir = tokens[++i];
@@ -181,6 +194,10 @@ void Config::display() {
         std::cout << "\tName: " << server.name << std::endl;
         std::cout << "\tRoot: " << server.root << std::endl;
         std::cout << "\tMax Body Size: " << server.max_body_size << std::endl;
+		std::cout << "\tCGI EXT " << server.cgi_ext.size() << std::endl;
+		for (int i = 0; server.cgi_ext.size() > i ; i++) {
+            std::cout << "\t\tcgiExit " << server.cgi_ext[i]<< std::endl;
+        }
         std::cout << "\tError Pages: " << std::endl;
         for (std::map<int, std::string>::const_iterator it_err = server.error_pages.begin(); it_err != server.error_pages.end(); ++it_err) {
             std::cout << "\t\tCode: " << it_err->first << std::endl;
@@ -197,7 +214,7 @@ void Config::display() {
             }
             std::cout << "\t\tRoot: " << location.root << std::endl;
             std::cout << "\t\tAuto Index: " << location.autoindex << std::endl;
-            std::cout << "\t\tCGI Ext: " << location.cgi_ext << std::endl;
+            // std::cout << "\t\tCGI Ext: " << location.cgi_ext << std::endl;
             std::cout << "\t\tCGI Path: " << location.cgi_path << std::endl;
             std::cout << "\t\tUpload Dir: " << location.upload_dir << std::endl;
             std::cout << "\t\tIndex: " << std::endl;

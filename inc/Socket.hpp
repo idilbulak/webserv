@@ -10,6 +10,7 @@
 #include <sys/event.h>
 #include <fcntl.h>
 #include "Time.hpp"
+#include "Config.hpp"
 
 #define BLACK "\033[0;30m"
 #define RED "\033[31m"
@@ -27,7 +28,7 @@
 class Socket {
 
 	public:
-		Socket(std::string host, std::string port);
+		Socket(VirtualServer server);//std::string host, std::string port);
 		Socket();
 		~Socket(void);
 

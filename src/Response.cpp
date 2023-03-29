@@ -20,7 +20,7 @@ bool Response::checkIndx() {
     for (int i = 0; i < _loc.index.size(); i++) {
 		std::string path;
 		if(!_loc.root.empty())
-			path = _loc.root + _loc.index[i];
+			path = _loc.root + "/" + _loc.index[i];
 		else
 			path = _loc.index[i];
         if (fileExists(path)) {
@@ -45,8 +45,16 @@ bool Response::folderExists(const std::string folder_to_check) {
     }
 }
 
+long long megabytesToBytes(int megabytes) {
+  long long bytes = megabytes;
+  bytes *= 1024;
+  bytes *= 1024;
+  return bytes;
+}
+
 std::string	Response::generate() {
 	if (!findLocation(&_loc, _req.getUri().path)) {
+	std::cout << "burda" << std::endl;
 		_code = 404;
 		return errRes("Location block not found");
 	}
@@ -58,8 +66,20 @@ std::string	Response::generate() {
 		_code = 505;
 		return(errRes("HTTP Version Not Supported"));
 	}
+	if(!_req.getHeaders()["Content Length"].empty() || !_server.max_body_size.empty()) {
+		long long size = megabytesToBytes(std::stoi(_server.max_body_size));
+		if(std::stoi(_req.getHeaders()["Content Length"]) <= size)
+		_code = 413;
+		return(errRes("HTTP Version Not Supported"));
+	}
 	_cgiOn = 0;
-	if (!_loc.cgi_path.empty()) {
+	if(!_file.empty()) {
+		_cgiOn = 1;
+		std::cout << "cgi on " << std::endl;
+	}
+	else if (!_loc.cgi_path.empty()) {
+		std::cout << "cgi off " << std::endl;
+
 		std::string cgiPath;
 		if (!_loc.root.empty())
 			cgiPath = _loc.root + "/" + _loc.cgi_path;
@@ -83,19 +103,17 @@ std::string	Response::generate() {
 			if(fileExists(cgiPath)) {
 				// correct cgi 
 				// if(_ext.empty() || _ext.substr(1).compare(_loc.cgi_ext)) {
-					_indxFile = fullPath;
+					_indxFile = fullpath;
 					_cgiOn = 1;
 				// }
 			}
 		}
 	}
-	if(!_file.empty()) {
-		_cgiOn = 1;
-	}
 	return (chooseMethod());
 }
 
 std::string	Response::cgiOff() {
+	std::cout << "yes" << std::endl;
 	if (!checkIndx()) {
 		if (_loc.autoindex == 1)
 		{
@@ -111,6 +129,7 @@ std::string	Response::cgiOff() {
 		}
 	}
 	else {
+		std::cout << " index: " << _indxFile << std::endl;
 		_code = 200;
 		_body = read_html_file(_indxFile);
 		return res();
@@ -161,9 +180,18 @@ std::string Response::putRes(void) {
 }
 
 std::string Response::getRes() {
+	for (int i = 0; i < _loc.index.size(); i++ )
+	{
+		if (_file.compare(_loc.index[i]) == 0)
+		{
+			_cgiOn = 0;
+		}
+	}
+
 	if (!_cgiOn)
 		return cgiOff();
-	_cgiRes = Cgi(_server.root + _loc.cgi_path, *this).execute();
+	std::cout << "getres ici " << _indxFile << std::endl;
+	_cgiRes = Cgi(_server.root + _indxFile, *this).execute();
 	parseCgiResponse();
 	if (_cgiCode == 302)
     {
@@ -326,6 +354,7 @@ VirtualServer Response::findServer() {
 bool Response::findLocation(Location* loc, std::string str) {
     if(str.empty())
         return false;
+			std::cout << "yes" << str << std::endl;
     // check if the full path is existing in one of the location blocks.
     for (int i = 0; i < _server.locations.size(); i++) {
         if (_server.locations[i].path.compare(str) == 0) {
@@ -336,8 +365,10 @@ bool Response::findLocation(Location* loc, std::string str) {
 	}
     // if we cant find the lcoation block, extract the string that is next to the last slash
     std::string::size_type last_slash_pos = str.find_last_of('/');
+
     std::string::size_type last_dot_pos = str.find_last_of('.');
     if (last_slash_pos != std::string::npos) {
+
         _path.clear();
         _file.clear();
         _ext.clear();
@@ -347,6 +378,7 @@ bool Response::findLocation(Location* loc, std::string str) {
             _ext = str.substr(last_dot_pos + 1);
     }
     if (!_ext.empty()) {
+		std::cout << "dsflhdfhkjs" << std::endl;
 		std::string newPath = "~\\." + _ext + "$";
 		for (int i = 0; i < _server.locations.size(); i++) {
 			if (_server.locations[i].path.compare(newPath) == 0) {
@@ -355,19 +387,25 @@ bool Response::findLocation(Location* loc, std::string str) {
             }
 		}
     }
+	    std::string filePath;
     for (int i = 0; i < _server.locations.size(); i++) {
         if (_server.locations[i].path.compare(_path) == 0) {
-            std::string filePath;
-            if(!_server.locations[i].root.empty())
+        
+            if(!_server.locations[i].root.empty()){
+
                 filePath = _server.locations[i].root + "/" + _file;
-            else
-                filePath = _file;
-            if fileExists(filePath) {
+			}else{
+
+                filePath = _file;}
+
+            if (fileExists(filePath)) {
+
                 *loc = _server.locations[i];
                 _indxFile = filePath;
                 return true;
             }
         }
+
 	
     }
     return findLocation(loc, _path);
