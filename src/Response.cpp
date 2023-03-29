@@ -1,32 +1,120 @@
 #include "../inc/Response.hpp"
 
-Response::Response(std::string buff, Config cf) : _cf(cf), _req(HttpRequest(buff)){
+Response::~Response(void) {}
+
+Response::Response(std::string buff, Config cf, std::string port) : _cf(cf), _req(HttpRequest(buff, port)){
 	makeCodeMap();
+	_server = findServer();
 }
 
-Response::~Response(void) {
+bool Response::fileExists(std::string name) {
+	std::string filename = _server.root + "/" + name;
+    struct stat buffer;
+    if (stat(filename.c_str(), &buffer) == 0) {
+		return true;
+	}
+	return (false);
+}
 
+bool Response::checkIndx() {
+    for (int i = 0; i < _loc.index.size(); i++) {
+        if (fileExists(_loc.index[i])) {
+			_indxFile = _server.root + "/" + _loc.index[i];
+            return true;
+		}
+    }
+    return false;
+}
+
+bool Response::folderExists(const std::string folder_to_check) {
+    std::string path = _server.root + "/" + folder_to_check;
+    DIR* dir = opendir(path.c_str());
+
+    if (dir) {
+        // The folder exists
+        closedir(dir);
+		return true;
+    } else {
+        // The folder does not exist
+        return false;
+    }
 }
 
 std::string	Response::generate() {
-	// if (findServer(_req).port.empty())
-    //     return(errRes(500));
-	if(!findLocation(_req.getUri(), &_loc, findServer(_req)))
-		// std::cout << _req.getUri()<< std::endl;
-        return(codeRes(404));
-	if(!validMethod(_loc, _req.getMethod()))
-        return(codeRes(405));
-	// return?
-	// if(!fileExists(_loc.root.c_str()))
-    //     return(codeRes(415));
-	setIndxFile();
-	std::cout << "index file path:\t" << _indxFile << std::endl;
-	if(_indxFile.empty())
-        return(codeRes(401));
-    else if(_cgiOn)
-        return(cgiRes());
-    else {
-		return(chooseMethod());
+	if (!findLocation(&_loc)) {
+		_code = 404;
+		return errRes("Location block not found");
+	}
+	if(!validMethod(_req.getMethod())) {
+		_code = 405;
+		return(errRes("Not allowed method"));
+	}
+	if(_req.getVersion().compare("HTTP/1.1")) {
+		_code = 505;
+		return(errRes("HTTP Version Not Supported"));
+	}
+	// std::cout << _file << "budur"<< std::endl;
+	_cgiOn = 0;
+	// if (!_file.empty()) {
+	// 	std::cout<< "DJKDJDJDJ"<< _file << _ext << std::endl;
+	// 	if (fileExists(_file) || fileExists(_file + "." + _ext)) {
+	// 		_indxFile = _file;
+	// 		_cgiOn = 1;
+	// 	}
+	// 	// roottan da checj ettttttt
+	// 	else {
+	// 		_code = 404;
+	// 		errRes("Not Found");
+	// 	}
+	// }
+	// if cgi path exists
+	if (!_loc.cgi_path.empty()) {
+		std::string fullpath = _server.root + _loc.cgi_path;
+		_typePath = pathType(fullpath);
+		// if path folder
+		if (_typePath == 2) {
+			if(folderExists(_loc.cgi_path)) {
+				// correct cgi.
+				if(_ext.empty() || _ext.substr(1).compare(_loc.cgi_ext)) {
+					_indxFile = findFirstFileWithExtension(_loc.cgi_path, _loc.cgi_ext);
+					_cgiOn = 1;
+				}
+			}
+		}
+		// if path file
+		// ////////////////
+		else if (_typePath == 1) {
+			if(fileExists(_loc.cgi_path)) {
+				// correct cgi 
+				if(_ext.empty() || _ext.substr(1).compare(_loc.cgi_ext)) {
+					_indxFile = _loc.cgi_path;
+					_cgiOn = 1;
+				}
+			}
+		}
+	}
+	return (chooseMethod());
+}
+
+std::string	Response::cgiOff() {
+	if (!checkIndx()) {
+		if (_loc.autoindex == 1)
+		{
+			_code = 200;
+			_type = 0;
+			_body = AutoIndex(_loc.root).generate_html_page();
+			return res();
+		}
+		else
+		{
+			_code = 404;
+			return (errRes("Cgi script not found and autoindex off"));
+		}
+	}
+	else {
+		_code = 200;
+		_body = read_html_file(_indxFile);
+		return res();
 	}
 }
 
@@ -37,132 +125,257 @@ std::string Response::chooseMethod() {
 			return (postRes());
 		else if(_req.getMethod().compare("DELETE") == 0)
 		    return (delRes());
-		else
-			return (codeRes(502));
+		else if(_req.getMethod().compare("PUT") == 0)
+		    return (putRes());
+		else {
+			_code = 501;
+			return errRes("Not a valid method");
+		}
 }
 
-std::string Response::getRes() {
-	if(_version.empty())
- 	   _version = "HTTP/1.1";
-	_code = 200;
-	// _type = "Content-Type: text/html; charset=UTF-8";
-	_filename = _indxFile;
+int Response::writeContent(const std::string &_body, const std::string &path) {
+	std::ofstream	file;
+
+	if (pathType(path)) {
+		file.open(path.c_str());
+		file << _body;
+		file.close();
+		return (204);
+	}
+	else {
+		file.open(path.c_str(), std::ofstream::out | std::ofstream::trunc);
+		if (file.is_open() == false)
+			return (403);
+		file << _body;
+		file.close();
+		return (201);
+	}
+}
+
+std::string Response::putRes(void) {
+    _code = writeContent(_body, this->_req.getUri().path);
+
+    if (!(_code == 201 || _code == 204))
+        return this->errRes("Write failed");
+    _type = 0;
     return res();
 }
 
+std::string Response::getRes() {
+	if (!_cgiOn)
+		return cgiOff();
+	_cgiRes = Cgi(_server.root + _loc.cgi_path, *this).execute();
+	parseCgiResponse();
+	if (_cgiCode == 302)
+    {
+        _type = 2;
+        _code = 302;
+        return res();
+    }
+    if (_cgiCode != 200)
+    {
+        _code = _cgiCode;
+        return errRes("Cgi error");
+    }
+	_code = _cgiCode;
+	if (!_file.empty()) {
+		if (!readContent(_indxFile))
+            	return (errRes("Can't open file"));
+	}
+	return res();
+}
+
+int Response::readFile(const std::string &path) {
+    std::ifstream file(path.c_str());
+	if (!file.is_open())
+		return (0);
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    _body = buffer.str();
+	file.close();
+	return (1);
+}
+
+bool Response::readContent(const std::string &path) {
+    if (readFile(path)) {
+        _type = 1;
+        _code = 200;
+        return (1);
+    }
+    else {
+        _type = 2;
+        _code = 403;
+        return (0);
+    }
+}
+
+// 2:dir 1:file 0:other?
+int Response::pathType(const std::string& path) {
+    struct stat s;
+    if (stat(path.c_str(), &s) == 0) {
+        if (s.st_mode & S_IFDIR)
+            return 2;
+        else if (s.st_mode & S_IFREG)
+            return 1;
+        else
+            return 0;
+    }
+    else {
+        return 0;
+    }
+}
+
 std::string Response::postRes() {
-	// upload file
-	std::cout << _loc.upload_dir << std::endl;
-	if (_loc.upload_dir.empty())
-		return(codeRes(503));
-	if (_req.getBody().empty())
-		return(codeRes(200));
-	else if (_req.getCntName().compare("file") == 0) {
-		if (_req.getCntFileName().empty())
-			return(codeRes(404));
-		if(!fileExists(_loc.upload_dir.c_str())) {
-			std::cout << "No upload_dir" << std::endl;
-			return(codeRes(500));
-		}
-		std::string path = _loc.upload_dir + "/" + _req.getCntFileName();
-		std::ofstream outfile(path);
-    	if (outfile.is_open()) {
-        outfile << _req.getContent();
-        outfile.close();
-        std::cout << "File created successfully.\n" << _indxFile;
-		if(_indxFile.empty() == 0) {
-			_version = "HTTP/1.1";
-			_code = 200;
-			_type = "Content-Type: text/html; charset=UTF-8";
-			_filename = _indxFile;
-			return res();
-		}
-		return(codeRes(201));
-		} 
-	}
-	else {
-		std::cout << "Failed to create file.\n";
-		return(codeRes(415));
-	}
-	if(_indxFile.empty() == 0) {
-		_version = "HTTP/1.1";
-		_code = 200;
-		_type = "Content-Type: text/html; charset=UTF-8";
-		_filename = _indxFile;
-		return res();
-	}
-	return(codeRes(200));
+	_cgiRes = Cgi(_loc.cgi_path, *this).execute();
+	// burda bastirabilirsin??
+	parseCgiResponse();
+	if (_cgiCode == 302)
+    {
+        _type = 2;
+        _code = 302;
+        return res();
+    }
+    if (_cgiCode != 200)
+    {
+        _code = _cgiCode;
+        return errRes("Cgi error");
+    }
+	_code = _cgiCode;
+	_type = 2;
+	return res();
 }
 
 std::string Response::delRes() {
-	if (_loc.upload_dir.empty())
-		return(codeRes(503));
-	if(!fileExists(_loc.upload_dir.c_str())) {
-		std::cout << "No upload_dir" << std::endl;
-		return(codeRes(500));
+	if (pathType(_req.getUri().path) != 0) {
+		if (remove(_req.getUri().path.c_str()) == 0)
+			_code = 204;
+		else
+			_code = 403;
 	}
-	std::string path = _loc.upload_dir + "/" + _req.getFileToDelete();
-	if (std::remove(path.c_str()) == 0) {
-    std::cout << "Deleted file " << path << std::endl;
-	} else {
-		std::cout << "Failed to delete file: " << path << std::endl;
-		return(codeRes(404));
-	}
-    return codeRes(204);
+	else
+		_code = 404;
+	if (_code == 403 || _code == 404)
+		return (errRes("Can't delete"));
+    return res();
 }
 
-void Response::extractCgiRes()
+void Response::parseCgiResponse(void)
 {
-	size_t versionPos = _cgiRes.find("HTTP/");
-    if (versionPos != std::string::npos)
-    {
-        size_t versionEndPos = _cgiRes.find(" ", versionPos);
-        if (versionEndPos != std::string::npos)
-            _version = _cgiRes.substr(versionPos, versionEndPos - versionPos);
+    std::vector<std::string> lines;
+    size_t tmpPos;
+    lines = splitFromCrlf(_cgiRes);
+    for (size_t i = 0; i < lines.size(); i++) {
+        if ((tmpPos = lines[i].find("Status: ")) != std::string::npos)
+            _cgiCode = atoi(lines[i].substr(tmpPos + 7, lines[i].length()).c_str());
+        else if ((tmpPos = lines[i].find("Content-type: ")) != std::string::npos)
+            _cgiType = lines[i].substr(tmpPos + 14, lines[i].length());   
+        else if ((tmpPos = lines[i].find(":")) != std::string::npos)
+            _otherHeaders[lines[i].substr(0, tmpPos)] = lines[i].substr(tmpPos + 2, lines[i].length());
     }
-	else
-		_version = "HTTP/1.1";
-    size_t typePos = _cgiRes.find("Content-type: ");
-	std::cout <<typePos <<std::endl;
-    if (typePos != std::string::npos)
-    {
-        size_t typeEndPos = _cgiRes.find("\r\n", typePos);
-        if (typeEndPos != std::string::npos)
-            _type = _cgiRes.substr(typePos + 14, typeEndPos - typePos - 14);
+}
+
+// Read the contents of an HTML file into a string
+std::string Response::read_html_file(const std::string& fileName) {
+	std::ifstream file(fileName);
+	if (!file.is_open()) {
+		throw std::runtime_error("Failed to open file: " + fileName);
+	}
+	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	return content;
+}
+
+std::string Response::res() {
+	_header += "HTTP/1.1 " + _codeMap[_code] + CRLF;
+	// date gerekir mi?
+    // _header += "Server: " + this->_server.name + CRLF;
+    if (this->_type != 2) {
+        _header += "Content-Length: " + itos(this->_body.size()) + CRLF;
+        _header += "Content-Type: " + (this->_type == 1 ? getMimeType(this->_req.getUri().path.substr(this->_req.getUri().path.find_last_of('.') + 1, this->_req.getUri().path.length())) : "text/html") + CRLF;
     }
-	else
-		_type = "text/html";
-    size_t bodyPos = _cgiRes.find("\r\n\r\n");
-    if (bodyPos != std::string::npos)
-        _body = _cgiRes.substr(bodyPos + 4);
-	size_t lengthPos = _cgiRes.find("Content-length: ");
-    if (lengthPos != std::string::npos)
-    {
-        size_t lengthEndPos = _cgiRes.find("\r\n", lengthPos);
-        if (lengthEndPos != std::string::npos)
-        {
-            std::string length_str = _cgiRes.substr(lengthPos + 16, lengthEndPos - lengthPos - 16);
-            _contentLength = atoi(length_str.c_str());
+    _header += CRLF;
+	// std::cout <<"header: " <<_header + _body << std::endl;
+	// std::cout <<"body: " <<_body << std::endl;
+	return(_header + _body);
+}
+
+std::string Response::errRes(std::string err)
+{
+    // std::cout << err << std::endl; //????
+	int code = _code;
+    std::string path = this->_server.error_pages[this->_code];
+    if (!readContent(path))
+        _body = "<!DOCTYPE html>\n<html><title>Errorpage</title><body><h1>ERROR" + itos(_code) + "</h1></body></html>";
+    this->_type = 0;
+	_code = code;
+    return res();
+}
+
+VirtualServer Response::findServer() {
+    VirtualServer server;
+    for(int i=0; i<_cf.servers.size(); i++) {
+		// std::cout << _cf.servers[i].port << " bla " << _req.getPort() << std::endl;
+        if(_cf.servers[i].port == _req.getPort()) {
+            server = _cf.servers[i];
+			break ;
+		}
+    }
+    return (server);
+}
+
+std::string getPath(const std::string& filePath) {
+    // Find the last occurrence of a forward slash
+    std::size_t slashIndex = filePath.find_last_of('/');
+    if (slashIndex == std::string::npos) {
+        // No forward slash found, return the original string
+        return filePath;
+    }
+    // Extract the directory path up to the last forward slash
+    return filePath.substr(0, slashIndex);
+}
+
+//  /pathto/file.extension
+void Response::parsePath(const std::string& path) {
+    for (int i = 0; i < _server.locations.size(); i++) {
+        if (_server.locations[i].path.compare(_req.getUri().path) == 0) {
+            _path = _server.locations[i].path;
+            return ;
+        }
+	}
+	std::string::size_type last_slash_pos = path.find_last_of('/');
+    std::string::size_type last_dot_pos = path.find_last_of('.');
+    if (last_slash_pos != std::string::npos || last_dot_pos != std::string::npos) {
+        _path = path.substr(0, last_slash_pos);
+        _file = path.substr(last_slash_pos + 1, last_dot_pos - last_slash_pos - 1);
+        _ext = path.substr(last_dot_pos + 1);
+    }
+}
+
+bool Response::findLocation(Location* loc) {
+	parsePath(_req.getUri().path);
+	// std::cout << "path"<< _path << std::endl;
+	for (int i = 0; i < _server.locations.size(); i++) {
+		// std::string	root = server.root;
+        if (_server.locations[i].path.compare(_path) == 0) {
+            *loc = _server.locations[i];
+			if (loc->root.empty())
+				loc->root = _server.root;
+			// if(_file.empty() || (!_file.empty() && fileExists(_req.getUri().path)))
+	        	return true;
         }
     }
-	else
-		_contentLength = _body.size();
-}
-
-
-std::string Response::cgiRes() {
-	_cgiRes = Cgi(_indxFile, _req).execute();
-	extractCgiRes();
-	return(chooseMethod());
-	std::cout << "cgires:" << _cgiRes << std::endl;
-	std::cout << "body: " << _body << std::endl;
-	std::cout << "type: " << _type << std::endl;
-	std::cout << "version: " << _version << std::endl;
-	std::cout << "length: " << _contentLength << std::endl;
-	//if cgi status is not 200 return error
-	//then check methods and send to there...
-	// _version = "HTTP/1.1 ";
-	// return res();
+	// if location is something like that? .. first check if we have ext : ~\.cgi$
+	if (!_ext.empty()) {
+		std::string newPath = "~\\." + _ext + "$";
+		for (int i = 0; i < _server.locations.size(); i++) {
+			if (_server.locations[i].path.compare(newPath) == 0) {
+				*loc = _server.locations[i];
+				if (loc->root.empty())
+					loc->root = _server.root;
+				return true;
+			}
+    }
+	}
+    return false;
 }
 
 //making a map for status codes
@@ -203,136 +416,61 @@ void Response::makeCodeMap() {
 	_codeMap.insert(std::pair<int, std::string>(505, "505 HTTP Version Not Supported"));
 }
 
-// Returns an HTTP response string that includes the HTTP version, status code, content type,
-// and the content of a file specified by the filename argument. (date and time?)
-std::string	Response::res() {
-// 	std::cout << _res.version << "|" << std::endl;
-// 	std::cout << _res.type << std::endl;
-// // exit(1);
-	// if(_res.version.compare("HTTP/1.1") == 0){
-	// 	std::cout << _res.code << std::endl;
-	// 	return(errRes(505)); //version not supported
-	// 	/////////////buraya
-	// 	}
-	// if(_res.type.compare("Content-Type: text/html; charset=UTF-8") == 0 || _res.type.compare("Content-Type: text/html") == 0)
-	// 	return(errRes(503)); //service unavailable
-	// if (_codeMap.find(_res.code) != _codeMap.end())
-	// 	return(errRes(404)); //not found
-	std::string res = _version + " ";
-		res += statuscode(_code) + CRFL;
-		res += _type + CRFL;
-		res += CRFL;
-		if(_body.empty())
-			res += read_html_file(_filename);
-		else if (_body.empty() == 0)
-			res += _body;
-		else
-			return(codeRes(404)); 
-	std::cout << RED << getTime() << RESET << "\tResponse: \n" << CYAN << res << RESET  << std::endl;
-	return (res);
+bool Response::validMethod(std::string method) {
+	return std::find(_loc.methods.begin(), _loc.methods.end(), method) != _loc.methods.end();
 }
 
-// Read the contents of an HTML file into a string
-std::string Response::read_html_file(const std::string& fileName) {
-	std::ifstream file(fileName);
-	if (!file.is_open()) {
-		throw std::runtime_error("Failed to open file: " + fileName);
-	}
-	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-	return content;
-}
+std::string Response::getCgiRes() {return _cgiRes;}
+// std::map<std::string, std::string> Response::getOtherHeaders() {return _otherHeaders;}
+VirtualServer Response::getServer() {return _server;}
+HttpRequest Response::getReq() {return _req;}
 
-VirtualServer Response::findServer(HttpRequest req) {
-    VirtualServer server;
-    for(int i=0; i<_cf.servers.size(); i++) {
-        if(_cf.servers[i].port == req.getPort())
-            server = _cf.servers[i];
+std::string findFirstFileWithExtension(const std::string& directory, const std::string& extension) {
+    // Open the specified directory
+    DIR* dir = opendir(directory.c_str());
+    if (dir == NULL) {
+        std::cerr << "Failed to open directory: " << directory << std::endl;
+        return "";
     }
-    return (server);
-}
+    struct dirent* entry;
+    // Iterate through the directory entries
+    while ((entry = readdir(dir)) != NULL) {
+        // Get the current entry's filename as a string
+        std::string filename(entry->d_name);
+        // Check if the filename has the specified extension
+        if (filename.size() > extension.size() &&
+            filename.substr(filename.size() - extension.size()) == extension) {
 
-bool Response::findLocation(std::string reqUri, Location* loc, VirtualServer server) {
-    for (int i = 0; i < server.locations.size(); i++) {
-		// std::string	root = server.root;
-        if (server.locations[i].path.compare(reqUri) == 0) {
-            *loc = server.locations[i];
-			if (loc->root.empty())
-				loc->root = server.root;
-            return true;
+            // Close the directory and return the first found file with the specified extension
+            closedir(dir);
+            return directory + "/" + filename;
         }
     }
-    return false;
+    // If no file with the specified extension is found, close the directory and return an empty string
+    closedir(dir);
+    return "";
 }
 
-bool Response::validMethod(Location loc, std::string method) {
-	return std::find(loc.methods.begin(), loc.methods.end(), method) != loc.methods.end();
+std::string Response::itos(int value) {
+    std::ostringstream ss;
+    ss << value;
+    return ss.str();
 }
 
-bool Response::fileExists(const char* filename) {
-    struct stat buffer;
-    return (stat(filename, &buffer) == 0);
+std::string Response::getMimeType(const std::string &ext) {
+    if (ext == "html")
+		return "text/html";
+	if (ext == "css")
+		return "text/css";
+	if (ext == "js")
+		return "text/javascript";
+	if (ext == "jpeg" || ext == "jpg")
+		return "image/jpeg";
+	if (ext == "png")
+		return "image/png";
+	if (ext == "bmp")
+		return "image/bmp";
+	if (ext == "ico")
+		return "image/x-icon";
+	return "text/html";
 }
-
-void Response::setIndxFile() {
-    if(checkIndx())
-        _cgiOn = 0;
-    else if (fileExists(_loc.cgi_path.c_str())) {
-		std::cout << _loc.cgi_path << "bu path" << std::endl;
-        _indxFile = _loc.cgi_path;
-        _cgiOn = 1;
-    }
-	else if (_loc.autoindex) {
-		std::cout << _loc.autoindex << std::endl;
-		AutoIndex listing(_loc.root);
-		std::string dst= _loc.root + "/listing.html";
-		moveFile("listing.html", dst);
-		_indxFile = _loc.root + "/listing.html";
-		_cgiOn = 0;
-	}
-	// else if (_loc.redirect_url)
-	// autoindex of check etmeti unutmaaaaaaaaaa!!!!!!!!!!
-	else
-		std::cout << RED << getTime() << RESET << "\tPage not found. \n" << RESET  << std::endl; 
-}
-
-bool Response::checkIndx() {
-    for (int i = 0; i < _loc.index.size(); i++) {
-		std::cout << _loc.root << std::endl;
-        std::string filename = _loc.root + "/" + _loc.index[i];
-        if (fileExists(filename.c_str())) {
-            _indxFile = filename;
-			std::cout << filename << std::endl;
-            return true;
-		}
-    }
-    return false;
-}
-
-std::string Response::statuscode(int cd) {
-	return _codeMap[cd];
-}
-
-// Returns an HTTP error response string
-std::string Response::codeRes(int err) {
-	_code = err;
-	_version = "HTTP/1.1";
-	_type = "Content-Type: text/html; charset=UTF-8";
-	_filename = std::to_string(err/100) + "xx_html/" + std::to_string(err) + ".html";
-	return (res());
-}
-
-void Response::moveFile(const std::string& source_path, const std::string& destination_path) {
-    int result = std::rename(source_path.c_str(), destination_path.c_str());
-    if (result != 0) {
-        std::cerr << "Error: Failed to move file from " << source_path << " to " << destination_path << std::endl;
-    }
-}
-
-// std::string Request::findValidFile(Location loc) {
-//     for (int i = 0; i < loc.index.size(); i++) {
-//         std::string filename = loc.root + "/" + loc.index[i];
-//         if (fileExists(filename.c_str()))
-//             return filename;
-//     }
-//     return "";
-// }

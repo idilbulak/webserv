@@ -1,7 +1,7 @@
 #include "../inc/AutoIndex.hpp"
 
-AutoIndex::AutoIndex(std::string root) {
-    generate_html_page(list_directory(root));
+AutoIndex::AutoIndex(std::string root)  : _root(root) {
+    // return generate_html_page(list_directory(root));
 }
 AutoIndex::~AutoIndex(){}
 
@@ -61,27 +61,20 @@ std::vector<std::string> AutoIndex::list_directory(const std::string& dir_path) 
     return output;
 }
 
-void AutoIndex::generate_html_page(const std::vector<std::string>& listing) {
-    std::ofstream html_file("listing.html");
-    if (!html_file.is_open()) {
-        std::cout << "Error: Could not open file for writing." << std::endl;
-        return;
-    }
+std::string AutoIndex::generate_html_page() {
+    const std::vector<std::string> listing =list_directory(_root);
+    std::stringstream ss;
     // Output the HTML header
-    html_file << "<html><head><title>Listing</title></head><body>" << std::endl;
+    ss << "<html><head><title>Listing</title></head><body>" << std::endl;
     // Output the listing as an unordered list
-    html_file << "<ul>" << std::endl;
+    ss << "<ul>" << std::endl;
     for (std::vector<std::string>::const_iterator it = listing.begin(); it != listing.end(); ++it) {
-        html_file << "<li>" << *it << "</li>" << std::endl;
+        ss << "<li>" << *it << "</li>" << std::endl;
     }
-    html_file << "</ul>" << std::endl;
+    ss << "</ul>" << std::endl;
     // Output the HTML footer
-    html_file << "</body></html>" << std::endl;
-    html_file.close();
+    ss << "</body></html>" << std::endl;
+
+    return ss.str();
 }
 
-// int main() {
-//     std::vector<std::string> listing = list_directory("./assets");
-//     generate_html_page(listing);
-//     return 0;
-// }

@@ -23,9 +23,10 @@ class AutoIndex {
 		~AutoIndex();
 
         std::vector<std::string> list_directory(const std::string& dir_path);
-		void generate_html_page(const std::vector<std::string>& listing);
-		
+		std::string generate_html_page();
+	
 	private:
+		std::string	_root;
 		
 
 };

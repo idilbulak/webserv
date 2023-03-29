@@ -1,5 +1,4 @@
-#ifndef CGI_HPP
-# define CGI_HPP
+#pragma once
 
 #include <iostream>
 #include <sstream>
@@ -11,21 +10,26 @@
 #include <sys/wait.h>
 #include <vector>
 #include <map>
-#include "HttpRequest.hpp"
+#include "Response.hpp"
 
 #define SIZE 65536 //64kilobytes
 
+class Response;
+
 class Cgi {
 	public:
-		Cgi(std::string file, HttpRequest req);
+		Cgi(std::string file, Response &response);
 		~Cgi(void);
 		std::string 	execute();
 		void	envCgi();
+				std::string itos(int num);
 
 	private:
 		std::map<std::string, std::string> _env;
 		HttpRequest      _req;
+		VirtualServer		_server;
 		std::string     _indxFile;
+		Response     &_response;
 		// std::string _body; //req.body
 // 		std::string _method;
 // 		std::string _host;
@@ -39,4 +43,4 @@ class Cgi {
 // 		// std::map<int, std::string> _codeMap;
 };
 
-#endif
+// #endif

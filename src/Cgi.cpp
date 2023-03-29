@@ -1,6 +1,6 @@
 #include "../inc/Cgi.hpp"
 
-Cgi::Cgi(std::string file, HttpRequest req) : _indxFile(file), _req(req) {
+Cgi::Cgi(std::string file, Response &response) : _response(response), _indxFile(file), _req(response.getReq()), _server(response.getServer()) {
     envCgi();
 }
 
@@ -30,7 +30,7 @@ static void freearr(char **arr)
 	delete[] arr;
 }
 
-std::string itos(int num) {
+std::string Cgi::itos(int num) {
     std::stringstream ss;
     ss << num;
     return ss.str();
@@ -39,21 +39,29 @@ std::string itos(int num) {
 void    Cgi::envCgi()
 {
     // BURAYI EKLEMEYIIII UNUTMAAAAAAAAAAAAA
-    _env.insert(std::make_pair("SERVER_SOFTWARE", _req.getVersion()));
-    _env.insert(std::make_pair("SERVER_NAME", ""));
-    _env.insert(std::make_pair("CONTENT_TYPE", _req.getCntType()));
-    // _env.insert(std::make_pair("CONTENT_LENGTH", itos(_req.getContentLength)));
-    _env.insert(std::make_pair("HTTP_COOKIE", ""));
-    _env.insert(std::make_pair("HTTP_USER_AGENT", ""));
-    _env.insert(std::make_pair("PATH_INFO", _indxFile));
-    _env.insert(std::make_pair("QUERY_STRING", _req.getQueryStr()));
-    _env.insert(std::make_pair("REMOTE_ADDR", ""));
-    _env.insert(std::make_pair("REMOTE_HOST", ""));
-    _env.insert(std::make_pair("REQUEST_METHOD", ""));
-    _env.insert(std::make_pair("REQUEST_METHOD", ""));
-    _env.insert(std::make_pair("SCRIPT_FILENAME", _indxFile));
+    _env.insert(std::make_pair("GATEWAY_INTERFACE", "CGI/1.1"));
+    _env.insert(std::make_pair("SERVER_SOFTWARE", _server.name));
+    _env.insert(std::make_pair("SERVER_PROTOCOL", "HTTP/1.1"));
+    _env.insert(std::make_pair("SERVER_PORT", _server.port));
+    _env.insert(std::make_pair("REQUEST_METHOD", _req.getMethod()));
+    _env.insert(std::make_pair("PATH_INFO", _req.getUri().path));
+    std::cout << _req.getUri().path << std::endl;
+    _env.insert(std::make_pair("PATH_TRANSLATED", _req.getUri().path));
     _env.insert(std::make_pair("SCRIPT_NAME", _indxFile));
+    _env.insert(std::make_pair("SCRIPT_FILENAME", _indxFile));
+    _env.insert(std::make_pair("QUERY_STRING", _req.getQueryStr()));
+    _env.insert(std::make_pair("REMOTE_ADDR", _server.host));
+    _env.insert(std::make_pair("REMOTEaddr", _server.host));
+    _env.insert(std::make_pair("REQUEST_URI", _req.getUri().path + _req.getQueryStr()));
+    _env.insert(std::make_pair("REDIRECT_STATUS", "200"));
+    // _env.insert(std::make_pair("CONTENT_TYPE", _response.getOtherHeaders()["Content-Type"]));
+    _env.insert(std::make_pair("CONTENT_LENGTH", itos(_req.getBody().length())));
 
+    // _env.insert(std::make_pair("SERVER_NAME", ""));
+    // _env.insert(std::make_pair("HTTP_COOKIE", ""));
+    // _env.insert(std::make_pair("HTTP_USER_AGENT", ""));
+    // _env.insert(std::make_pair("REMOTE_HOST", ""));
+    // _env.insert(std::make_pair("REQUEST_METHOD", ""));
     // _env.insert(std::make_pair("PATH_INFO", _req.uri));
     // _env.insert(std::make_pair("BODY", _req.body));
 }
