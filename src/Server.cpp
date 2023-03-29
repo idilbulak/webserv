@@ -66,6 +66,7 @@ void Server::onClientConnect(struct kevent& event) {
 	
 	for (int i = 0; i < event.data; i++) {
 
+		std::cout << "data " << event.data << std::endl;
 		int connectionSocket = _listenSockets[event.ident].accept();
 		printLog(_listenSockets[event.ident], "Connecting... ", connectionSocket);
 		UpdateKqueue(connectionSocket, EVFILT_READ, EV_ADD, 0);
@@ -88,8 +89,8 @@ void Server::onRead(struct kevent& event) {
 		closeConnection(event);
 		return;
 	}
-	if (num_bytes == 0) { //??
-		// printLog(event.ident, )
+	if (num_bytes == 0) {
+
 		closeConnection(event);
 		return;
 	}
@@ -102,6 +103,7 @@ void Server::onRead(struct kevent& event) {
 		printLog(event, YELLOW, "Receiving... ", _Clients[event.ident].request);
 		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf, _Clients[event.ident].port).generate();
 		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
+		printLog(event, CYAN, "Sending... ", _Clients[event.ident].response);
 	}
 }
 
@@ -124,7 +126,7 @@ void Server::onWrite(struct kevent& event) {
 void Server::closeConnection(struct kevent& event) {
 
 	if (event.filter == EVFILT_TIMER)
-		printLog(event, PURPLE, "Disconnecting... ", "Connection timeout, bouncing client... ");
+		printLog(event, PURPLE, "Disconnecting... ", "Connection timeout");
 	else
 		printLog(event, "", "Disconnecting... ");
 	
@@ -164,8 +166,9 @@ void Server::printLog(struct kevent& event, std::string color, std::string activ
 	std::cout << RED << getTime() << RESET;
 	std::cout << event;
 	std::cout << std::setw(17) << activity << RESET;
-	std::cout << GREEN << std::setw(10) << event.ident << RESET; 
+	std::cout << GREEN << std::setw(10) << event.ident << RESET;
 	std::cout << color << httpMessage.substr(0, httpMessage.find("\r\n")) << RESET;
+	// std::cout << std::endl << std::endl << color << httpMessage << RESET;
 	std::cout << std::endl;
 }
 
@@ -177,6 +180,7 @@ std::ostream& operator<<(std::ostream &os, struct kevent& event) {
 
 	os << "port: " << BLUE << std::left << std::setw(8) << ntohs(addr.sin_port) << RESET;
 	os << "IP address: " << BLUE << std::setw(12) << inet_ntoa(addr.sin_addr) << RESET;
+
 	return os;
 }
 
