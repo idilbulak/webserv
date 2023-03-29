@@ -44,9 +44,7 @@ void Config::CheckLocation(std::vector<Location> location)
     for (int i = 0; location.size() > i ; i++)
     {
         CheckPath(location[i].path);
-        low(location[i].methods);
-        CheckRoot(location[i].root);
-        CheckCgiExit(location[i].cgi_ext,location[i].cgi_path);
+        CheckAllow(location[i].methods);
         CheckUploadDir(location[i].upload_dir);
         CheckIndex(location[i].index);
         CheckReturn(location[i].redirect_cd, location[i].redirect_url);
@@ -64,25 +62,12 @@ void Config::CheckAllow(std::vector<std::string> methods){
     {
         if (!(methods[i].compare("PUT") == 0 || methods[i].compare("GET") == 0 || methods[i].compare("POST") == 0 || methods[i].compare("DELETE") == 0))
         {
-            std::cout << methods[i] << std::endl;
+            std::cout << " method is  " << methods[i] << std::endl;
             throw std::invalid_argument("Methods error");}
     }
 }
 
-void Config::CheckRoot(std::string root){
-    
-    if (root.empty())
-        return;
-    if (access(root.c_str(), F_OK) == -1) 
-        throw std::invalid_argument("root path error!");
-    
-}
 
-//What do i have check? i don't know..
-void Config::CheckCgiExit(std::string cgi_ext,std::string cgi_path){
-    if (cgi_ext.empty() && cgi_path.empty())
-        return;
-}
 
 void Config::CheckUploadDir(std::string	upload_dir){
     // if (upload_dir.empty())

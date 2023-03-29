@@ -113,7 +113,7 @@ bool CheckConfFile::checkLocationKey(std::string word)
     word = deleteSpace(word);
     if(word.empty())
         return true;
-    if (word == "root" || word == "allow" || word == "autoindex" || word == "index" || word == "upload_dir" || word == "cgi_ext"  || word == "return")
+    if (word == "cgi_path" || word == "root" || word == "allow" || word == "autoindex" || word == "index" || word == "upload_dir" || word == "cgi_ext"  || word == "return")
         return true;
     return false;
 }
@@ -144,7 +144,7 @@ bool CheckConfFile::checkServerKey(std::string word)
     }
     else if (getLocationBrackets())
         return checkLocationKey(word);
-    else if (word == "root" || word == "server" || word == "{" || word == "}" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" )
+    else if (word == "root" || word == "server" || word == "{" || word == "}" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" || word == "max_body_size" || word == "cgi_ext" )
         return true;
     return false;
 }

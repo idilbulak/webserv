@@ -18,7 +18,6 @@ struct Location {
 	std::vector<std::string>	methods;
 	std::string					root;
 	int							autoindex;
-	std::string					cgi_ext;
 	std::string					cgi_path;
 	std::string					upload_dir;
 	std::vector<std::string>	index;
@@ -32,6 +31,7 @@ struct VirtualServer {
 	std::string					name;
 	std::string					root;
 	std::string					max_body_size;
+	std::vector<std::string>	cgi_ext;
 	std::map<int,std::string>   error_pages;
 	std::vector<Location>		locations;
 };
@@ -51,7 +51,7 @@ class Config {
 		void parseErrorPage(std::map<int,std::string> &error_pages, std::vector<std::string> &tokens, size_t &i);
 		void parseLocation(std::vector<Location> &locations, const std::vector<std::string> &tokens, size_t &i);
 		bool	check_word(const std::string &word);
-
+		void parseCgiExt(std::vector<std::string> &cgi_ext, const std::vector<std::string> &tokens, size_t &i);
 
 		//check all data..
 
@@ -61,8 +61,6 @@ class Config {
 		void CheckLocation(std::vector<Location> location);
 		void CheckPath(std::string path);
         void CheckAllow(std::vector<std::string> methods);
-        void CheckRoot(std::string root);
-        void CheckCgiExit(std::string cgi_ext,std::string cgi_path);
         void CheckUploadDir(std::string	upload_dir);
         void CheckIndex(std::vector<std::string> index);
         void CheckReturn(int redirect_cd, std::string redirect_url);
