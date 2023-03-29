@@ -44,7 +44,7 @@ void Config::CheckLocation(std::vector<Location> location)
     for (int i = 0; location.size() > i ; i++)
     {
         CheckPath(location[i].path);
-        CheckAllow(location[i].methods);
+        low(location[i].methods);
         CheckRoot(location[i].root);
         CheckCgiExit(location[i].cgi_ext,location[i].cgi_path);
         CheckUploadDir(location[i].upload_dir);
@@ -62,7 +62,7 @@ void Config::CheckPath(std::string path){
 void Config::CheckAllow(std::vector<std::string> methods){
     for (int i = 0; i < methods.size(); i++)
     {
-        if (!(methods[i].compare("GET") == 0 || methods[i].compare("POST") == 0 || methods[i].compare("DELETE") == 0))
+        if (!(methods[i].compare("PUT") == 0 || methods[i].compare("GET") == 0 || methods[i].compare("POST") == 0 || methods[i].compare("DELETE") == 0))
         {
             std::cout << methods[i] << std::endl;
             throw std::invalid_argument("Methods error");}
