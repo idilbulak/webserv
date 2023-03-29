@@ -2,6 +2,7 @@
 # define Server_HPP
 
 #include <iostream>
+#include <iomanip>
 #include "Config.hpp"
 #include "Socket.hpp"
 #include "Response.hpp"
@@ -30,25 +31,21 @@ class Server {
 		Config _cf;
 		int _kq;
 		std::map<int, Socket> _listenSockets;
-		// std::vector<int> _ListenSockets;
-		// std::vector<int> _ConnectionSockets;
 		std::map<int, struct SocketData> _Clients;
-		// std::vector<int> _ConnectionSockets;
-		// std::map<int, std::string> _request;
-		// std::map<int, std::string> _response;
 		struct kevent _changeList;
 		struct kevent _eventList;
 
+		void	UpdateKqueue(int fd, int filter, int flag, int data);
 		bool	isListenSockfd(struct kevent& event);
-		// bool	isConnectionSockfd(struct kevent& event);
 		void	onClientConnect(struct kevent& event);
 		void	onRead(struct kevent& event);
 		void	onWrite(struct kevent& event);
 		void	closeConnection(struct kevent& event);
-		// bool 	isComplete(struct kevent& event);
 
-		// void	UpdateKqueue()
-
+		void	printLog(Socket socket, std::string activity);
+		void	printLog(Socket socket, std::string activity, int filed);
+		void	printLog(struct kevent& event, std::string color, std::string activity);
+		void	printLog(struct kevent& event, std::string color, std::string activity, std::string httpMessage);
 };
 
 std::ostream& operator<<(std::ostream &os, struct kevent& event);

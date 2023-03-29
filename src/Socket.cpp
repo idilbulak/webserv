@@ -8,7 +8,7 @@ Socket::Socket(std::string host, std::string port) :_host(host), _port(port) {
 
 	createSocket();
 	setSocketAddr();
-	setFiledOptions();
+	setFiledOptions(_fd);
 	bind();
 	listen();
 }
@@ -30,18 +30,18 @@ void Socket::setSocketAddr() {
 	_addr.sin_port = htons(port);
 }
 
-void Socket::setFiledOptions() {
+void Socket::setFiledOptions(int filed) {
 
 	int optval = 1;
-	if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
+	if (setsockopt(filed, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
 		ERROR("setsockopt() failed");
 		exit(1);
 	}
-	if (setsockopt(_fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) == -1) {
+	if (setsockopt(filed, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) == -1) {
 		ERROR("setsockopt() failed");
 		exit(1);
 	}
-	if (fcntl(_fd, F_SETFL, O_NONBLOCK) == -1) {
+	if (fcntl(filed, F_SETFL, O_NONBLOCK) == -1) {
 		ERROR("fcntl() failed");
 		exit(1);
 	}
@@ -49,17 +49,15 @@ void Socket::setFiledOptions() {
 
 void Socket::bind() {
 
-	// bind socket to specific IP address and port using socket addr structure
 	if (::bind(_fd, (struct sockaddr *)&_addr, sizeof(_addr)) < 0 ) {
 		ERROR("bind() failed: ");
-		close( _fd);
 		exit(1);
 	}
 }
 
 void Socket::listen() {
 
-	if (::listen(_fd, BACKLOG) < 0) {
+	if (::listen(_fd, BACKLOG) < 0) { // BACKLOG??
 		ERROR("listen() failed: ");
 		exit(1);
 	}
@@ -70,19 +68,18 @@ int Socket::accept() {
 	int connectionSocket = ::accept(_fd, NULL, NULL);
 	if (connectionSocket < 0) {
 		ERROR("accept() failed");
-		return -1;
+		exit(1);
 	}
-	fcntl(connectionSocket, F_SETFL, O_NONBLOCK);
+	setFiledOptions(connectionSocket); //??
 	return connectionSocket;
 }
 
 std::ostream& operator<<(std::ostream &os, Socket& obj) {
 
-	os << "port: " << CYAN << ntohs(obj.getAddr().sin_port) << RESET
-	<< " \tIP address: " << inet_ntoa(obj.getAddr().sin_addr);
+	os << "port: " << BLUE << std::left << std::setw(8) << ntohs(obj.getAddr().sin_port) << RESET;
+	os << "IP address: " << BLUE << std::setw(12) << inet_ntoa(obj.getAddr().sin_addr) << RESET;
 	return os;
 }
 
 Socket::~Socket() {
-
 }

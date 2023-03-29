@@ -5,47 +5,31 @@ Server::Server(Config &cf) :_cf(cf) {
 
 void Server::setup() {
 
-	// create kqueue
 	_kq = kqueue();
 	if (_kq == -1) {
+
 		ERROR("kqueue() failed");
 		exit(1);
 	}
 
-	// loop over virtual servers
 	for (int i = 0; i < _cf.servers.size(); i++) {
 
-		// create socket, bind and listen
 		Socket listenSocket(_cf.servers[i].host, _cf.servers[i].port);
-
-		// save listensocket to map
 		_listenSockets.insert(std::pair<int, Socket>(listenSocket.getfd(), listenSocket));
-
-		// initialize kevent struct
-		EV_SET(&_changeList, listenSocket.getfd(), EVFILT_READ, EV_ADD, 0, 0, 0);
-
-		// attach kevent to kqueue
-		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
-			ERROR("adding listenSocket to kqueue");
-			exit(1);
-		}
-		// display on standard out
-		std::cout << RED << getTime() << RESET << listenSocket << "\tListening... " << std::endl;
+		UpdateKqueue(listenSocket.getfd(), EVFILT_READ, EV_ADD, 0);
+		printLog(listenSocket, "listening... ");
 	}
 }
 
 void Server::run() {
 
-	// start kevent monitoring loop
-	int	new_events;
 	for(;;) {
 
-		// retrieve triggered event !! still needs timespec struct for TIMEOUT !!
-		new_events = kevent(_kq, NULL, 0, &_eventList, 1, NULL);
-		// check what type of event triggered
+		int new_events = kevent(_kq, NULL, 0, &_eventList, 1, NULL);
 		if (new_events == -1 || _eventList.flags & EV_ERROR) {
-			ERROR("requesting new kevent");
-			break ;
+
+			ERROR("requesting new kevent failed");
+			break ; //???
 		}
 		else if (_eventList.flags & EV_EOF || _eventList.filter == EVFILT_TIMER)
 			closeConnection(_eventList);
@@ -59,15 +43,15 @@ void Server::run() {
 	close(_kq); //?????
 }
 
-// bool Server::isListenSockfd(struct kevent& event) {
+void Server::UpdateKqueue(int fd, int filter, int flag, int data) {
 
-// 	std::map<int, Socket>::iterator it = _listenSockets.begin();
-// 	for (; it != _listenSockets.end(); ++it) {
-// 		if (event.ident == it->first)
-// 			return true;
-// 	}
-// 	return false;
-// }
+	EV_SET(&_changeList, fd, filter, flag, 0, data, NULL);
+	if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
+
+		ERROR("updateKqueue() failed");
+		exit(1);
+	}
+}
 
 bool Server::isListenSockfd(struct kevent& event) {
 
@@ -80,110 +64,107 @@ bool Server::isListenSockfd(struct kevent& event) {
 
 void Server::onClientConnect(struct kevent& event) {
 	
-	// check if multiple clients are connecting at same time
-	for (int i = 0; i < event.data; i++;) {
+	for (int i = 0; i < event.data; i++) {
 
-		// accept new connection on listening socket
 		int connectionSocket = _listenSockets[event.ident].accept();
-		if (connectionSocket < 0) {
-			return ;
-		}
+		printLog(_listenSockets[event.ident], "Connecting... ", connectionSocket);
+		UpdateKqueue(connectionSocket, EVFILT_READ, EV_ADD, 0);
 
-		// print
-		std::cout << RED << getTime() << RESET << _listenSockets[event.ident] << "\tConnecting... " << PURPLE << connectionSocket << RESET << std::endl;
-		
-		// add new connection to kqueue for receiving
-		EV_SET(&_changeList, connectionSocket, EVFILT_READ, EV_ADD, 0, 0, NULL);
-		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
-			ERROR("adding EVFILT_READ to kqueue");
-		}
-
-		// add timeout to bounch new connection if neccesary
-		EV_SET(&_changeList, connectionSocket, EVFILT_TIMER, EV_ADD, 0, 5 * 1000, NULL);
-		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
-			ERROR("adding EVFILT_TIMER to kqueue");
-		}
-
-		// initialize struct to store request, response and port number
 		struct SocketData data;
 		data.port = _listenSockets[event.ident].getPort();
 		_Clients.insert(std::make_pair(connectionSocket, data));
 	}
-
 }
 
 void Server::onRead(struct kevent& event) {
 		
+	UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 5 * 1000);
+
 	char buffer[4096];
 	int num_bytes = recv(event.ident, buffer, sizeof(buffer), 0);
 	if (num_bytes == -1) {
+
 		ERROR("recv() failed");
 		closeConnection(event);
 		return;
 	}
-	if (num_bytes == 0) //??
-		return ;
+	if (num_bytes == 0) { //??
+		return;
+	}
 	buffer[num_bytes] = '\0';
 	_Clients[event.ident].request.append(buffer, num_bytes);
 
 	if (HttpRequest().isComplete(_Clients[event.ident].request)) {
 
-		// delete timeout to bounch new connection if neccesary
-		EV_SET(&_changeList, connectionSocket, EVFILT_TIMER, EV_DELETE, 0, 5 * 1000, NULL);
-		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) == -1) {
-			ERROR("adding EVFILT_TIMER to kqueue");
-		}
-
-		// write request HTTP to terminal
-		std::cout << RED << getTime() << RESET << event << "\tReceiving... " << PURPLE << event.ident << RESET  << "\n\n" << YELLOW << _Clients[event.ident].request << RESET  << std::endl;
-		
-		// parse request and create response 
+		UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
+		printLog(event, YELLOW, "Receiving... ", _Clients[event.ident].request);
 		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf).generate();
-
-		// add socket to kqueue ready for writing
-		EV_SET(&_changeList, event.ident, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
-		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0) {
-			ERROR("adding EVFILT_WRITE to kqueue");
-		}
+		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
 	}
 }
 
 void Server::onWrite(struct kevent& event) {
 
-	// send response message
 	int num_bytes = send(event.ident, _Clients[event.ident].response.c_str(), _Clients[event.ident].response.size(), 0);
 	if (num_bytes <= 0) {
 
-		ERROR("send()");
+		ERROR("send() failed");
 		closeConnection(event);
 		return;
 	}
 	_Clients[event.ident].response.erase(0, num_bytes);
 
-	// remove client if complete response has been send
 	if (_Clients[event.ident].response.empty()) {
-
-		EV_SET(&_changeList, event.ident, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-		if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0)
-			ERROR("removing EVFILT_WRITE event from kqueue");
 		closeConnection(event);
 	}
 }
 
 void Server::closeConnection(struct kevent& event) {
 
-	std::cout << RED << getTime() << RESET << event << "\tDisconnecting... " << PURPLE << event.ident << RESET << std::endl;
-
-	// remove connectionSocket from kqueue // not necessary???
-	EV_SET(&_changeList, event.ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-	if (kevent(_kq, &_changeList, 1, NULL, 0, NULL) < 0)
-		ERROR("removing EVFILT_READ event from kqueue");
+	if (event.filter == EVFILT_TIMER)
+		printLog(event, PURPLE, "Disconnecting... ", "Connection timeout, bouncing client... ");
+	else
+		printLog(event, "", "Disconnecting... ");
 	
-	// free SocketData connected to event
 	_Clients.erase(event.ident);
-
-	// close connectionSocket file descriptor
 	::close(event.ident);
+}
+
+void Server::printLog(Socket socket, std::string activity) {
+
+	std::cout << RED << getTime() << RESET;
+	std::cout << socket;
+	std::cout << std::setw(17) << activity;
+	std::cout << GREEN << socket.getfd() << RESET;
+	std::cout << std::endl;
+}
+
+void Server::printLog(Socket socket, std::string activity, int filed) {
+
+	std::cout << RED << getTime() << RESET;
+	std::cout << socket;
+	std::cout << std::setw(17) << activity;
+	std::cout << GREEN << socket.getfd() << " >> " << filed << RESET;
+	std::cout << std::endl;
+}
+
+void Server::printLog(struct kevent& event, std::string color, std::string activity) {
+
+	std::cout << RED << getTime() << RESET;
+	std::cout << event;
+	std::cout << color << std::setw(17) << activity << RESET;
+	std::cout << GREEN << event.ident << RESET; 
+	std::cout << std::endl;
+}
+
+void Server::printLog(struct kevent& event, std::string color, std::string activity, std::string httpMessage) {
+
+	std::cout << RED << getTime() << RESET;
+	std::cout << event;
+	std::cout << std::setw(17) << activity << RESET;
+	std::cout << GREEN << std::setw(10) << event.ident << RESET; 
+	std::cout << color << httpMessage.substr(0, httpMessage.find("\r\n")) << RESET;
+	std::cout << std::endl;
 }
 
 std::ostream& operator<<(std::ostream &os, struct kevent& event) {
@@ -192,8 +173,8 @@ std::ostream& operator<<(std::ostream &os, struct kevent& event) {
 	socklen_t addrlen = sizeof(addr);
 	getsockname(event.ident, (struct sockaddr *)&addr, &addrlen);
 
-	os << "port: " << CYAN << ntohs(addr.sin_port) << RESET
-	<< " \tIP address: " << inet_ntoa(addr.sin_addr);
+	os << "port: " << BLUE << std::left << std::setw(8) << ntohs(addr.sin_port) << RESET;
+	os << "IP address: " << BLUE << std::setw(12) << inet_ntoa(addr.sin_addr) << RESET;
 	return os;
 }
 
