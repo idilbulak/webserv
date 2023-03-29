@@ -18,8 +18,13 @@ bool Response::fileExists(std::string name) {
 
 bool Response::checkIndx() {
     for (int i = 0; i < _loc.index.size(); i++) {
-        if (fileExists(_loc.index[i])) {
-			_indxFile = _server.root + "/" + _loc.index[i];
+		std::string path;
+		if(!_loc.root.empty())
+			path = _loc.root + _loc.index[i];
+		else
+			path = _loc.index[i];
+        if (fileExists(path)) {
+			_indxFile = _server.root + "/" + path;
             return true;
 		}
     }
@@ -41,7 +46,7 @@ bool Response::folderExists(const std::string folder_to_check) {
 }
 
 std::string	Response::generate() {
-	if (!findLocation(&_loc)) {
+	if (!findLocation(&_loc, _req.getUri().path)) {
 		_code = 404;
 		return errRes("Location block not found");
 	}
@@ -53,45 +58,39 @@ std::string	Response::generate() {
 		_code = 505;
 		return(errRes("HTTP Version Not Supported"));
 	}
-	// std::cout << _file << "budur"<< std::endl;
 	_cgiOn = 0;
-	// if (!_file.empty()) {
-	// 	std::cout<< "DJKDJDJDJ"<< _file << _ext << std::endl;
-	// 	if (fileExists(_file) || fileExists(_file + "." + _ext)) {
-	// 		_indxFile = _file;
-	// 		_cgiOn = 1;
-	// 	}
-	// 	// roottan da checj ettttttt
-	// 	else {
-	// 		_code = 404;
-	// 		errRes("Not Found");
-	// 	}
-	// }
-	// if cgi path exists
 	if (!_loc.cgi_path.empty()) {
-		std::string fullpath = _server.root + _loc.cgi_path;
+		std::string cgiPath;
+		if (!_loc.root.empty())
+			cgiPath = _loc.root + "/" + _loc.cgi_path;
+		else
+			cgiPath = _loc.cgi_path;
+		std::string fullpath = _server.root + "/" + cgiPath;
 		_typePath = pathType(fullpath);
 		// if path folder
 		if (_typePath == 2) {
 			if(folderExists(_loc.cgi_path)) {
 				// correct cgi.
-				if(_ext.empty() || _ext.substr(1).compare(_loc.cgi_ext)) {
-					_indxFile = findFirstFileWithExtension(_loc.cgi_path, _loc.cgi_ext);
-					_cgiOn = 1;
-				}
+				// if(_ext.empty() || _ext.substr(1).compare(_loc.cgi_ext)) {
+					// _indxFile = findFirstFileWithExtension(_loc.cgi_path, _loc.cgi_ext);
+					// _cgiOn = 1;
+				// }
 			}
 		}
 		// if path file
 		// ////////////////
 		else if (_typePath == 1) {
-			if(fileExists(_loc.cgi_path)) {
+			if(fileExists(cgiPath)) {
 				// correct cgi 
-				if(_ext.empty() || _ext.substr(1).compare(_loc.cgi_ext)) {
-					_indxFile = _loc.cgi_path;
+				// if(_ext.empty() || _ext.substr(1).compare(_loc.cgi_ext)) {
+					_indxFile = fullPath;
 					_cgiOn = 1;
-				}
+				// }
 			}
 		}
+	}
+	if(!_file.empty()) {
+		_cgiOn = 1;
 	}
 	return (chooseMethod());
 }
@@ -226,6 +225,8 @@ int Response::pathType(const std::string& path) {
 }
 
 std::string Response::postRes() {
+	if (!_cgiOn)
+		return cgiOff();
 	_cgiRes = Cgi(_loc.cgi_path, *this).execute();
 	// burda bastirabilirsin??
 	parseCgiResponse();
@@ -322,6 +323,57 @@ VirtualServer Response::findServer() {
     return (server);
 }
 
+bool Response::findLocation(Location* loc, std::string str) {
+    if(str.empty())
+        return false;
+    // check if the full path is existing in one of the location blocks.
+    for (int i = 0; i < _server.locations.size(); i++) {
+        if (_server.locations[i].path.compare(str) == 0) {
+            *loc = _server.locations[i];
+            // _path = str;
+            return true;
+        }
+	}
+    // if we cant find the lcoation block, extract the string that is next to the last slash
+    std::string::size_type last_slash_pos = str.find_last_of('/');
+    std::string::size_type last_dot_pos = str.find_last_of('.');
+    if (last_slash_pos != std::string::npos) {
+        _path.clear();
+        _file.clear();
+        _ext.clear();
+        _path = str.substr(0, last_slash_pos);
+        _file = _req.getUri().path.substr(last_slash_pos + 1);
+        if (last_dot_pos != std::string::npos)
+            _ext = str.substr(last_dot_pos + 1);
+    }
+    if (!_ext.empty()) {
+		std::string newPath = "~\\." + _ext + "$";
+		for (int i = 0; i < _server.locations.size(); i++) {
+			if (_server.locations[i].path.compare(newPath) == 0) {
+				*loc = _server.locations[i];
+				return true;
+            }
+		}
+    }
+    for (int i = 0; i < _server.locations.size(); i++) {
+        if (_server.locations[i].path.compare(_path) == 0) {
+            std::string filePath;
+            if(!_server.locations[i].root.empty())
+                filePath = _server.locations[i].root + "/" + _file;
+            else
+                filePath = _file;
+            if fileExists(filePath) {
+                *loc = _server.locations[i];
+                _indxFile = filePath;
+                return true;
+            }
+        }
+	
+    }
+    return findLocation(loc, _path);
+}
+
+
 std::string getPath(const std::string& filePath) {
     // Find the last occurrence of a forward slash
     std::size_t slashIndex = filePath.find_last_of('/');
@@ -333,50 +385,7 @@ std::string getPath(const std::string& filePath) {
     return filePath.substr(0, slashIndex);
 }
 
-//  /pathto/file.extension
-void Response::parsePath(const std::string& path) {
-    for (int i = 0; i < _server.locations.size(); i++) {
-        if (_server.locations[i].path.compare(_req.getUri().path) == 0) {
-            _path = _server.locations[i].path;
-            return ;
-        }
-	}
-	std::string::size_type last_slash_pos = path.find_last_of('/');
-    std::string::size_type last_dot_pos = path.find_last_of('.');
-    if (last_slash_pos != std::string::npos || last_dot_pos != std::string::npos) {
-        _path = path.substr(0, last_slash_pos);
-        _file = path.substr(last_slash_pos + 1, last_dot_pos - last_slash_pos - 1);
-        _ext = path.substr(last_dot_pos + 1);
-    }
-}
 
-bool Response::findLocation(Location* loc) {
-	parsePath(_req.getUri().path);
-	// std::cout << "path"<< _path << std::endl;
-	for (int i = 0; i < _server.locations.size(); i++) {
-		// std::string	root = server.root;
-        if (_server.locations[i].path.compare(_path) == 0) {
-            *loc = _server.locations[i];
-			if (loc->root.empty())
-				loc->root = _server.root;
-			// if(_file.empty() || (!_file.empty() && fileExists(_req.getUri().path)))
-	        	return true;
-        }
-    }
-	// if location is something like that? .. first check if we have ext : ~\.cgi$
-	if (!_ext.empty()) {
-		std::string newPath = "~\\." + _ext + "$";
-		for (int i = 0; i < _server.locations.size(); i++) {
-			if (_server.locations[i].path.compare(newPath) == 0) {
-				*loc = _server.locations[i];
-				if (loc->root.empty())
-					loc->root = _server.root;
-				return true;
-			}
-    }
-	}
-    return false;
-}
 
 //making a map for status codes
 void Response::makeCodeMap() {

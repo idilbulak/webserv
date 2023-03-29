@@ -14,7 +14,8 @@ class Response {
 		void			makeCodeMap();
 		VirtualServer	findServer();
 		std::string		generate();
-		bool			findLocation(Location* loc);
+		// bool			findLocation(Location* loc);
+		bool findLocation(Location* loc, std::string str);
 		std::string		chooseMethod();
 		std::string		errRes(std::string err);
 		std::string		res();
