@@ -89,6 +89,8 @@ void Server::onRead(struct kevent& event) {
 		return;
 	}
 	if (num_bytes == 0) { //??
+		// printLog(event.ident, )
+		closeConnection(event);
 		return;
 	}
 	buffer[num_bytes] = '\0';
@@ -98,7 +100,7 @@ void Server::onRead(struct kevent& event) {
 
 		UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
 		printLog(event, YELLOW, "Receiving... ", _Clients[event.ident].request);
-		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf).generate();
+		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf, _Clients[event.ident].port).generate();
 		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
 	}
 }
