@@ -14,10 +14,14 @@ void Server::setup() {
 
 	for (int i = 0; i < _cf.servers.size(); i++) {
 
-		Socket listenSocket(_cf.servers[i].host, _cf.servers[i].port);
-		_listenSockets.insert(std::make_pair(listenSocket.getfd(), listenSocket));
-		UpdateKqueue(listenSocket.getfd(), EVFILT_READ, EV_ADD, 0);
-		printLog(listenSocket, "listening... ");
+		Socket serverSocket(_cf.servers[i].host, _cf.servers[i].port);
+		serverSocket.setSocketAddr();
+		serverSocket.setFiledOptions(serverSocket.getfd());
+		serverSocket.bind();
+		serverSocket.listen();
+		_listenSockets.insert(std::make_pair(serverSocket.getfd(), serverSocket));
+		UpdateKqueue(serverSocket.getfd(), EVFILT_READ, EV_ADD, 0);
+		printLog(serverSocket, "listening... ");
 	}
 }
 

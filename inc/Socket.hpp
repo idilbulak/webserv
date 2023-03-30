@@ -32,7 +32,11 @@ class Socket {
 		Socket();
 		~Socket(void);
 
-		int	accept();
+		void setSocketAddr();
+		void setFiledOptions(int filed);
+		void bind();
+		void listen();
+		int accept();
 
 		std::string getHost() {return _host;}
 		std::string getPort() {return _port;}
@@ -41,17 +45,13 @@ class Socket {
 		socklen_t getAddrlen() {return _addrlen;}
 
 	private:
+		int _fd;
 		std::string _host;
 		std::string _port;
-		int _fd;
 		struct sockaddr_in _addr;
 		socklen_t _addrlen;
 
-		void createSocket();
-		void setSocketAddr();
-		void setFiledOptions(int filed);
-		void bind();
-		void listen();
+		// void createSocket();
 };
 
 std::ostream& operator<<(std::ostream &os, Socket& obj);
