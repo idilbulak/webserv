@@ -28,7 +28,7 @@
 class Socket {
 
 	public:
-		Socket(VirtualServer server);//std::string host, std::string port);
+		Socket(std::string host, std::string port);
 		Socket();
 		~Socket(void);
 
