@@ -29,7 +29,7 @@ void Server::run() {
 		if (new_events == -1 || _eventList.flags & EV_ERROR) {
 
 			ERROR("requesting new kevent failed");
-			exit(1);
+			exit(1); //??
 		}
 		else if (_eventList.flags & EV_EOF || _eventList.filter == EVFILT_TIMER)
 			closeConnection(_eventList);
@@ -78,7 +78,7 @@ void Server::onClientConnect(struct kevent& event) {
 
 void Server::onRead(struct kevent& event) {
 		
-	UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 5 * 1000);
+	// UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 5 * 1000);
 
 	char buffer[4096];
 	int num_bytes = recv(event.ident, buffer, sizeof(buffer), 0);
@@ -88,22 +88,30 @@ void Server::onRead(struct kevent& event) {
 		closeConnection(event);
 		return;
 	}
+	
+
 	buffer[num_bytes] = '\0';
 	_Clients[event.ident].request.append(buffer, num_bytes);
+	// std::cout << _Clients[event.ident].request.max_size() << std::endl;
 
+		
 	if (HttpRequest().isComplete(_Clients[event.ident].request)) {
 
-		UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
+		// UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
 		printLog(event, YELLOW, "Receiving... ", _Clients[event.ident].request);
 		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf, _Clients[event.ident].port).generate();
 		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
 		printLog(event, CYAN, "Sending... ", _Clients[event.ident].response);
 	}
+
 }
 
 void Server::onWrite(struct kevent& event) {
 
-	int num_bytes = send(event.ident, _Clients[event.ident].response.c_str(), _Clients[event.ident].response.size(), 0);
+	// std::cout << "onwrite " << std::endl;
+	size_t num_bytes = send(event.ident, _Clients[event.ident].response.c_str(), _Clients[event.ident].response.size(), 0);
+	// std::cout << "num_bytes " << num_bytes << std::endl;
+
 	if (num_bytes <= 0) {
 
 		ERROR("send() failed");
@@ -113,7 +121,8 @@ void Server::onWrite(struct kevent& event) {
 	_Clients[event.ident].response.erase(0, num_bytes);
 
 	if (_Clients[event.ident].response.empty()) {
-		closeConnection(event);
+ 		closeConnection(event);
+		// std::cout << "emty" << std::endl;
 	}
 }
 
@@ -126,6 +135,7 @@ void Server::closeConnection(struct kevent& event) {
 	
 	_Clients.erase(event.ident);
 	::close(event.ident);
+	// std::cout << "hegkfhsjkfhdjs" << std::endl;
 }
 
 void Server::printLog(Socket socket, std::string activity) {
@@ -161,8 +171,8 @@ void Server::printLog(struct kevent& event, std::string color, std::string activ
 	std::cout << event;
 	std::cout << std::setw(17) << activity << RESET;
 	std::cout << GREEN << std::setw(10) << event.ident << RESET;
-	std::cout << color << httpMessage.substr(0, httpMessage.find("\r\n")) << RESET;
-	// std::cout << std::endl << std::endl << color << httpMessage << RESET;
+	// std::cout << color << httpMessage.substr(0, httpMessage.find("\r\n")) << RESET;
+	std::cout << std::endl << std::endl << color << httpMessage << RESET;
 	std::cout << std::endl;
 }
 

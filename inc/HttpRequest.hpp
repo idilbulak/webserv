@@ -11,6 +11,7 @@
 #include <vector>
 #include <map>
 #include "Config.hpp"
+#include <cmath>
 
 #define CRLF "\r\n"
 
@@ -29,6 +30,8 @@ class HttpRequest {
 		HttpRequest();
 		HttpRequest(std::string buff, std::string port);
 		~HttpRequest(void);
+
+		int i;
 
 		void	parseHeader();
 		void	parseBody();

@@ -31,6 +31,7 @@ void Socket::setSocketAddr() {
 	_addr.sin_port = htons(port);
 }
 
+// exiting?
 void Socket::setFiledOptions(int filed) {
 
 	int optval = 1;

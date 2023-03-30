@@ -1,7 +1,7 @@
 #include "../inc/HttpRequest.hpp"
 
 // =====================DAN==============================================
-HttpRequest::HttpRequest() {}
+HttpRequest::HttpRequest() {i = 0;}
 HttpRequest::~HttpRequest(void) {}
 std::string HttpRequest::find(const std::string& buff, std::string lookfor, std::string end) {
 	std::string contentType;
@@ -19,14 +19,58 @@ std::string HttpRequest::find(const std::string& buff, std::string lookfor, std:
 	return contentType;
 }
 
+int hexToDec(const std::string& hexStr) {
+    int decimal = 0;
+    for (size_t i = 0; i < hexStr.length(); ++i) {
+        char c = hexStr[i];
+        int digit = 0;
+        if (c >= '0' && c <= '9') {
+            digit = c - '0';
+        } else if (c >= 'a' && c <= 'f') {
+            digit = c - 'a' + 10;
+        } else if (c >= 'A' && c <= 'F') {
+            digit = c - 'A' + 10;
+        } else {
+            // invalid hexadecimal character
+            return -1;
+        }
+        decimal += digit * std::pow(16, hexStr.length() - i - 1);
+    }
+    return decimal;
+}
+
+   
 bool HttpRequest::isComplete(std::string buff) {
+  
+    // //std::cout << "BUFF IS" << std::endl << buff << std::endl;
 	if (buff.find("Content-Length: ") != std::string::npos) {
 
 		size_t contentLength = std::stoi(find(buff, "Content-Length: ", "\r\n"));
+        if (contentLength > 4096)
+            return true;
 		size_t headerLength = buff.find("\r\n\r\n") + 4;
 		if (contentLength + headerLength > buff.size())
 			return false;
 	}
+    else if (buff.find("Transfer-Encoding: ") != std::string::npos && buff.find("0\r\n\r\n")  == std::string::npos ) {
+        // //std::cout << "BURDAAAAAA   " << buff << std::endl;
+        size_t startPos = buff.find("\r\n\r\n") + 4;
+        std::string temp = buff.substr(startPos);
+        size_t endPos = temp.find("\r\n");
+        std::string size = temp.substr(0,endPos);
+        // //std::cout << "size  " << size << std::endl;
+        i += hexToDec(size);
+        if (i < 0)
+            return true;
+        std::string content = temp.substr(endPos);
+        //std::cout << content.size() << "i = " << i << std::endl;
+        //std::cout << content.length() << std::endl;
+        if (content.size() == i)
+            return true;
+        else 
+            return false;
+
+    }
 	else if (buff.find("\r\n\r\n") == std::string::npos)
 		return false;
 	return true;
@@ -36,6 +80,7 @@ bool HttpRequest::isComplete(std::string buff) {
 // =========================IDIL============================================
 
 HttpRequest::HttpRequest(std::string buff, std::string port) : _buff(buff), _port(port) {
+    //std::cout << "print" << std::endl;
 	parseHeader();
 	parseBody();
 }
@@ -75,6 +120,7 @@ void HttpRequest::parseBody() {
 	}
 }
 
+// http_URL = "http:" "//" host [ ":" port ] [ abs_path [ "?" query ]]
 // https://www.example.com/path/to/resource?param1=value1&param2=value2#section1
 Uri HttpRequest::parseUri(std::string token) {
     Uri uri;

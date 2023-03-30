@@ -18,7 +18,7 @@ std::string	Response::generate() {
 	// }
 	if(!_file.empty())
 		extBlock();
-	std::cout << "locblock " <<_loc.path << std::endl;
+	// std::cout << "locblock " <<_loc.path << std::endl;
 	if(!validMethod(_req.getMethod())) {
 		_code = 405;
 		return(errRes("Not allowed method"));
@@ -27,20 +27,14 @@ std::string	Response::generate() {
 		_code = 505;
 		return(errRes("HTTP Version Not Supported"));
 	}
-	if(!_req.getHeaders()["Content Length"].empty() || !_server.max_body_size.empty()) {
-		long long size = megabytesToBytes(std::stoi(_server.max_body_size));
-		if(std::stoi(_req.getHeaders()["Content Length"]) <= size)
-		_code = 413;
-		return(errRes("HTTP Version Not Supported"));
-	}
+	// if(!_req.getHeaders()["Content Length"].empty() || !_server.max_body_size.empty()) {
+	// 	long long size = megabytesToBytes(std::stoi(_server.max_body_size));
+	// 	if(std::stoi(_req.getHeaders()["Content Length"]) <= size)
+	// 	_code = 413;
+	// 	return(errRes("HTTP Version Not Supported"));
+	// }
 	return (chooseMethod());
 }
-
-
-
-
-
-
 
 
 
