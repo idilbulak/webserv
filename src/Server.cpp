@@ -14,7 +14,7 @@ void Server::setup() {
 
 	for (int i = 0; i < _cf.servers.size(); i++) {
 
-		Socket listenSocket(_cf.servers[i]);//.host, _cf.servers[i].port);
+		Socket listenSocket(_cf.servers[i].host, _cf.servers[i].port);
 		_listenSockets.insert(std::make_pair(listenSocket.getfd(), listenSocket));
 		UpdateKqueue(listenSocket.getfd(), EVFILT_READ, EV_ADD, 0);
 		printLog(listenSocket, "listening... ");
@@ -29,7 +29,7 @@ void Server::run() {
 		if (new_events == -1 || _eventList.flags & EV_ERROR) {
 
 			ERROR("requesting new kevent failed");
-			break ; //???
+			exit(1);
 		}
 		else if (_eventList.flags & EV_EOF || _eventList.filter == EVFILT_TIMER)
 			closeConnection(_eventList);
@@ -40,7 +40,6 @@ void Server::run() {
 		else if (_eventList.filter == EVFILT_WRITE)
 			onWrite(_eventList);
 	}
-	close(_kq); //?????
 }
 
 void Server::UpdateKqueue(int fd, int filter, int flag, int data) {
@@ -83,14 +82,9 @@ void Server::onRead(struct kevent& event) {
 
 	char buffer[4096];
 	int num_bytes = recv(event.ident, buffer, sizeof(buffer), 0);
-	if (num_bytes == -1) {
+	if (num_bytes <= 0) {
 
 		ERROR("recv() failed");
-		closeConnection(event);
-		return;
-	}
-	if (num_bytes == 0) {
-
 		closeConnection(event);
 		return;
 	}
