@@ -235,11 +235,14 @@ std::string Response::chooseMethod() {
 
 int Response::writeContent(const std::string &_body, const std::string &path) {
 	std::ofstream	file;
-
+	if (_loc.upload_dir.empty())
+		return (403);
 	if (pathType(path)) {
 		file.open(path.c_str());
 		file << _body;
 		file.close();
+		std::string command = "mv " + path + " " + _loc.upload_dir;
+    	std::system(command.c_str());
 		return (204);
 	}
 	else {
@@ -248,12 +251,14 @@ int Response::writeContent(const std::string &_body, const std::string &path) {
 			return (403);
 		file << _body;
 		file.close();
+		std::string command = "mv " + path + " " + _loc.upload_dir;
+    	std::system(command.c_str());
 		return (201);
 	}
 }
 
 std::string Response::putRes(void) {
-    _code = writeContent(_body, this->_req.getUri().path);
+    _code = writeContent(_body, _file);
 
     if (!(_code == 201 || _code == 204))
         return this->errRes("Write failed");
