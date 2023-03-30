@@ -28,7 +28,7 @@
 class Socket {
 
 	public:
-		Socket(VirtualServer server);//std::string host, std::string port);
+		Socket(std::string host, std::string port);
 		Socket();
 		~Socket(void);
 
@@ -50,8 +50,6 @@ class Socket {
 		std::string _port;
 		struct sockaddr_in _addr;
 		socklen_t _addrlen;
-
-		// void createSocket();
 };
 
 std::ostream& operator<<(std::ostream &os, Socket& obj);

@@ -4,27 +4,13 @@ Socket::Socket() {
 
 }
 
-// Socket::Socket(std::string host, std::string port) :_host(host), _port(port) {
-Socket::Socket(VirtualServer server) :_host(server.host), _port(server.port) {
+Socket::Socket(std::string host, std::string port) :_host(host), _port(port) {
 
 	if (( _fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		ERROR("socket() failed");
 		exit(1);
 	}
-	// createSocket();
-	// setSocketAddr();
-	// setFiledOptions(_fd);
-	// bind();
-	// listen();
 }
-
-// void Socket::createSocket() {
-
-// 	if (( _fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-// 		ERROR("socket() failed");
-// 		exit(1);
-// 	}
-// }
 
 void Socket::setSocketAddr() {
 

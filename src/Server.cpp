@@ -69,7 +69,6 @@ void Server::onClientConnect(struct kevent& event) {
 	
 	for (int i = 0; i < event.data; i++) {
 
-		std::cout << "data " << event.data << std::endl;
 		int connectionSocket = _listenSockets[event.ident].accept();
 		printLog(_listenSockets[event.ident], "Connecting... ", connectionSocket);
 		UpdateKqueue(connectionSocket, EVFILT_READ, EV_ADD, 0);
