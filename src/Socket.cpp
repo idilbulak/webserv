@@ -4,8 +4,8 @@ Socket::Socket() {
 
 }
 
-// Socket::Socket(std::string host, std::string port) :_host(host), _port(port) {
-Socket::Socket(VirtualServer server) :_host(server.host), _port(server.port) {
+Socket::Socket(std::string host, std::string port) :_host(host), _port(port) {
+// Socket::Socket(VirtualServer server) :_host(server.host), _port(server.port) {
 
 	createSocket();
 	setSocketAddr();

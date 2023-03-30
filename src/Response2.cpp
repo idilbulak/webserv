@@ -1,41 +1,21 @@
 #include "../inc/Response.hpp"
 
-Response::~Response(void) {}
-
-Response::Response(std::string buff, Config cf, std::string port) : _cf(cf), _req(HttpRequest(buff, port)){
-	makeCodeMap();
-	_server = findServer();
-}
-
 bool Response::fileExists(std::string name) {
 	std::string filename = _server.root + "/" + name;
+		std::cout << "filesdfsdf ldskfl"  << filename << std::endl;
+
     struct stat buffer;
-    if (stat(filename.c_str(), &buffer) == 0) {
+    if (stat(filename.c_str(), &buffer) == 0 && S_ISREG(buffer.st_mode)) {
 		return true;
 	}
 	return (false);
 }
 
-// bool Response::checkIndx() {
-//     for (int i = 0; i < _loc.index.size(); i++) {
-// 		std::string path;
-// 		if(!_loc.root.empty())
-// 			path = _loc.root + "/" + _loc.index[i];
-// 		else
-// 			path = _loc.index[i];
-//         if (fileExists(path)) {
-// 			_indxFile = _server.root + "/" + path;
-//             return true;
-// 		}
-//     }
-//     return false;
-// }
-
 bool Response::folderExists(const std::string folder_to_check) {
     std::string path = _server.root + "/" + folder_to_check;
     DIR* dir = opendir(path.c_str());
-
     if (dir) {
+// std::cout << "foldeR"<< path << std::endl;
         // The folder exists
         closedir(dir);
 		return true;
@@ -45,7 +25,7 @@ bool Response::folderExists(const std::string folder_to_check) {
     }
 }
 
-long long megabytesToBytes(int megabytes) {
+long long Response::megabytesToBytes(int megabytes) {
   long long bytes = megabytes;
   bytes *= 1024;
   bytes *= 1024;
@@ -53,7 +33,7 @@ long long megabytesToBytes(int megabytes) {
 }
 
 std::string Response::findExtension() {
-	std::cout << "burda" << std::endl;
+	// std::cout << "burda" << std::endl;
 	std::string::size_type last_slash_pos = _req.getUri().path.find_last_of('/');
 	std::string::size_type last_dot_pos = _req.getUri().path.find_last_of('.');
 	if (last_dot_pos != std::string::npos)
@@ -86,43 +66,13 @@ void Response::extBlock() {
 				std::cout << "dsflhdfhkjs" << _server.locations[i].path << std::endl;
 				// if(i != 1) {
 					_loc = _server.locations[i];
+					_file.clear();
 					// return true;
 				// }
 			}
 		}
 	}
 	// return false;
-}
-
-std::string	Response::generate() {
-	if (!findLocation(_req.getUri().path)) {
-		_code = 404;
-		return errRes("Location block not found");
-	}
-	// if(!extBlock()) {
-	// 	_code = 404;
-	// 	return errRes("Location block not found");
-	// }
-	if(!_file.empty())
-		extBlock();
-	std::cout << "locblock " <<_loc.path << std::endl;
-	if(!validMethod(_req.getMethod())) {
-		_code = 405;
-		return(errRes("Not allowed method"));
-	}
-	if(_req.getVersion().compare("HTTP/1.1")) {
-		_code = 505;
-		return(errRes("HTTP Version Not Supported"));
-	}
-	if(!_req.getHeaders()["Content Length"].empty() || !_server.max_body_size.empty()) {
-		long long size = megabytesToBytes(std::stoi(_server.max_body_size));
-		if(std::stoi(_req.getHeaders()["Content Length"]) <= size)
-		_code = 413;
-		return(errRes("HTTP Version Not Supported"));
-	}
-	setCgi();
-	setIndxFile();
-	return (chooseMethod());
 }
 
 bool Response::checkExtension() {
@@ -137,30 +87,111 @@ bool Response::checkExtension() {
 }
 
 void	Response::setCgi() {
-	if(!_file.empty()) {
+	if(!_file.empty() && checkExtension()) {
 		_cgiPath = _server.root + "/" + _file;
 		_cgiOn = 1;
 	}
-	else if(!_loc.cgi_path.empty()) {
+	else if(!_loc.cgi_path.empty() && _file.empty()) {
 		_cgiPath = _server.root + "/" + _loc.cgi_path;
 		_cgiOn = 1;
 	}
 	else
 		_cgiOn = 0;
-		std::cout << "cgi" << _cgiPath <<std::endl;
+		std::cout << "cgi" << _cgiOn <<std::endl;
+}
+
+void Response::deductPathForFolder() {
+	// _folder = _server.root + "/";
+  size_t pos = _req.getUri().path.find(_loc.path);
+  if (pos != std::string::npos) {
+    _folder = _req.getUri().path.substr(pos + _loc.path.length() + 1);
+  }
 }
 
 void	Response::setIndxFile() {
-	for (int i = 0; i < _loc.index.size(); i++) {
-		std::string path;
-		if(!_loc.root.empty())
-			path = _loc.root + "/" + _loc.index[i];
-		else
-			path = _loc.index[i];
-        if (fileExists(path)) {
-			_indxFile = _server.root + "/" + path;
+	if(!_file.empty() && !_cgiOn) {
+		// deductPathForFolder();
+		std::cout << "file " << _file << std::endl;
+		if(fileExists(_file)) {
+		std::cout << "filesdfsdf ldskfl" << std::endl;
+			_indxFile = _server.root + "/" + _file;
+			return ;
 		}
-    }
+		else if(fileExists(_loc.root + "/" +_file)) {
+			_indxFile = _server.root + "/" + _loc.root + "/" +_file;
+			return ;
+		}
+		else if(folderExists(_file)) {
+
+			for (int i = 0; i < _loc.index.size(); i++) {
+				// std::string path;
+				// if(!_loc.root.empty())
+				// 	path = _loc.root + "/" + _loc.index[i];
+				// else
+				// 	path = _loc.index[i];
+				if (fileExists(_file + "/" + _loc.index[i])) {
+					_indxFile = _server.root + "/" + _file + "/" + _loc.index[i];
+				}
+			}
+			// _indxFile = _server.root + "/" + _file;
+			return ;
+		}
+		else if(folderExists(_loc.root + "/" +_file)) {
+		std::cout << "file ldskfl" << std::endl;
+
+			for (int i = 0; i < _loc.index.size(); i++) {
+				// std::string path;
+				// if(!_loc.root.empty())
+				// 	path = _loc.root + "/" + _loc.index[i];
+				// else
+				// 	path = _loc.index[i];
+				if (fileExists(_loc.root + "/" +_file + "/" + _loc.index[i])) {
+					_indxFile = _server.root + "/" + _loc.root + "/" +_file + "/" + _loc.index[i];
+				}
+			}
+			// _indxFile = _server.root + "/" + _file;
+			return ;
+		}
+		// else if(folderExists(_file)) {
+		// }
+		// else if(folderExists(_folder)) {
+		// std::cout << "burda _file "<< _folder << std::endl;
+		// 	for (int i = 0; i < _loc.index.size(); i++) {
+		// 		std::string path;
+		// 		if(!_loc.root.empty())
+		// 			path = _loc.root + "/" + _loc.index[i];
+		// 		else
+		// 			path = _loc.index[i];
+		// 		if (fileExists(path)) {
+		// 			_indxFile = _server.root + "/" + path;
+		// 		}
+		// 	}
+		// }
+		// else if(fileExists(_folder)) {
+		// std::cout << "burda _file "<< _folder << std::endl;
+		// 	// for (int i = 0; i < _loc.index.size(); i++) {
+		// 		// std::string path;
+		// 		// if(!_loc.root.empty())
+		// 		// 	path = _loc.root + "/" + _loc.index[i];
+		// 		// else
+		// 		// 	path = _loc.index[i];
+		// 		// if (fileExists(path)) {
+		// 			_indxFile = _server.root + "/" + _folder;
+		// 		// }
+		// 	}
+	}
+	else {
+		for (int i = 0; i < _loc.index.size(); i++) {
+			std::string path;
+			if(!_loc.root.empty())
+				path = _loc.root + "/" + _loc.index[i];
+			else
+				path = _loc.index[i];
+			if (fileExists(path)) {
+				_indxFile = _server.root + "/" + path;
+			}
+		}
+	}
 }
 
 std::string	Response::cgiOff() {
@@ -231,6 +262,8 @@ std::string Response::putRes(void) {
 }
 
 std::string Response::getRes() {
+	setCgi();
+	setIndxFile();
 	if (!_cgiOn)
 		return cgiOff();
 	std::cout << "getres ici " << _cgiPath << std::endl;
@@ -408,27 +441,27 @@ bool Response::parsePathRecursively(std::string str, Location *loc) {
         path = str.substr(0, last_slash_pos);
         file = _req.getUri().path.substr(last_slash_pos + 1);
     }
-	std::cout << "file" << file << std::endl;
-	std::cout << "path" << path << std::endl;
+	// std::cout << "file" << file << std::endl;
+	// std::cout << "path" << path << std::endl;
     for (int i = 0; i < _server.locations.size(); i++) {
         if (_server.locations[i].path.compare(path) == 0) {
         
                 *loc = _server.locations[i];
-            if(!_server.locations[i].root.empty()){
+            // if(!_server.locations[i].root.empty()){
 
-                filePath = _server.locations[i].root + "/" + file;
-			}else{
+            //     filePath = _server.locations[i].root + "/" + file;
+			// }else{
 
-                filePath = file;}
-std::cout << "filepath" << filePath << std::endl;
+            //     filePath = file;}
+// std::cout << "filepath" << filePath << std::endl;
             // if (fileExists(filePath)) { //extension check et yap
 
-                _file = filePath;
+                _file = file;
             // }
                 return true;
 		}
 	}
-				std::cout << "loc" <<loc->path << std::endl;
+				// std::cout << "loc" <<loc->path << std::endl;
     return parsePathRecursively(path, loc);
 }
 
@@ -444,7 +477,7 @@ bool Response::findLocation(std::string str) {
             return true;
         }
 	}
-			std::cout << "yes" << _server.locations.size() << std::endl;
+			// std::cout << "yes" << _server.locations.size() << std::endl;
     return (parsePathRecursively(str, &_loc));
 	// if we cant find the lcoation block, extract the string that is next to the last slash
 }

@@ -1,5 +1,55 @@
-// #include "../inc/Response.hpp"
+#include "../inc/Response.hpp"
 
+Response::~Response(void) {}
+
+Response::Response(std::string buff, Config cf, std::string port) : _cf(cf), _req(HttpRequest(buff, port)){
+	makeCodeMap();
+	_server = findServer();
+}
+
+std::string	Response::generate() {
+	if (!findLocation(_req.getUri().path)) {
+		_code = 404;
+		return errRes("Location block not found");
+	}
+	// if(!extBlock()) {
+	// 	_code = 404;
+	// 	return errRes("Location block not found");
+	// }
+	if(!_file.empty())
+		extBlock();
+	std::cout << "locblock " <<_loc.path << std::endl;
+	if(!validMethod(_req.getMethod())) {
+		_code = 405;
+		return(errRes("Not allowed method"));
+	}
+	if(_req.getVersion().compare("HTTP/1.1")) {
+		_code = 505;
+		return(errRes("HTTP Version Not Supported"));
+	}
+	if(!_req.getHeaders()["Content Length"].empty() || !_server.max_body_size.empty()) {
+		long long size = megabytesToBytes(std::stoi(_server.max_body_size));
+		if(std::stoi(_req.getHeaders()["Content Length"]) <= size)
+		_code = 413;
+		return(errRes("HTTP Version Not Supported"));
+	}
+	return (chooseMethod());
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// =========================================================
 // Response::~Response(void) {}
 
 // Response::Response(std::string buff, Config cf, std::string port) : _cf(cf), _req(HttpRequest(buff, port)){

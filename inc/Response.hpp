@@ -36,6 +36,7 @@ class Response {
 		bool checkExtension();
 		bool folderExists(const std::string folder_to_check);
 		std::string findExtension();
+		long long megabytesToBytes(int megabytes);
 
 		std::string 	getCgiRes();
 		VirtualServer 	getServer();
@@ -50,6 +51,7 @@ class Response {
 		void			parsePath(const std::string& path);
 		std::string		read_html_file(const std::string& fileName);
 		bool parsePathRecursively(std::string str, Location *loc);
+		void deductPathForFolder();
 
 	private:
 		std::map<int, std::string>	_codeMap;
@@ -77,6 +79,7 @@ class Response {
 
 		std::string _path;
 		std::string _file;
+		std::string _folder;
 		std::string _ext;
     	int							_typePath;
 };
