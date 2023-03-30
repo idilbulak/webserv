@@ -14,7 +14,8 @@ class Response {
 		void			makeCodeMap();
 		VirtualServer	findServer();
 		std::string		generate();
-		bool			findLocation(Location* loc);
+		// bool			findLocation(Location* loc);
+		bool findLocation(std::string str);
 		std::string		chooseMethod();
 		std::string		errRes(std::string err);
 		std::string		res();
@@ -30,8 +31,11 @@ class Response {
 		bool			readContent(const std::string &path);
 		int				readFile(const std::string &path);
 		int writeContent(const std::string &content, const std::string &path);
-
+		void extBlock();
+		void	setCgi();
+		bool checkExtension();
 		bool folderExists(const std::string folder_to_check);
+		std::string findExtension();
 
 		std::string 	getCgiRes();
 		VirtualServer 	getServer();
@@ -40,11 +44,12 @@ class Response {
 		std::string	cgiOff();
 
 		bool			fileExists(std::string name);
-		bool			checkIndx();
+		// bool			checkIndx();
 		void			setIndxFile();
-		Location		getLocation( const std::string &path );
+		// Location		getLocation( const std::string &path );
 		void			parsePath(const std::string& path);
 		std::string		read_html_file(const std::string& fileName);
+		bool parsePathRecursively(std::string str, Location *loc);
 
 	private:
 		std::map<int, std::string>	_codeMap;
@@ -62,7 +67,9 @@ class Response {
 		std::string					_cgiRes;
     	int							_cgiCode;
     	std::string					_cgiType;
+    	std::string					_cgiPath;
 		int						    _cgiOn;
+		std::string _cgiResBody; 
 
 		std::string 			    _indxFile;
 		std::vector<std::string>		_locationdirs;

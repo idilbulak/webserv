@@ -116,6 +116,7 @@ std::string HttpRequest::getVersion() {return _version;}
 std::string HttpRequest::getBody() {return _body;}
 std::string HttpRequest::getQueryStr() {return _uri.queryStr;}
 std::string HttpRequest::getPort() {return _port;}
+std::map<std::string, std::string> HttpRequest::getHeaders() {return _headers;}
 
 std::string HttpRequest::getFirstLine() {
     size_t pos = _buff.find("\r\n");

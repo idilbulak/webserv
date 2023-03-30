@@ -4,7 +4,8 @@ Socket::Socket() {
 
 }
 
-Socket::Socket(std::string host, std::string port) :_host(host), _port(port) {
+// Socket::Socket(std::string host, std::string port) :_host(host), _port(port) {
+Socket::Socket(VirtualServer server) :_host(server.host), _port(server.port) {
 
 	if (( _fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		ERROR("socket() failed");

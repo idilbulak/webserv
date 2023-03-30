@@ -52,7 +52,7 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 		// std::cout << tokens[i] << "is token " << std::endl;
 		if(tokens[i] == "server")
 			break;
-		if (tokens[i] == "listen") {
+		else if (tokens[i] == "listen") {
             parseHostPort(server.host, server.port, tokens[++i]);
 			CheckPort(server.port);
 		}
@@ -147,13 +147,13 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 	for (; i<tokens.size()-1 && (tokens[i] != "location" || tokens[i] != "server");) {
 		if (tokens[i] == "location" || tokens[i] == "server")
 			break;
-		if ( tokens[i] == "allow" ) {
+		else if ( tokens[i] == "allow" ) {
 			for ( ++i; !check_word(tokens[i]); ++i){
 				loc.methods.push_back(tokens[i]);}
 		}
-		if ( tokens[i] == "root" )
+		else if ( tokens[i] == "root" )
 			loc.root = tokens[++i];
-		if ( tokens[i] == "autoindex" ) {
+		else if ( tokens[i] == "autoindex" ) {
 			std::string str = tokens[++i];
 			if (str.compare("on") == 0 || str.compare("off") == 0){
 			if (str== "on")

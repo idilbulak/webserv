@@ -2,6 +2,8 @@
 
 Cgi::Cgi(std::string file, Response &response) : _response(response), _indxFile(file), _req(response.getReq()), _server(response.getServer()) {
     envCgi();
+    std::cout << file << "sdds" << std::endl;
+
 }
 
 Cgi::~Cgi(void) {}
