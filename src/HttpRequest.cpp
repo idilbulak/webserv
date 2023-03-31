@@ -52,23 +52,24 @@ bool HttpRequest::isComplete(std::string buff) {
 		if (contentLength + headerLength > buff.size())
 			return false;
 	}
-    else if (buff.find("Transfer-Encoding: ") != std::string::npos && buff.find("0\r\n\r\n")  == std::string::npos ) {
-        // //std::cout << "BURDAAAAAA   " << buff << std::endl;
-        size_t startPos = buff.find("\r\n\r\n") + 4;
-        std::string temp = buff.substr(startPos);
-        size_t endPos = temp.find("\r\n");
-        std::string size = temp.substr(0,endPos);
-        // //std::cout << "size  " << size << std::endl;
-        i += hexToDec(size);
-        if (i < 0)
-            return true;
-        std::string content = temp.substr(endPos);
-        //std::cout << content.size() << "i = " << i << std::endl;
-        //std::cout << content.length() << std::endl;
-        if (content.size() == i)
-            return true;
-        else 
-            return false;
+    else if (buff.find("Transfer-Encoding: chunked") != std::string::npos && buff.find("0\r\n\r\n") == std::string::npos ) {
+        return false;
+        // // //std::cout << "BURDAAAAAA   " << buff << std::endl;
+        // size_t startPos = buff.find("\r\n\r\n") + 4;
+        // std::string temp = buff.substr(startPos);
+        // size_t endPos = temp.find("\r\n");
+        // std::string size = temp.substr(0,endPos);
+        // // //std::cout << "size  " << size << std::endl;
+        // i += hexToDec(size);
+        // if (i < 0)
+        //     return true;
+        // std::string content = temp.substr(endPos);
+        // //std::cout << content.size() << "i = " << i << std::endl;
+        // //std::cout << content.length() << std::endl;
+        // if (content.size() == i)
+        //     return true;
+        // else 
+        //     return false;
 
     }
 	else if (buff.find("\r\n\r\n") == std::string::npos)

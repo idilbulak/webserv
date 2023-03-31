@@ -97,6 +97,7 @@ void Server::onRead(struct kevent& event) {
 		
 	if (HttpRequest().isComplete(_Clients[event.ident].request)) {
 
+		// TEST
 		// UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
 		printLog(event, YELLOW, "Receiving... ", _Clients[event.ident].request);
 		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf, _Clients[event.ident].port).generate();
