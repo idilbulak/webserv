@@ -65,7 +65,7 @@ void Server::onClientConnect(struct kevent& event) {
 	
 	for (int i = 0; i < event.data; i++) {
 
-		std::cout << "data " << event.data << std::endl;
+		// std::cout << "data " << event.data << std::endl;
 		int connectionSocket = _listenSockets[event.ident].accept();
 		printLog(_listenSockets[event.ident], "Connecting... ", connectionSocket);
 		UpdateKqueue(connectionSocket, EVFILT_READ, EV_ADD, 0);
@@ -81,7 +81,7 @@ void Server::onRead(struct kevent& event) {
 	// UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 5 * 1000);
 
 	char buffer[4096];
-	int num_bytes = recv(event.ident, buffer, sizeof(buffer), 0);
+	int num_bytes = recv(event.ident, buffer, sizeof(buffer) - 1, 0);
 	if (num_bytes <= 0) {
 
 		ERROR("recv() failed");

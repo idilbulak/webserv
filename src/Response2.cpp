@@ -4,6 +4,7 @@
 bool Response::fileExists(std::string name) {
 	std::string filename = _server.root + "/" + name;
 		// //std::cout << "filesdfsdf ldskfl"  << filename << std::endl;
+	// std::string filename = name;
 
     struct stat buffer;
     if (stat(filename.c_str(), &buffer) == 0 && S_ISREG(buffer.st_mode)) {
@@ -99,6 +100,7 @@ void	Response::setCgi() {
 	else
 		_cgiOn = 0;
 		//std::cout << "cgi" << _cgiOn <<std::endl;
+	std::cout << _cgiPath << std::endl;
 }
 
 void Response::deductPathForFolder() {
@@ -112,14 +114,14 @@ void Response::deductPathForFolder() {
 void	Response::setIndxFile() {
 	if(!_file.empty() && !_cgiOn) {
 		// deductPathForFolder();
-		//std::cout << "file " << _file << std::endl;
+		std::cout << "file " << _file << std::endl;
 		if(fileExists(_file)) {
 		//std::cout << "filesdfsdf ldskfl" << std::endl;
-			_indxFile = _server.root + "/" + _file;
+			_indxFile = _file;
 			return ;
 		}
 		else if(fileExists(_loc.root + "/" +_file)) {
-			_indxFile = _server.root + "/" + _loc.root + "/" +_file;
+			_indxFile = _loc.root + "/" +_file;
 			return ;
 		}
 		else if(folderExists(_file)) {
@@ -131,10 +133,10 @@ void	Response::setIndxFile() {
 				// else
 				// 	path = _loc.index[i];
 				if (fileExists(_file + "/" + _loc.index[i])) {
-					_indxFile = _server.root + "/" + _file + "/" + _loc.index[i];
+					_indxFile = _file + "/" + _loc.index[i];
 				}
 			}
-			// _indxFile = _server.root + "/" + _file;
+			// _indxFile = _file;
 			return ;
 		}
 		else if(folderExists(_loc.root + "/" +_file)) {
@@ -147,10 +149,10 @@ void	Response::setIndxFile() {
 				// else
 				// 	path = _loc.index[i];
 				if (fileExists(_loc.root + "/" +_file + "/" + _loc.index[i])) {
-					_indxFile = _server.root + "/" + _loc.root + "/" +_file + "/" + _loc.index[i];
+					_indxFile = _loc.root + "/" +_file + "/" + _loc.index[i];
 				}
 			}
-			// _indxFile = _server.root + "/" + _file;
+			// _indxFile = _file;
 			return ;
 		}
 		// else if(folderExists(_file)) {
@@ -189,20 +191,19 @@ void	Response::setIndxFile() {
 			else
 				path = _loc.index[i];
 			if (fileExists(path)) {
-				_indxFile = _server.root + "/" + path;
+				_indxFile =  path;
 			}
 		}
 	}
 }
 
 std::string	Response::cgiOff() {
-	// //std::cout << "yes" << std::endl;
 	if (_indxFile.empty()) {
 		if (_loc.autoindex == 1)
 		{
 			_code = 200;
 			_type = 0;
-			_body = AutoIndex(_loc.root).generate_html_page();
+			_body = AutoIndex(_server.root + "/" + _loc.root).generate_html_page();
 			return res();
 		}
 		else
@@ -212,58 +213,49 @@ std::string	Response::cgiOff() {
 		}
 	}
 	else {
-		//std::cout << " index: " << _indxFile << std::endl;
+		std::cout << " index: " << _indxFile << std::endl;
 		_code = 200;
-		_body = read_html_file(_indxFile);
+		if (fileExists(_indxFile))
+			_body = read_html_file(_server.root + "/" + _loc.root + "/" + _indxFile);
+		else
+			_body = "";
 		return res();
 	}
 }
 
-std::string Response::chooseMethod() {
-		if(_req.getMethod().compare("GET") == 0)
-        	return (getRes());
-		else if(_req.getMethod().compare("POST") == 0)
-			return (postRes());
-		else if(_req.getMethod().compare("DELETE") == 0)
-		    return (delRes());
-		else if(_req.getMethod().compare("PUT") == 0)
-		    return (putRes());
-		else {
-			_code = 501;
-			return errRes("Not a valid method");
-		}
-}
-
-int Response::writeContent(const std::string &_body, const std::string &path) {
-	std::ofstream	file;
+int Response::writeContent(const std::string &_body, std::string path) {
 	if (_loc.upload_dir.empty())
+		return 404;
+	if (_body.empty())
+		return 204;
+	path = _loc.upload_dir + "/" + path;
+	bool fExists = fileExists(path);
+	std::ofstream	file(path, std::ofstream::trunc);
+	if (file.is_open()) {
+        	file << _body;
+			file.close();
+		if(fExists)
+			return 201;
+		else {
+			file << _body;
+			return 200;
+		}
+	}
+	else
 		return (403);
-	if (pathType(path)) {
-		file.open(path.c_str());
-		file << _body;
-		file.close();
-		std::string command = "mv " + path + " " + _loc.upload_dir;
-    	std::system(command.c_str());
-		return (204);
-	}
-	else {
-		file.open(path.c_str(), std::ofstream::out | std::ofstream::trunc);
-		if (file.is_open() == false)
-			return (403);
-		file << _body;
-		file.close();
-		std::string command = "mv " + path + " " + _loc.upload_dir;
-    	std::system(command.c_str());
-		return (201);
-	}
 }
 
 std::string Response::putRes(void) {
-    _code = writeContent(_body, _file);
+	// std::cout << _req.getBody() << std::endl;
+    _code = writeContent(_req.getBody(), _file);
 
-    if (!(_code == 201 || _code == 204))
+    if (!(_code == 201 || _code == 200))
         return this->errRes("Write failed");
     _type = 0;
+	if (fileExists(_indxFile))
+			_body = read_html_file(_indxFile);
+	else
+		_body = "";
     return res();
 }
 
@@ -302,15 +294,19 @@ int Response::readFile(const std::string &path) {
 	return (1);
 }
 
-bool Response::readContent(const std::string &path) {
-    if (readFile(path)) {
+// bu error icin gibi
+bool Response::readContent(const std::string path) {
+	// std::cout << "path"<< _server.root + "/" + path << std::endl;
+    if (fileExists(path)) {
         _type = 1;
         _code = 200;
+		_body = read_html_file(_server.root + "/" + path);
         return (1);
     }
     else {
         _type = 2;
-        _code = 403;
+        _code = 404;
+		// std::cout << "olmadi" << std::endl;
         return (0);
     }
 }
@@ -332,11 +328,25 @@ int Response::pathType(const std::string& path) {
 }
 
 std::string Response::postRes() {
+	if (!_cgiOn && !_req.getBody().empty())
+		return putRes();
 	if (!_cgiOn)
 		return cgiOff();
 	_cgiRes = Cgi(_loc.cgi_path, *this).execute();
 	// burda bastirabilirsin??
 	parseCgiResponse();
+	// if (!_cgiResBody.empty()) {
+	// 	_code = writeContent(_cgiResBody, _file);
+
+	// 	if (!(_code == 201 || _code == 200))
+	// 		return this->errRes("Write failed");
+	// 	_type = 0;
+	// 	if (fileExists(_indxFile))
+	// 			_body = read_html_file(_indxFile);
+	// 	else
+	// 		_body = "";
+	// 	return res();
+	// }
 	if (_cgiCode == 302)
     {
         _type = 2;
@@ -349,6 +359,7 @@ std::string Response::postRes() {
         return errRes("Cgi error");
     }
 	_code = _cgiCode;
+	_body = _cgiResBody;
 	_type = 2;
 	return res();
 }
@@ -390,9 +401,11 @@ void Response::parseCgiResponse(void)
 
 // Read the contents of an HTML file into a string
 std::string Response::read_html_file(const std::string& fileName) {
+	// if (!fileExists(fileName))
+	// 	return "";
 	std::ifstream file(fileName);
 	if (!file.is_open()) {
-		throw std::runtime_error("Failed to open file: " + fileName);
+		return "";
 	}
 	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	return content;
@@ -408,8 +421,8 @@ std::string Response::res() {
     }
     _header += CRLF;
     _header += CRLF; //????????????????
-	// //std::cout <<"header: " <<_header + _body << std::endl;
-	// //std::cout <<"body: " <<_body << std::endl;
+	// std::cout <<"header: " <<_header + _body << std::endl;
+	// std::cout <<"body: " <<_body << std::endl;
 	return(_header + _body);
 }
 
@@ -418,8 +431,10 @@ std::string Response::errRes(std::string err)
     // //std::cout << err << std::endl; //????
 	int code = _code;
     std::string path = this->_server.error_pages[this->_code];
+	std::cout << "bom" << path << std::endl;
+    // readContent(path);
     if (!readContent(path))
-        _body = "<!DOCTYPE html>\n<html><title>Errorpage</title><body><h1>ERROR" + itos(_code) + "</h1></body></html>";
+        _body = "<!DOCTYPE html>\n<html><title>Errorpage</title><body><h1>ERROR 404</h1></body></html>";
     this->_type = 0;
 	_code = code;
     return res();

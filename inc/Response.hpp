@@ -28,9 +28,9 @@ class Response {
 		void			parseCgiResponse(void);
 		int				pathType(const std::string& path);
 		bool			validMethod(std::string method);
-		bool			readContent(const std::string &path);
+		bool			readContent(const std::string path);
 		int				readFile(const std::string &path);
-		int writeContent(const std::string &content, const std::string &path);
+		int writeContent(const std::string &content, const std::string path);
 		void extBlock();
 		void	setCgi();
 		bool checkExtension();
@@ -80,7 +80,7 @@ class Response {
 		std::string _path;
 		std::string _file;
 		std::string _folder;
-		std::string _ext;
+		std::string _buff;
     	int							_typePath;
 };
 		std::string findFirstFileWithExtension(const std::string& directory, const std::string& extension);

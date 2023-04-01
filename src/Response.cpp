@@ -2,30 +2,30 @@
 
 Response::~Response(void) {}
 
-Response::Response(std::string buff, Config cf, std::string port) : _cf(cf), _req(HttpRequest(buff, port)){
+Response::Response(std::string buff, Config cf, std::string port) : _buff(buff), _cf(cf), _req(HttpRequest(buff, port)){
 	makeCodeMap();
 	_server = findServer();
 }
 
 std::string	Response::generate() {
+	if(_req.getVersion().compare("HTTP/1.1")) {
+		_code = 505;
+		return(errRes("HTTP Version Not Supported"));
+	}
 	if (!findLocation(_req.getUri().path)) {
 		_code = 404;
 		return errRes("Location block not found");
 	}
-	// if(!extBlock()) {
-	// 	_code = 404;
-	// 	return errRes("Location block not found");
-	// }
 	if(!_file.empty())
 		extBlock();
 	// std::cout << "locblock " <<_loc.path << std::endl;
+	if(!_loc.redirect_url.empty()) {
+		_req.setUriPath(_loc.redirect_url);
+		return generate();
+	}
 	if(!validMethod(_req.getMethod())) {
 		_code = 405;
 		return(errRes("Not allowed method"));
-	}
-	if(_req.getVersion().compare("HTTP/1.1")) {
-		_code = 505;
-		return(errRes("HTTP Version Not Supported"));
 	}
 	// if(!_req.getHeaders()["Content Length"].empty() || !_server.max_body_size.empty()) {
 	// 	long long size = megabytesToBytes(std::stoi(_server.max_body_size));
@@ -36,6 +36,20 @@ std::string	Response::generate() {
 	return (chooseMethod());
 }
 
+std::string Response::chooseMethod() {
+		if(_req.getMethod().compare("GET") == 0)
+        	return (getRes());
+		else if(_req.getMethod().compare("POST") == 0)
+			return (postRes());
+		else if(_req.getMethod().compare("DELETE") == 0)
+		    return (delRes());
+		else if(_req.getMethod().compare("PUT") == 0)
+		    return (putRes());
+		else {
+			_code = 501;
+			return errRes("Not a valid method");
+		}
+}
 
 
 

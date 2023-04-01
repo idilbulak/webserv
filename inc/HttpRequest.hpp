@@ -48,6 +48,7 @@ class HttpRequest {
 		std::string		getBody();
 		std::string		getQueryStr();
 		Uri				getUri();
+		void			setUriPath(std::string path);
 		std::map<std::string, std::string>	getHeaders();
 
 	private:
