@@ -88,23 +88,13 @@ bool Response::checkExtension() {
 	return false;
 }
 
-// buraya root eklemeyi unutma
 void	Response::setCgi() {
-	std::cout << "file: " << _file << std::endl;
-	std::cout << "file: " << checkExtension() << std::endl;
-	std::cout << "file: " << _loc.cgi_path << std::endl;
 	if(!_file.empty() && checkExtension()) {
-		if (_loc.root.empty()) 
-			_cgiPath = _server.root + "/" + _file; //tam buratya
-		else
-			_cgiPath = _server.root + "/" + _loc.root + "/" + _file; //tam buratya
+		_cgiPath = _server.root + "/" + _file;
 		_cgiOn = 1;
 	}
 	else if(!_loc.cgi_path.empty() && _file.empty()) {
-		if (_loc.root.empty())
-			_cgiPath = _server.root + "/" + _loc.cgi_path; //ve buraya
-		else
-			_cgiPath = _server.root + "/" + _loc.root + "/" + _loc.cgi_path; //ve buraya
+		_cgiPath = _server.root + "/" + _loc.cgi_path;
 		_cgiOn = 1;
 	}
 	else
@@ -338,14 +328,11 @@ int Response::pathType(const std::string& path) {
 }
 
 std::string Response::postRes() {
-	// if (!_cgiOn && !_req.getBody().empty())
-	// 	return putRes();
-	std::cout << "burda miyim" << _cgiOn << std::endl;
-	setCgi();
-	setIndxFile();
+	if (!_cgiOn && !_req.getBody().empty())
+		return putRes();
 	if (!_cgiOn)
 		return cgiOff();
-	_cgiRes = Cgi(_cgiPath, *this).execute();
+	_cgiRes = Cgi(_loc.cgi_path, *this).execute();
 	// burda bastirabilirsin??
 	parseCgiResponse();
 	// if (!_cgiResBody.empty()) {
