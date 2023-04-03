@@ -63,9 +63,9 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 		}
 		else if (tokens[i] == "root")
 			server.root = tokens[++i];
-		else if (tokens[i] == "client_max_body_size" ){
+		else if (tokens[i] == "max_body_size" ){
 			CheckClientMaxBodySize(tokens[++i]);
-			server.max_body_size = tokens[++i];
+			server.max_body_size = tokens[i];
 			}
 		else if (tokens[i] == "error_page" ){
 			parseErrorPage(server.error_pages, tokens, i);
@@ -164,7 +164,7 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 		}
 		else if (tokens[i] == "cgi_path") {
 			loc.cgi_path = tokens[++i];
-			std::cout << "path is "<< loc.cgi_path<< std::endl;
+			// std::cout << "path is "<< loc.cgi_path<< std::endl;
 		}
 		else if (tokens[i] == "upload_dir") {
 			loc.upload_dir = tokens[++i];

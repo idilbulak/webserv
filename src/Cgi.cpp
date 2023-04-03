@@ -2,8 +2,13 @@
 
 Cgi::Cgi(std::string file, Response &response) : _response(response), _indxFile(file), _req(response.getReq()), _server(response.getServer()) {
     envCgi();
-    std::cout << file << "sdds" << std::endl;
-
+    std::string filename = "cgiBody.txt";
+	std::ofstream outFile(filename.c_str());
+    if (!outFile) {
+        std::cerr << "Error: Unable to open file for writing: " << filename << std::endl;
+    }
+    outFile << _req.getBody();
+    outFile.close();
 }
 
 Cgi::~Cgi(void) {}
@@ -47,7 +52,6 @@ void    Cgi::envCgi()
     _env.insert(std::make_pair("SERVER_PORT", _server.port));
     _env.insert(std::make_pair("REQUEST_METHOD", _req.getMethod()));
     _env.insert(std::make_pair("PATH_INFO", _req.getUri().path));
-    std::cout << _req.getUri().path << std::endl;
     _env.insert(std::make_pair("PATH_TRANSLATED", _req.getUri().path));
     _env.insert(std::make_pair("SCRIPT_NAME", _indxFile));
     _env.insert(std::make_pair("SCRIPT_FILENAME", _indxFile));
@@ -59,13 +63,14 @@ void    Cgi::envCgi()
     // _env.insert(std::make_pair("CONTENT_TYPE", _response.getOtherHeaders()["Content-Type"]));
     _env.insert(std::make_pair("CONTENT_LENGTH", itos(_req.getBody().length())));
 
-    // _env.insert(std::make_pair("SERVER_NAME", ""));
-    // _env.insert(std::make_pair("HTTP_COOKIE", ""));
-    // _env.insert(std::make_pair("HTTP_USER_AGENT", ""));
-    // _env.insert(std::make_pair("REMOTE_HOST", ""));
-    // _env.insert(std::make_pair("REQUEST_METHOD", ""));
-    // _env.insert(std::make_pair("PATH_INFO", _req.uri));
-    // _env.insert(std::make_pair("BODY", _req.body));
+    _env.insert(std::make_pair("SERVER_NAME", ""));
+    _env.insert(std::make_pair("HTTP_COOKIE", ""));
+    _env.insert(std::make_pair("HTTP_USER_AGENT", ""));
+    _env.insert(std::make_pair("REMOTE_HOST", ""));
+    _env.insert(std::make_pair("REQUEST_METHOD", ""));
+    ///
+    _env.insert(std::make_pair("HTTP_X_SECRET_HEADER_FOR_TEST", _req.getHeaders()["X-Secret-Header-For-Test"]));
+    // _env.insert(std::make_pair("BODY", _req.getBody()));
 }
 
 std::string Cgi::execute()
@@ -84,10 +89,8 @@ std::string Cgi::execute()
     write(fdIn, _req.getBody().c_str(), _req.getBody().length());
     // Move the file position indicator to the beginning of the file
     lseek(fdIn, 0, 0);
-
     // Create a new process by forking the current process
     pid_t pid = fork();
-
     if (pid == -1)
     {
         // Error: failed to create a new process
@@ -104,9 +107,8 @@ std::string Cgi::execute()
         dup2(fdOut, 1);
 
         // Execute the CGI program with environment variables
-        char * const * _null = NULL;
-        std::cout << _indxFile.c_str() << std::endl;
-        execve(_indxFile.c_str(), _null, env);
+        const char* _args[2] = {"cgiBody.txt", NULL};
+        execve(_indxFile.c_str(), const_cast<char* const*>(_args), env);
         // Error: failed to execute the CGI program
         std::cout <<  std::strerror(errno) << std::endl;
         std::cout << "Status: 502\r\n\r\n" << std::endl;
@@ -117,16 +119,25 @@ std::string Cgi::execute()
         // Parent process
 
         // Read the output of the CGI program from the output file
-        char buff[SIZE] = {0};
+        // char buff[SIZE] = {0};
+
+        // waitpid(pid, NULL, 0);
+        // lseek(fdOut, 0, 0);
+
+        // while (read(fdOut, buff, SIZE) > 0)
+        // {
+        //     output += buff;
+        //     memset(buff, 0, SIZE);
+        // }
+        std::vector<char> buffer(SIZE);
 
         waitpid(pid, NULL, 0);
         lseek(fdOut, 0, 0);
 
-        while (read(fdOut, buff, SIZE) > 0)
-        {
-            output += buff;
-            memset(buff, 0, SIZE);
-        }
+        ssize_t bytesRead;
+        while ((bytesRead = read(fdOut, &buffer[0], SIZE)) > 0) {
+        output.append(buffer.begin(), buffer.begin() + bytesRead);
+    }
     }
 
     // Restore standard input and output file descriptors

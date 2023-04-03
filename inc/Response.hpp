@@ -31,8 +31,8 @@ class Response {
 		bool			readContent(const std::string path);
 		int				readFile(const std::string &path);
 		int writeContent(const std::string &content, const std::string path);
-		void extBlock();
-		void	setCgi();
+		void CheckExtensionBlock(Location *_loc);
+		void	setCgiPath();
 		bool checkExtension();
 		bool folderExists(const std::string folder_to_check);
 		std::string findExtension();
@@ -45,6 +45,7 @@ class Response {
 		std::string	cgiOff();
 
 		bool			fileExists(std::string name);
+		// bool			fileExists_new(std::string name);
 		// bool			checkIndx();
 		void			setIndxFile();
 		// Location		getLocation( const std::string &path );
@@ -52,6 +53,7 @@ class Response {
 		std::string		read_html_file(const std::string& fileName);
 		bool parsePathRecursively(std::string str, Location *loc);
 		void deductPathForFolder();
+		std::string	formatPath(std::string path);
 
 	private:
 		std::map<int, std::string>	_codeMap;

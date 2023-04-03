@@ -80,7 +80,7 @@ void Server::onRead(struct kevent& event) {
 		
 	// UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 5 * 1000);
 
-	char buffer[4096];
+	char buffer[65536];
 	int num_bytes = recv(event.ident, buffer, sizeof(buffer) - 1, 0);
 	if (num_bytes <= 0) {
 
@@ -172,8 +172,8 @@ void Server::printLog(struct kevent& event, std::string color, std::string activ
 	std::cout << event;
 	std::cout << std::setw(17) << activity << RESET;
 	std::cout << GREEN << std::setw(10) << event.ident << RESET;
-	// std::cout << color << httpMessage.substr(0, httpMessage.find("\r\n")) << RESET;
-	std::cout << std::endl << std::endl << color << httpMessage << RESET;
+	std::cout << color << httpMessage.substr(0, httpMessage.find("\r\n") + 1000) << RESET;
+	// std::cout << std::endl << std::endl << color << httpMessage << RESET;
 	std::cout << std::endl;
 }
 

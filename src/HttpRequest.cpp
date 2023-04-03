@@ -66,13 +66,13 @@ HttpRequest::HttpRequest(std::string buff, std::string port) : _buff(buff), _por
 	parseHeader();
 	parseBody();
     // std::cout << "method " << _method << std::endl;
+    // std::cout << "uri path " << _uri.path << std::endl;
+    // std::cout << "uri qs" << _uri.queryStr << std::endl;
+    // std::cout << "uri protocol" << _uri.protocol << std::endl;
     // std::cout << "port " << _port << std::endl;
     // std::cout << "version " << _version << std::endl;
     // std::cout << "body " << _body << std::endl;
-    // std::cout << "uri " << _uri.path << std::endl;
-    // std::cout << "uri " << _uri.queryStr << std::endl;
-    // std::cout << "uri " << _uri.protocol << std::endl;
-
+    // std::cout << "body " << _headers["User-Agent"] << std::endl;
 }
 
 void HttpRequest::parseHeader() {
@@ -95,29 +95,14 @@ void HttpRequest::parseHeader() {
 }
 
 std::string parseChunked(std::string body) {
-	// std::string body;
 	std::string newBody;
-	// size_t body_start = buff.find("\r\n\r\n");
-	// if (body_start != std::string::npos)
-	// 	body_start += 4;
-	// body = buff.substr(body_start);
 	while (body.compare("0\r\n\r\n") != 0) {
-    // std::cout << "yeni hexli body" << std::endl;
-        // std::cout << body << std::endl;
 		size_t hex_end = body.find("\r\n");
 		std::string hex = body.substr(0, hex_end);
-        // std::cout << "hex" << hex << std::endl;
 		int length = hexToDec(hex);
-        // std::cout << "hexsiz hal" << std::endl;
-        // std::cout << body.substr(hex_end + 2, length) << std::endl;
 		newBody.append(body.substr(hex_end + 2, length));
 		body = body.substr(hex_end + length + 2 + 2);
-        // std::cout << "jhdfkjhsdjfk" << body << std::endl;
-        // if (!body.compare("0\r\n\r\n"))
-        //     break;
 	}
-    // std::cout << "new body" << std::endl;
-        // std::cout << newBody << std::endl;
 	return newBody;
 }
 
@@ -136,12 +121,8 @@ void HttpRequest::parseBody() {
 			_body = _buff.substr(body_start, content_length);
 	}
     if (_buff.find("Transfer-Encoding: chunked") != std::string::npos && _buff.find("\r\n\r\n0\r\n\r\n") == std::string::npos){
-        // std::cout << "fgdfgdfgurda" << std::endl;
-        // std::cout << _buff.substr(body_start) << std::endl;
         _body = parseChunked(_buff.substr(body_start));
     } 
-    // std::cout << "header " << _headers["Transfer-Encoding: "] << std::endl;
-    // std::cout << "body " << _body << std::endl;
 }
 
 // http_URL = "http:" "//" host [ ":" port ] [ abs_path [ "?" query ]]
