@@ -13,6 +13,7 @@
 #include "Response.hpp"
 
 #define SIZE 65536 //64kilobytes
+// #define SIZE 4096
 
 class Response;
 

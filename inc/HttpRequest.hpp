@@ -11,6 +11,7 @@
 #include <vector>
 #include <map>
 #include "Config.hpp"
+#include <cmath>
 
 #define CRLF "\r\n"
 
@@ -30,9 +31,12 @@ class HttpRequest {
 		HttpRequest(std::string buff, std::string port);
 		~HttpRequest(void);
 
+		int i;
+
 		void	parseHeader();
 		void	parseBody();
 		Uri		parseUri(std::string token);
+		void    parseMultiData();
 
 		bool						isComplete(std::string buff);
 		std::string 				getFirstLine();
@@ -45,6 +49,7 @@ class HttpRequest {
 		std::string		getBody();
 		std::string		getQueryStr();
 		Uri				getUri();
+		void			setUriPath(std::string path);
 		std::map<std::string, std::string>	getHeaders();
 
 	private:
@@ -55,6 +60,7 @@ class HttpRequest {
 		std::string		_body;
 		Location        _loc;
 		Uri				_uri;
+		bool			multipartFormData;
 		std::map<std::string, std::string> 	_headers;
 };
 

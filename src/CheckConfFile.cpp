@@ -53,7 +53,7 @@ void CheckConfFile::checkKey(const std::string path)
     while (getline(ifs, line))
     {
         if (!checkServerKey(split(line, " ")[0])){
-            std::cout << "{"<<split(line, " ")[0] << "}"<< std::endl;
+            // std::cout << "{"<<split(line, " ")[0] << "}"<< std::endl;
             throw std::invalid_argument("invalid Key");
         }
         checkArgument(line);
@@ -193,7 +193,7 @@ void CheckConfFile::checkBrackets(std::vector<std::string> tokens)
                 {
                     if ((tokens[i + 1].compare("server") != 0) && (i + 1) < tokens.size())
                     {
-                        std::cout << "size is" << tokens.size() << "i " << i << "[" << tokens[i + 1] << "]" << std::endl;
+                        // std::cout << "size is" << tokens.size() << "i " << i << "[" << tokens[i + 1] << "]" << std::endl;
                         throw std::invalid_argument("brackets error 5");
                     }
                 }
