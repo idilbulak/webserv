@@ -26,15 +26,18 @@ class Server {
 
 		void setup();
 		void run();
-		
+
 	private:
 		Config _cf;
-		int _kq;
+		int _kqueue;
+		bool _serverIsListening;
 		std::map<int, Socket> _listenSockets;
 		std::map<int, struct SocketData> _Clients;
 		struct kevent _changeList;
 		struct kevent _eventList;
 
+		void setupKqueue();
+		void setupListenSocket(Socket& serverSocket);
 		void UpdateKqueue(int fd, int filter, int flag, int data);
 		bool isListenSockfd(struct kevent& event);
 		void onClientConnect(struct kevent& event);
@@ -46,6 +49,13 @@ class Server {
 		void printLog(Socket socket, std::string activity, int filed);
 		void printLog(struct kevent& event, std::string color, std::string activity);
 		void printLog(struct kevent& event, std::string color, std::string activity, std::string httpMessage);
+
+		class KeventFail : public std::exception {
+			public:
+				const char* what() const throw() {
+					return "kevent() failed";
+				}
+		};
 };
 
 std::ostream& operator<<(std::ostream &os, struct kevent& event);

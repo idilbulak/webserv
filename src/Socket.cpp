@@ -1,15 +1,16 @@
 #include "../inc/Socket.hpp"
+#include "../inc/ErrorMessage.hpp"
 
 Socket::Socket() {
-
 }
 
 Socket::Socket(std::string host, std::string port) :_host(host), _port(port) {
+}
 
-	if (( _fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		ERROR("socket() failed");
-		exit(1);
-	}
+void Socket::createSocket() {
+
+	if (( _fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+		throw CreateSocketFail();
 }
 
 void Socket::setSocketAddr() {
@@ -24,43 +25,31 @@ void Socket::setSocketAddr() {
 void Socket::setFiledOptions(int filed) {
 
 	int optval = 1;
-	if (setsockopt(filed, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
-		ERROR("setsockopt() failed");
-		exit(1);
-	}
-	if (setsockopt(filed, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) == -1) {
-		ERROR("setsockopt() failed");
-		exit(1);
-	}
-	if (fcntl(filed, F_SETFL, O_NONBLOCK) == -1) {
-		ERROR("fcntl() failed");
-		exit(1);
-	}
+	if (setsockopt(filed, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+		throw std::runtime_error("setsockopt(SO_REUSEADDR) failed");
+	if (setsockopt(filed, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) == -1)
+		throw std::runtime_error("setsockopt(SO_REUSEPORT) failed");
+	if (fcntl(filed, F_SETFL, O_NONBLOCK) == -1)
+		throw std::runtime_error("fcntl(O_NONBLOCK) failed");
 }
 
 void Socket::bind() {
 
-	if (::bind(_fd, (struct sockaddr *)&_addr, sizeof(_addr)) < 0 ) {
-		ERROR("bind() failed: ");
-		exit(1);
-	}
+	if (::bind(_fd, (struct sockaddr *)&_addr, sizeof(_addr)) < 0 )
+		throw std::runtime_error("bind() failed: ");
 }
 
 void Socket::listen() {
 
-	if (::listen(_fd, BACKLOG) < 0) { // BACKLOG??
-		ERROR("listen() failed: ");
-		exit(1);
-	}
+	if (::listen(_fd, SOMAXCONN) < 0)
+		throw std::runtime_error("listen() failed: ");
 }
 
 int Socket::accept() {
 
 	int connectionSocket = ::accept(_fd, NULL, NULL);
-	if (connectionSocket < 0) {
-		ERROR("accept() failed");
-		exit(1);
-	}
+	if (connectionSocket < 0)
+		throw AcceptFail();
 	setFiledOptions(connectionSocket); //??
 	return connectionSocket;
 }
