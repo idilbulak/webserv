@@ -1,4 +1,6 @@
 #include "../inc/Server.hpp"
+#include "../inc/Cgi.hpp"
+#include <unistd.h>
 
 Server::Server(Config &cf) :_cf(cf) {
 }
@@ -81,9 +83,9 @@ void Server::onClientConnect(struct kevent& event) {
 
 void Server::onRead(struct kevent& event) {
 		
-	UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 5 * 1000);
+	// UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 10 * 1000);
 
-	char buffer[4096];
+	char buffer[SIZE];
 	int num_bytes = recv(event.ident, buffer, sizeof(buffer) - 1, 0);
 	if (num_bytes <= 0) {
 
@@ -96,9 +98,10 @@ void Server::onRead(struct kevent& event) {
 
 	if (HttpRequest().isComplete(_Clients[event.ident].request)) {
 
-		UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
+		// UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
 		printLog(event, YELLOW, "Receiving... ", _Clients[event.ident].request);
 		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf, _Clients[event.ident].port).generate();
+		_Clients[event.ident].request.clear();
 		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
 		printLog(event, CYAN, "Sending... ", _Clients[event.ident].response);
 	}
@@ -106,18 +109,26 @@ void Server::onRead(struct kevent& event) {
 
 void Server::onWrite(struct kevent& event) {
 
-	int num_bytes = send(event.ident, _Clients[event.ident].response.c_str(), _Clients[event.ident].response.size(), 0);
-	if (num_bytes <= 0) {
+	if (!_Clients[event.ident].response.empty()) {
 
-		ERROR("send() failed");
-		closeConnection(event);
-		return;
-	}
-	_Clients[event.ident].response.erase(0, num_bytes);
+		int num_bytes = send(event.ident, _Clients[event.ident].response.c_str(), _Clients[event.ident].response.size(), 0);
+		if (num_bytes <= 0) {
 
-	if (_Clients[event.ident].response.empty()) {
-		closeConnection(event);
+			ERROR("send() failed");
+			closeConnection(event);
+			return;
+		}
+		// if (num_bytes == 0) {
+
+		// 	closeConnection(event);
+		// 	return;
+		// }
+		_Clients[event.ident].response.erase(0, num_bytes);
 	}
+
+	// if (_Clients[event.ident].response.empty()) {
+	// 	closeConnection(event);
+	// }
 }
 
 void Server::closeConnection(struct kevent& event) {
@@ -128,7 +139,7 @@ void Server::closeConnection(struct kevent& event) {
 		printLog(event, "", "Disconnecting... ");
 	
 	_Clients.erase(event.ident);
-	::close(event.ident);
+	close(event.ident);
 }
 
 void Server::printLog(Socket socket, std::string activity) {
