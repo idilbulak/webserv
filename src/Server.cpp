@@ -84,7 +84,7 @@ void Server::onRead(struct kevent& event) {
 	UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 5 * 1000);
 
 	char buffer[4096];
-	int num_bytes = recv(event.ident, buffer, sizeof(buffer), 0);
+	int num_bytes = recv(event.ident, buffer, sizeof(buffer) - 1, 0);
 	if (num_bytes <= 0) {
 
 		ERROR("recv() failed");
