@@ -118,8 +118,7 @@ void Server::onRead(struct kevent& event) {
 	if (HttpRequest().isComplete(_Clients[event.ident].request)) {
 		UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
 		printLog(event, YELLOW, "Receiving... ", _Clients[event.ident].request);
-		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf, 
-												_Clients[event.ident].port).generate();
+		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf, _Clients[event.ident].port).generate();
 		_Clients[event.ident].request.clear();
 		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
 		printLog(event, CYAN, "Sending... ", _Clients[event.ident].response);
@@ -129,9 +128,7 @@ void Server::onRead(struct kevent& event) {
 void Server::onWrite(struct kevent& event) {
 
 	if (!_Clients[event.ident].response.empty()) {
-		int num_bytes = send(event.ident, 
-							_Clients[event.ident].response.c_str(), 
-							_Clients[event.ident].response.size(), 0);
+		int num_bytes = send(event.ident, _Clients[event.ident].response.c_str(), _Clients[event.ident].response.size(), 0);
 		if (num_bytes <= 0)
 			throw std::runtime_error("send() failed");
 		_Clients[event.ident].response.erase(0, num_bytes);
