@@ -85,12 +85,19 @@ void HttpRequest::parseHeader() {
 	// parse other lines and put them in to map<str,str>
 	std::vector<std::string> lines = getLines();
 	for (std::vector<std::string>::iterator it = lines.begin() + 1; it != lines.end(); ++it) {
+        // std::cout << it->substr(0) << std::endl;
+        // std::cout << it->compare("\r\n") << std::endl;
+        if (it->compare("\r\n\r\n") == -1)
+            break ;
         std::string::size_type pos = it->find(": ");
         if (pos != std::string::npos) {
             std::string headerName = it->substr(0, pos);
             std::string headerValue = it->substr(pos + 2);
             this->_headers[headerName] = headerValue;
         }
+    }
+    if (_headers["Content-Type"].find("multipart/form-data") != std::string::npos) {
+        multipartFormData = true;
     }
 }
 
@@ -104,6 +111,12 @@ std::string parseChunked(std::string body) {
 		body = body.substr(hex_end + length + 2 + 2);
 	}
 	return newBody;
+}
+
+void    HttpRequest::parseMultiData() {
+    // std::vector<std::string> lines = getLines();
+    // _bodyti pars4e edecejsin icinden compiositioni koy headersa
+
 }
 
 void HttpRequest::parseBody() {
@@ -122,7 +135,10 @@ void HttpRequest::parseBody() {
 	}
     if (_buff.find("Transfer-Encoding: chunked") != std::string::npos && _buff.find("\r\n\r\n0\r\n\r\n") == std::string::npos){
         _body = parseChunked(_buff.substr(body_start));
-    } 
+    }
+    if(multipartFormData) {
+        parseMultiData();
+    }
 }
 
 // http_URL = "http:" "//" host [ ":" port ] [ abs_path [ "?" query ]]
@@ -157,7 +173,7 @@ Uri HttpRequest::parseUri(std::string token) {
     if (pathStart != uriEnd)
         uri.path = std::string(pathStart, queryStart);
     if (queryStart != uriEnd)
-        uri.queryStr = std::string(queryStart, uriEnd);
+        uri.queryStr = std::string(queryStart + 1, uriEnd);
     return uri;
 }
 

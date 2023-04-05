@@ -56,6 +56,7 @@ void    Cgi::envCgi()
     _env.insert(std::make_pair("SCRIPT_NAME", _indxFile));
     _env.insert(std::make_pair("SCRIPT_FILENAME", _indxFile));
     _env.insert(std::make_pair("QUERY_STRING", _req.getQueryStr()));
+    // std::cout << _req.getQueryStr() << std::endl;
     _env.insert(std::make_pair("REMOTE_ADDR", _server.host));
     _env.insert(std::make_pair("REMOTEaddr", _server.host));
     _env.insert(std::make_pair("REQUEST_URI", _req.getUri().path + _req.getQueryStr()));

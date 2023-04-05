@@ -36,6 +36,7 @@ class HttpRequest {
 		void	parseHeader();
 		void	parseBody();
 		Uri		parseUri(std::string token);
+		void    parseMultiData();
 
 		bool						isComplete(std::string buff);
 		std::string 				getFirstLine();
@@ -59,6 +60,7 @@ class HttpRequest {
 		std::string		_body;
 		Location        _loc;
 		Uri				_uri;
+		bool			multipartFormData;
 		std::map<std::string, std::string> 	_headers;
 };
 

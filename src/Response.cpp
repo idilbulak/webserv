@@ -4,6 +4,9 @@ Response::~Response(void) {}
 
 Response::Response(std::string buff, Config cf, std::string port) : _buff(buff), _cf(cf), _req(HttpRequest(buff, port)){
 	makeCodeMap();
+	_body.clear();
+	// _code.clear();
+	// _code.clear();
 	_server = findServer();
 }
 
@@ -54,13 +57,18 @@ std::string Response::chooseMethod() {
 }
 
 std::string Response::getRes() {
+	std::cout << _loc.path << std::endl;
 	setIndxFile();
+	std::cout << _indxFile << std::endl;
 	if (!_indxFile.empty()) {
 		_code = 200;
 		_body = read_html_file( _indxFile);
+		std::cout << _body << std::endl;
 		return res();
 	}
 	setCgiPath();
+	// std::cout << "hahahahah" << std::endl;
+	std::cout << _cgiPath << std::endl;
 	if (!_cgiOn)
 		return cgiOff();
 	_cgiRes = Cgi(_cgiPath, *this).execute();
@@ -80,8 +88,8 @@ std::string Response::getRes() {
         return errRes("Cgi error");
     }
 	_code = _cgiCode;
-	_type = 0;
-	// _body = _cgiResBody; 
+	_type = 1;
+	_body = _cgiResBody; 
 	return res();
 }
 
@@ -100,8 +108,12 @@ std::string	Response::cgiOff() {
 std::string Response::postRes() {
 	setCgiPath();
 	if (!_cgiOn) {
-		if (_file.empty())
+		if (_file.empty()) {
+			if (!_req.getHeaders()["Content-Type"].empty()) {
+				// std::cout << _req.getHeaders()["Content-Type"] << std::endl;
+			}
 			_file = "new";
+		}
 		std::string filename;
 		if (_loc.upload_dir.empty())
 			filename = _server.root + "/" + formatPath(_file);
