@@ -38,6 +38,7 @@ class Server {
 
 		void setupKqueue();
 		void setupListenSocket(Socket& serverSocket);
+		void closeAllConnections();
 		void UpdateKqueue(int fd, int filter, int flag, int data);
 		bool isListenSockfd(struct kevent& event);
 		void onClientConnect(struct kevent& event);
@@ -53,7 +54,7 @@ class Server {
 		class KeventFail : public std::exception {
 			public:
 				const char* what() const throw() {
-					return "kevent() failed";
+					return "[ERROR] kevent() failed";
 				}
 		};
 };

@@ -26,23 +26,23 @@ void Socket::setFiledOptions(int filed) {
 
 	int optval = 1;
 	if (setsockopt(filed, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
-		throw std::runtime_error("setsockopt(SO_REUSEADDR) failed");
+		throw std::runtime_error("[ERROR] setsockopt(SO_REUSEADDR) failed");
 	if (setsockopt(filed, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) == -1)
-		throw std::runtime_error("setsockopt(SO_REUSEPORT) failed");
+		throw std::runtime_error("[ERROR] setsockopt(SO_REUSEPORT) failed");
 	if (fcntl(filed, F_SETFL, O_NONBLOCK) == -1)
-		throw std::runtime_error("fcntl(O_NONBLOCK) failed");
+		throw std::runtime_error("[ERROR] fcntl(O_NONBLOCK) failed");
 }
 
 void Socket::bind() {
 
 	if (::bind(_fd, (struct sockaddr *)&_addr, sizeof(_addr)) < 0 )
-		throw std::runtime_error("bind() failed: ");
+		throw std::runtime_error("[ERROR] bind() failed: ");
 }
 
 void Socket::listen() {
 
 	if (::listen(_fd, SOMAXCONN) < 0)
-		throw std::runtime_error("listen() failed: ");
+		throw std::runtime_error("[ERROR] listen() failed: ");
 }
 
 int Socket::accept() {
@@ -56,8 +56,8 @@ int Socket::accept() {
 
 std::ostream& operator<<(std::ostream &os, Socket& obj) {
 
-	os << "port: " << BLUE << std::left << std::setw(8) << ntohs(obj.getAddr().sin_port) << RESET;
-	os << "IP address: " << BLUE << std::setw(12) << inet_ntoa(obj.getAddr().sin_addr) << RESET;
+	os << BLUE << std::left << std::setw(10) << inet_ntoa(obj.getAddr().sin_addr);
+	os << ":" << std::setw(8) << ntohs(obj.getAddr().sin_port) << RESET;
 	return os;
 }
 

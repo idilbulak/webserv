@@ -39,23 +39,21 @@ class Socket {
 		void listen();
 		int accept();
 
-		std::string getHost() {return _host;}
 		std::string getPort() {return _port;}
 		int getfd() {return _fd;}
 		struct sockaddr_in getAddr() {return _addr;}
-		socklen_t getAddrlen() {return _addrlen;}
 
 		class AcceptFail : public std::exception {
 			public:
 				const char* what() const throw() {
-					return "Accept() failed";
+					return "[ERROR] Accept() failed";
 				}
 		};
 
 		class CreateSocketFail : public std::exception {
 			public:
 				const char* what() const throw() {
-					return "Socket() failed";
+					return "[ERROR] Socket() failed";
 				}
 		};
 

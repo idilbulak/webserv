@@ -9,6 +9,7 @@ Server::Server(Config &cf) :_cf(cf) {
 
 void Server::setup() {
 
+	_serverIsListening = false;
 	setupKqueue();
 	for (int i = 0; i < _cf.servers.size(); i++) {
 		Socket serverSocket(_cf.servers[i].host, _cf.servers[i].port);
@@ -34,7 +35,7 @@ void Server::setupKqueue() {
 
 	_kqueue = kqueue();
 	if (_kqueue == -1) {
-		std::perror("kqueue() failed");
+		std::perror("[ERROR] kqueue() failed");
 		exit(1);
 	}
 }
@@ -67,7 +68,10 @@ void Server::run() {
 		}
 		catch (KeventFail& e) {
 			std::perror(e.what());
-			close(_kqueue); // reboot server fatal error????
+			close(_kqueue);
+			closeAllConnections();
+			setup();
+			run();
 		}
 		catch (Socket::AcceptFail& e) {
 			std::perror(e.what());
@@ -79,11 +83,19 @@ void Server::run() {
 	}
 }
 
+void Server::closeAllConnections() {
+
+	std::map<int, struct SocketData>::iterator it;
+	for (it = _Clients.begin(); it != _Clients.end(); ++it)
+		close(it->first);
+	_Clients.clear();
+}
+
 void Server::UpdateKqueue(int fd, int filter, int flag, int data) {
 
 	EV_SET(&_changeList, fd, filter, flag, 0, data, NULL);
 	if (kevent(_kqueue, &_changeList, 1, NULL, 0, NULL) == -1)
-		throw std::runtime_error("updateKqueue() failed");
+		throw std::runtime_error("[ERROR] updateKqueue() failed");
 }
 
 bool Server::isListenSockfd(struct kevent& event) {
@@ -109,20 +121,19 @@ void Server::onClientConnect(struct kevent& event) {
 void Server::onRead(struct kevent& event) {
 		
 	UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 10 * 1000);
-	char buffer[SIZE];
-	int num_bytes = recv(event.ident, buffer, sizeof(buffer) - 1, 0);
+	std::vector<char> buffer(event.data);
+	int num_bytes = recv(event.ident, buffer.data(), buffer.size(), 0);
 	if (num_bytes <= 0)
-		throw std::runtime_error("recv() failed");
-	buffer[num_bytes] = '\0';
-	_Clients[event.ident].request.append(buffer, num_bytes);
+		throw std::runtime_error("[ERROR] recv() failed");
+	_Clients[event.ident].request.append(buffer.data());
 	if (HttpRequest().isComplete(_Clients[event.ident].request)) {
-		UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
 		printLog(event, YELLOW, "Receiving... ", _Clients[event.ident].request);
 		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf, _Clients[event.ident].port).generate();
 		_Clients[event.ident].request.clear();
 		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
-		printLog(event, CYAN, "Sending... ", _Clients[event.ident].response);
 	}
+	else
+		printLog(event, BLACK, "Receiving... ", buffer.data());
 }
 
 void Server::onWrite(struct kevent& event) {
@@ -130,8 +141,11 @@ void Server::onWrite(struct kevent& event) {
 	if (!_Clients[event.ident].response.empty()) {
 		int num_bytes = send(event.ident, _Clients[event.ident].response.c_str(), _Clients[event.ident].response.size(), 0);
 		if (num_bytes <= 0)
-			throw std::runtime_error("send() failed");
+			throw std::runtime_error("[ERROR] send() failed");
+		printLog(event, CYAN, "Sending... ", _Clients[event.ident].response.substr(0, num_bytes));
 		_Clients[event.ident].response.erase(0, num_bytes);
+		if (_Clients[event.ident].response.empty())
+			UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
 	}
 }
 
@@ -141,8 +155,8 @@ void Server::closeConnection(struct kevent& event) {
 		printLog(event, PURPLE, "Disconnecting... ", "Connection timeout");
 	else
 		printLog(event, "", "Disconnecting... ");
+	close(event.ident);
 	_Clients.erase(event.ident);
-	close(event.ident); //?? check return
 }
 
 void Server::printLog(Socket socket, std::string activity) {
@@ -177,9 +191,9 @@ void Server::printLog(struct kevent& event, std::string color, std::string activ
 	std::cout << RED << getTime() << RESET;
 	std::cout << event;
 	std::cout << std::setw(17) << activity << RESET;
-	std::cout << GREEN << std::setw(10) << event.ident << RESET;
-	std::cout << color << httpMessage.substr(0, httpMessage.find("\r\n")) << RESET;
-	// std::cout << std::endl << std::endl << color << httpMessage << RESET;
+	std::cout << GREEN << std::setw(8) << event.ident << RESET;
+	// std::cout << color << httpMessage.substr(0, httpMessage.find("\r\n")) << RESET;
+	std::cout << std::endl << std::endl << color << httpMessage << RESET;
 	std::cout << std::endl;
 }
 
@@ -188,38 +202,10 @@ std::ostream& operator<<(std::ostream &os, struct kevent& event) {
 	struct sockaddr_in addr;
 	socklen_t addrlen = sizeof(addr);
 	getsockname(event.ident, (struct sockaddr *)&addr, &addrlen);
-
-	os << "port: " << BLUE << std::left << std::setw(8) << ntohs(addr.sin_port) << RESET;
-	os << "IP address: " << BLUE << std::setw(12) << inet_ntoa(addr.sin_addr) << RESET;
-
+	os << BLUE << std::left << std::setw(10) << inet_ntoa(addr.sin_addr);// << RESET;
+	os << ":" << std::setw(8) << ntohs(addr.sin_port) << RESET;
 	return os;
 }
 
 Server::~Server() {
 }
-
-// void Server::onRead(struct kevent& event) {
-		
-// 	UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 10 * 1000);
-
-// 	char buffer[SIZE];
-// 	int num_bytes = recv(event.ident, buffer, sizeof(buffer) - 1, 0);
-// 	if (num_bytes <= 0) {
-
-// 		std::perror("recv() failed");
-// 		closeConnection(event);
-// 		return;
-// 	}
-// 	buffer[num_bytes] = '\0';
-// 	_Clients[event.ident].request.append(buffer, num_bytes);
-
-// 	if (HttpRequest().isComplete(_Clients[event.ident].request)) {
-
-// 		UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
-// 		printLog(event, YELLOW, "Receiving... ", _Clients[event.ident].request);
-// 		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf, _Clients[event.ident].port).generate();
-// 		_Clients[event.ident].request.clear();
-// 		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
-// 		printLog(event, CYAN, "Sending... ", _Clients[event.ident].response);
-// 	}
-// }
