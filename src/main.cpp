@@ -9,8 +9,8 @@ int main(int argc, char **argv) {
 	}
 	Config cf(argv[1]);
 	// cf.display();
-	// Server Server(cf);
-	// Server.setup();
-	// Server.run();
+	Server Server(cf);
+	Server.setup();
+	Server.run();
 	return 0;
 }

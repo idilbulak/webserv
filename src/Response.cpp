@@ -30,14 +30,14 @@ std::string	Response::generate() {
 		return(errRes("Not allowed method"));
 	}
 	// burasi manuel oldu kesin degistir.
-	// if(_loc.path.compare("/post_body") == 0 && !_req.getBody().empty() && !_server.max_body_size.empty()) {
-	// 	_server.max_body_size.erase(_server.max_body_size.size() - 1);
-	// 	int size = std::stoi(_server.max_body_size);
-	// 	if(_req.getBody().length() > size) {
-	// 		_code = 413;
-	// 		return(errRes("Request Entity Too Large"));
-	// 	};
-	// }
+	if(!_req.getBody().empty() && !_loc.max_body_size.empty()) {
+		_loc.max_body_size.erase(_loc.max_body_size.size() - 1);
+		int size = std::stoi(_loc.max_body_size);
+		if(_req.getBody().length() > size) {
+			_code = 413;
+			return(errRes("Request Entity Too Large"));
+		};
+	}
 	return (chooseMethod());
 }
 
