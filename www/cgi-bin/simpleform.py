@@ -2,6 +2,7 @@
 
 import os
 
+print('Status: 200')
 print("Content-type: text/html")
 print("\r\n\r\n")
 print("<html>")

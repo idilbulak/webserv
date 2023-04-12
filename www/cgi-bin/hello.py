@@ -2,6 +2,7 @@
 
 import cgi
 
+print('Status: 200')
 # specify that we're returning HTML content
 print("Content-type: text/html")
 # print a blank line to indicate the end of the header
