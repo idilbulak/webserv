@@ -35,7 +35,8 @@ void	Config::parse() {
     while (ifs >> token) {
         if (token == "{" || token == "}")
             continue;
-        tokens.push_back(token);
+		else if (!token.empty())
+        	tokens.push_back(token);
     }
     ifs.close();
 	for (size_t i = 0; i != tokens.size(); ++i) {
@@ -66,7 +67,7 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 		else if (tokens[i] == "server_name")
 		{
 			CheckServerName(tokens[++i]);
-			server.name = tokens[++i];
+			server.name = tokens[i];
 		}
 		else if (tokens[i] == "root")
 			server.root = tokens[++i];
@@ -84,7 +85,14 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 		else
 			i++;
 	}
-	servers.push_back(server);
+	bool isNew = true;
+	for (int i = 0; i < servers.size(); i++)
+	{
+		if (servers[i].port == server.port)
+			isNew = false;
+	}
+	if(isNew)
+		servers.push_back(server);
 }
 
 void Config::parseCgiExt(std::vector<std::string>  &cgi_ext, const std::vector<std::string> &tokens, size_t &i){
