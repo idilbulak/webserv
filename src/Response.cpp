@@ -3,6 +3,7 @@
 Response::~Response(void) {}
 
 Response::Response(std::string buff, Config cf, std::string port) : _buff(buff), _cf(cf), _req(HttpRequest(buff, port)){
+	// std::cout << "idil is it form meeee" << std::endl;
 	makeCodeMap();
 	_body.clear();
 	// _code.clear();
@@ -73,9 +74,9 @@ std::string Response::getRes() {
 		return cgiOff();
 	_cgiRes = Cgi(_cgiPath, *this).execute();
 	parseCgiResponse();
-	// std::cout << _cgiCode << std::endl;  
-	// std::cout << _cgiType << std::endl;  
-	// std::cout << _cgiResBody << std::endl;  
+	std::cout << _cgiCode << std::endl;  
+	std::cout << _cgiType << std::endl;  
+	std::cout << _cgiResBody << std::endl;  
 	if (_cgiCode == 302)
     {
         _type = 2;

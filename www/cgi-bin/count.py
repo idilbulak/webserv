@@ -15,6 +15,7 @@ def incrementcount():
     except Exception as e:
         return -1
 
+print('Status: 200')
 print('Content-type: text/html')
 print("\r\n\r\n")
 print('<html>')
