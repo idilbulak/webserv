@@ -21,13 +21,17 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HEAD)
 $(ERR):
 	@mkdir -p {1..5}$(ERR)
 # @mkdir -p $(UPLOADDIR)
-	@python3 assets/$(ERR).py
+	@python3 xx/$(ERR).py
+	@mv {1..5}$(ERR) xx/
 run: $(NAME)
 	./$(NAME) Conf/test.conf
 clean:
 	@rm -rf $(OBJDIR)
-	@rm -rf {1..5}$(ERR)
+	@rm -rf xx/{1..5}$(ERR)
 	@echo 0 > www/count.txt
+	@echo "" > tester/YoupiBanane/youpi.bla
+	@rm -rf tester/YoupiBanane/youpla.bla
+	@echo "" > cgiBody.txt
 # @rm -rf $(UPLOADDIR)
 fclean: clean
 	@rm -f $(NAME)

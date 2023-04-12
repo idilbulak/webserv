@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Delete File</title>
+    <script>
+      function deleteFile() {
+        // Get the file input field and retrieve the first file from the input
+        var fileInput = document.getElementById("fileInput");
+        var file = fileInput.files[0];
+        // Create a new XMLHttpRequest object
+        var xhr = new XMLHttpRequest();
+        // Initialize the XHR request with the HTTP DELETE method and the URL of the server-side script, with the filename as a parameter
+        xhr.open("DELETE", "/delete_test?filename=" + file.name);
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+          if (xhr.status === 200) {
+            window.location.href = '/deletesuccess.html';
+          } else {
+            window.location.href = '/failure';
+          }
+        }
+        };
+        // Send the DELETE request to the server
+        xhr.send();
+      }
+    </script>
+  </head>
+  <body>
+    <!-- Create a file input field with an ID of "fileInput" -->
+    <input type="file" id="fileInput">
+    <!-- Create a button that calls the deleteFile function when clicked -->
+    <button onclick="deleteFile()">Delete File</button>
+  </body>
+</html>

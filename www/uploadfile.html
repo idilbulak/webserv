@@ -24,9 +24,9 @@
       xhr.onreadystatechange = function() {
         if (xhr.readyState === XMLHttpRequest.DONE) {
           if (xhr.status === 200) {
-            window.location.href = '/successupload';
+            window.location.href = '/uploadsuccess.html';
           } else {
-            window.location.href = '/failure';
+            window.location.href = '/failure.html';
           }
         }
       };

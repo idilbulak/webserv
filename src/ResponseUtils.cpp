@@ -149,7 +149,7 @@ void	Response::setIndxFile() {
 
 void	Response::setCgiPath() {
 	_cgiOn = 0;
-    std::cout << _file << std::endl;
+    // std::cout << _file << std::endl;
 	if(!_file.empty() && checkExtension()) {
 		_cgiPath = _server.root + "/" + formatPath(_file);
 		if (fileExists(formatPath(_file)))
