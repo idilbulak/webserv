@@ -1,5 +1,4 @@
 #include "../inc/Server.hpp"
-// #include "../inc/ErrorMessage.hpp"
 #include "../inc/Socket.hpp"
 #include "../inc/Cgi.hpp"
 #include <unistd.h>
@@ -102,18 +101,20 @@ void Server::onClientConnect(struct kevent& event) {
 void Server::onRead(struct kevent& event) {
 		
 	UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 10 * 1000);
-	std::vector<char> buffer(event.data);
-	int num_bytes = recv(event.ident, buffer.data(), buffer.size(), 0);
+	std::vector<char> buffer(event.data + 1);
+	int num_bytes = recv(event.ident, buffer.data(), buffer.size() - 1, 0);
 	if (num_bytes <= 0)
 		throw std::runtime_error("[ERROR] recv() failed");
 	buffer[num_bytes] = '\0';
 	printLog(event, YELLOW, "Receiving... ", buffer.data());
 	_Clients[event.ident].request.append(buffer.data());
 	if (HttpRequest().isComplete(_Clients[event.ident].request)) {
+		UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
+		printLog(event, PURPLE, "Processing... ");
 		Response Response(_Clients[event.ident].request, _cf, _Clients[event.ident].port);
 		_Clients[event.ident].response = Response.generate();
-		_Clients[event.ident].request.clear();
 		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
+		_Clients[event.ident].request.clear();
 	}
 }
 
@@ -124,10 +125,8 @@ void Server::onWrite(struct kevent& event) {
 		throw std::runtime_error("[ERROR] send() failed");
 	printLog(event, CYAN, "Sending... ", _Clients[event.ident].response.substr(0, num_bytes));
 	_Clients[event.ident].response.erase(0, num_bytes);
-	if (_Clients[event.ident].response.empty()) {
+	if (_Clients[event.ident].response.empty())
 		UpdateKqueue(event.ident, EVFILT_WRITE, EV_DELETE, 0);
-		UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
-	}
 }
 
 void Server::closeConnection(struct kevent& event) {
@@ -189,8 +188,8 @@ void Server::printLog(struct kevent& event, std::string color, std::string activ
 	std::cout << event;
 	std::cout << std::setw(17) << activity << RESET;
 	std::cout << GREEN << std::setw(8) << event.ident << RESET;
-	std::cout << std::endl << std::endl << color << httpMessage << RESET;
-	// std::cout << std::endl << std::endl << color << httpMessage.substr(0, 1000) << RESET;
+	// std::cout << std::endl << std::endl << color << httpMessage << RESET;
+	std::cout << std::endl << std::endl << color << httpMessage.substr(0, 500) << RESET;
 	std::cout << std::endl;
 }
 

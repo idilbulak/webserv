@@ -1,5 +1,4 @@
 #include "../inc/Socket.hpp"
-#include "../inc/ErrorMessage.hpp"
 
 Socket::Socket() {
 }
