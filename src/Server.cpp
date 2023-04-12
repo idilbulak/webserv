@@ -9,7 +9,6 @@ Server::Server(Config &cf) :_cf(cf) {
 
 void Server::setup() {
 
-	_serverIsListening = false;
 	setupKqueue();
 	for (int i = 0; i < _cf.servers.size(); i++) {
 		Socket serverSocket(_cf.servers[i].host, _cf.servers[i].port);
@@ -27,7 +26,6 @@ void Server::setup() {
 		}
 		_listenSockets.insert(std::make_pair(serverSocket.getfd(), serverSocket));
 		printLog(serverSocket, "listening... ");
-		_serverIsListening = true;
 	}
 }
 
@@ -52,10 +50,10 @@ void Server::setupListenSocket(Socket& serverSocket) {
 
 void Server::run() {
 
-	for(;_serverIsListening;) {
+	for(;!_listenSockets.empty();) {
 		try {
-			int new_events = kevent(_kqueue, NULL, 0, &_eventList, 1, NULL);
-			if (new_events == -1 || _eventList.flags & EV_ERROR)
+			int new_event = kevent(_kqueue, NULL, 0, &_eventList, 1, NULL);
+			if (new_event == -1 || _eventList.flags & EV_ERROR)
 				throw KeventFail();
 			else if (_eventList.flags & EV_EOF || _eventList.filter == EVFILT_TIMER)
 				closeConnection(_eventList);
@@ -66,13 +64,6 @@ void Server::run() {
 			else if (_eventList.filter == EVFILT_WRITE)
 				onWrite(_eventList);
 		}
-		catch (KeventFail& e) {
-			std::perror(e.what());
-			close(_kqueue);
-			closeAllConnections();
-			setup();
-			run();
-		}
 		catch (Socket::AcceptFail& e) {
 			std::perror(e.what());
 		}
@@ -80,15 +71,15 @@ void Server::run() {
 			std::perror(e.what());
 			closeConnection(_eventList);
 		}
+		catch (KeventFail& e) {
+			std::perror(e.what());
+			close(_kqueue);
+			closeAllConnections();
+			closeListenSockets();
+			setup();
+			run();
+		}
 	}
-}
-
-void Server::closeAllConnections() {
-
-	std::map<int, struct SocketData>::iterator it;
-	for (it = _Clients.begin(); it != _Clients.end(); ++it)
-		close(it->first);
-	_Clients.clear();
 }
 
 void Server::UpdateKqueue(int fd, int filter, int flag, int data) {
@@ -125,27 +116,26 @@ void Server::onRead(struct kevent& event) {
 	int num_bytes = recv(event.ident, buffer.data(), buffer.size(), 0);
 	if (num_bytes <= 0)
 		throw std::runtime_error("[ERROR] recv() failed");
-	_Clients[event.ident].request.append(buffer.data());
+	buffer[num_bytes] = '\0';
+	printLog(event, YELLOW, "Receiving... ", buffer.data());
+		_Clients[event.ident].request.append(buffer.data());
 	if (HttpRequest().isComplete(_Clients[event.ident].request)) {
-		printLog(event, YELLOW, "Receiving... ", _Clients[event.ident].request);
+		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
 		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf, _Clients[event.ident].port).generate();
 		_Clients[event.ident].request.clear();
-		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
 	}
-	else
-		printLog(event, BLACK, "Receiving... ", buffer.data());
 }
 
 void Server::onWrite(struct kevent& event) {
 
-	if (!_Clients[event.ident].response.empty()) {
-		int num_bytes = send(event.ident, _Clients[event.ident].response.c_str(), _Clients[event.ident].response.size(), 0);
-		if (num_bytes <= 0)
-			throw std::runtime_error("[ERROR] send() failed");
-		printLog(event, CYAN, "Sending... ", _Clients[event.ident].response.substr(0, num_bytes));
-		_Clients[event.ident].response.erase(0, num_bytes);
-		if (_Clients[event.ident].response.empty())
-			UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
+	int num_bytes = send(event.ident, _Clients[event.ident].response.c_str(), _Clients[event.ident].response.size(), 0);
+	if (num_bytes <= 0)
+		throw std::runtime_error("[ERROR] send() failed");
+	printLog(event, CYAN, "Sending... ", _Clients[event.ident].response.substr(0, num_bytes));
+	_Clients[event.ident].response.erase(0, num_bytes);
+	if (_Clients[event.ident].response.empty()) {
+		UpdateKqueue(event.ident, EVFILT_WRITE, EV_DELETE, 0);
+		UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
 	}
 }
 
@@ -157,6 +147,22 @@ void Server::closeConnection(struct kevent& event) {
 		printLog(event, "", "Disconnecting... ");
 	close(event.ident);
 	_Clients.erase(event.ident);
+}
+
+void Server::closeAllConnections() {
+
+	std::map<int, struct SocketData>::iterator it;
+	for (it = _Clients.begin(); it != _Clients.end(); ++it)
+		close(it->first);
+	_Clients.clear();
+}
+
+void Server::closeListenSockets() {
+
+	std::map<int, Socket>::iterator it;
+	for (it = _listenSockets.begin(); it != _listenSockets.end(); ++it)
+		close(it->first);
+	_listenSockets.clear();
 }
 
 void Server::printLog(Socket socket, std::string activity) {
@@ -192,8 +198,8 @@ void Server::printLog(struct kevent& event, std::string color, std::string activ
 	std::cout << event;
 	std::cout << std::setw(17) << activity << RESET;
 	std::cout << GREEN << std::setw(8) << event.ident << RESET;
-	// std::cout << color << httpMessage.substr(0, httpMessage.find("\r\n")) << RESET;
 	std::cout << std::endl << std::endl << color << httpMessage << RESET;
+	// std::cout << std::endl << std::endl << color << httpMessage.substr(0, 1000) << RESET;
 	std::cout << std::endl;
 }
 
@@ -202,7 +208,7 @@ std::ostream& operator<<(std::ostream &os, struct kevent& event) {
 	struct sockaddr_in addr;
 	socklen_t addrlen = sizeof(addr);
 	getsockname(event.ident, (struct sockaddr *)&addr, &addrlen);
-	os << BLUE << std::left << std::setw(10) << inet_ntoa(addr.sin_addr);// << RESET;
+	os << BLUE << std::left << std::setw(10) << inet_ntoa(addr.sin_addr);
 	os << ":" << std::setw(8) << ntohs(addr.sin_port) << RESET;
 	return os;
 }
