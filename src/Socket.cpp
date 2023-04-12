@@ -49,7 +49,7 @@ int Socket::accept() {
 	int connectionSocket = ::accept(_fd, NULL, NULL);
 	if (connectionSocket < 0)
 		throw AcceptFail();
-	setFiledOptions(connectionSocket); //??
+	setFiledOptions(connectionSocket);
 	return connectionSocket;
 }
 

@@ -1,15 +1,9 @@
 #ifndef Server_HPP
 # define Server_HPP
 
-#include <iostream>
-#include <iomanip>
-#include "Config.hpp"
-#include "Socket.hpp"
-#include "Response.hpp"
-
-// #include "Time.hpp"
-// #include <sys/event.h>
-// #include "fcntl.h"
+# include "Config.hpp"
+# include "Socket.hpp"
+# include "Response.hpp"
 
 struct SocketData {
 

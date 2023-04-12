@@ -1,7 +1,5 @@
 #include "../inc/Server.hpp"
 #include "../inc/Socket.hpp"
-#include "../inc/Cgi.hpp"
-#include <unistd.h>
 
 Server::Server(Config &cf) :_cf(cf) {
 }
@@ -92,6 +90,7 @@ void Server::onClientConnect(struct kevent& event) {
 		int connectionSocket = _listenSockets[event.ident].accept();
 		printLog(_listenSockets[event.ident], "Connecting... ", connectionSocket);
 		UpdateKqueue(connectionSocket, EVFILT_READ, EV_ADD, 0);
+		UpdateKqueue(connectionSocket, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 5 * 1000);
 		struct SocketData data;
 		data.port = _listenSockets[event.ident].getPort();
 		_Clients.insert(std::make_pair(connectionSocket, data));
@@ -100,7 +99,7 @@ void Server::onClientConnect(struct kevent& event) {
 
 void Server::onRead(struct kevent& event) {
 		
-	UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 10 * 1000);
+	UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 5 * 1000);
 	std::vector<char> buffer(event.data + 1);
 	int num_bytes = recv(event.ident, buffer.data(), buffer.size() - 1, 0);
 	if (num_bytes <= 0)
@@ -120,6 +119,7 @@ void Server::onRead(struct kevent& event) {
 
 void Server::onWrite(struct kevent& event) {
 
+	UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 5 * 1000);
 	int num_bytes = send(event.ident, _Clients[event.ident].response.c_str(), _Clients[event.ident].response.size(), 0);
 	if (num_bytes <= 0)
 		throw std::runtime_error("[ERROR] send() failed");
@@ -132,7 +132,7 @@ void Server::onWrite(struct kevent& event) {
 void Server::closeConnection(struct kevent& event) {
 
 	if (event.filter == EVFILT_TIMER)
-		printLog(event, PURPLE, "Disconnecting... ", "Connection timeout");
+		printLog(event, PURPLE, "Timeout... ");
 	else
 		printLog(event, "", "Disconnecting... ");
 	close(event.ident);
@@ -190,7 +190,7 @@ void Server::printLog(struct kevent& event, std::string color, std::string activ
 	std::cout << GREEN << std::setw(8) << event.ident << RESET;
 	// std::cout << std::endl << std::endl << color << httpMessage << RESET;
 	std::cout << std::endl << std::endl << color << httpMessage.substr(0, 500) << RESET;
-	std::cout << std::endl;
+	std::cout << std::endl << std::endl;
 }
 
 std::ostream& operator<<(std::ostream &os, struct kevent& event) {
