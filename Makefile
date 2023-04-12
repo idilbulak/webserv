@@ -35,5 +35,5 @@ clean:
 # @rm -rf $(UPLOADDIR)
 fclean: clean
 	@rm -f $(NAME)
-re: fclean all
+re: fclean run
 .PHONY: clean fclean re all err_html
