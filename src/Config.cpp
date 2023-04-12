@@ -9,8 +9,15 @@ Config::Config(const std::string &path) :_path(path) {
 	// 	}
 	// }
 
-	CheckConfFile confCheck(path);
-    this->parse();
+	try
+	{
+		CheckConfFile confCheck(path);
+    	this->parse();
+	}
+	catch(const std::exception& e)
+	{
+		std::cout << e.what() << std::endl;
+	}
 }
 
 Config::~Config() {
@@ -128,7 +135,6 @@ void	Config::parseErrorPage(std::map<int,std::string> &error_pages, std::vector<
 		catch(const std::exception& e)
 		{
 			throw std::invalid_argument("error pages atoi error!");
-        	exit (1);
 		}
 		
 		i++;
@@ -156,10 +162,8 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 			if (str== "on")
 				loc.autoindex = 1;
 			}
-			else{
+			else
 				throw std::invalid_argument("autoindex error!");
-        		exit (1);
-		}
 		}
 		else if (tokens[i] == "cgi_path") {
 			loc.cgi_path = tokens[++i];
