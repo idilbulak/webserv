@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 import cgi
 import os
@@ -20,5 +20,6 @@ print("\r\n\r\n")
 print('<html>')
 print('<body>')
 print('<h1>The current count is: {}</h1>'.format(incrementcount()))
+print('<p><a href="/">Click here to return to the homepage</a></p>')
 print('</body>')
 print('</html>')

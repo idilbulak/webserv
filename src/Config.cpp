@@ -63,10 +63,6 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 		}
 		else if (tokens[i] == "root")
 			server.root = tokens[++i];
-		else if (tokens[i] == "max_body_size" ){
-			CheckClientMaxBodySize(tokens[++i]);
-			server.max_body_size = tokens[i];
-			}
 		else if (tokens[i] == "error_page" ){
 			parseErrorPage(server.error_pages, tokens, i);
 			
@@ -105,7 +101,7 @@ void	Config::parseHostPort(std::string &host, std::string &port, std::string &to
 bool	Config::check_word(const std::string &word) {
 	if (word.empty())
 		return true;
-	if (word == "cgi_ext" || word == "cgi_path" || word == "index" || word == "listen" || word == "location" || word == "client_max_body_size" || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return" || word == "autoindex" || word == "upload_dir")
+	if (word == "cgi_ext" || word == "cgi_path" || word == "index" || word == "listen" || word == "location"  || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return" || word == "autoindex" || word == "upload_dir" || word == "max_body_size")
 		return true;
 	return false;
 }
@@ -132,6 +128,7 @@ void	Config::parseErrorPage(std::map<int,std::string> &error_pages, std::vector<
 		catch(const std::exception& e)
 		{
 			throw std::invalid_argument("error pages atoi error!");
+        	exit (1);
 		}
 		
 		i++;
@@ -159,8 +156,10 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 			if (str== "on")
 				loc.autoindex = 1;
 			}
-			else
+			else{
 				throw std::invalid_argument("autoindex error!");
+        		exit (1);
+		}
 		}
 		else if (tokens[i] == "cgi_path") {
 			loc.cgi_path = tokens[++i];
@@ -178,6 +177,12 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 			loc.redirect_cd = stoi(tokens[++i]);
 			loc.redirect_url = tokens[++i];
 		}
+		else if(tokens[i] == "max_body_size")
+		{
+			CheckClientMaxBodySize(tokens[++i]);
+			loc.max_body_size = tokens[i];
+			// std::cout << "size is " << loc.max_body_size << " than  "<< i++ << std::endl;
+		}
 		else
 			i++;
 	}
@@ -193,7 +198,6 @@ void Config::display() {
         std::cout << "\tPort: " << server.port << std::endl;
         std::cout << "\tName: " << server.name << std::endl;
         std::cout << "\tRoot: " << server.root << std::endl;
-        std::cout << "\tMax Body Size: " << server.max_body_size << std::endl;
 		std::cout << "\tCGI EXT " << server.cgi_ext.size() << std::endl;
 		for (int i = 0; server.cgi_ext.size() > i ; i++) {
             std::cout << "\t\tcgiExit " << server.cgi_ext[i]<< std::endl;
@@ -208,6 +212,7 @@ void Config::display() {
             const Location &location = *it_loc;
 	        std::cout << "\tlocation: " << std::endl;
             std::cout << "\t\tPath: " << location.path << std::endl;
+            std::cout << "\t\tmax body size: " << location.max_body_size << std::endl;
             std::cout << "\t\tMethods: " << std::endl;
             for (std::vector<std::string>::const_iterator it_meth = location.methods.begin(); it_meth != location.methods.end(); ++it_meth) {
                 std::cout << "\t\t\t" << *it_meth << std::endl;

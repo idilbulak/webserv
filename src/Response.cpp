@@ -30,9 +30,9 @@ std::string	Response::generate() {
 		return(errRes("Not allowed method"));
 	}
 	// burasi manuel oldu kesin degistir.
-	if(_loc.path.compare("/post_body") == 0 && !_req.getBody().empty() && !_server.max_body_size.empty()) {
-		_server.max_body_size.erase(_server.max_body_size.size() - 1);
-		int size = std::stoi(_server.max_body_size);
+	if(!_req.getBody().empty() && !_loc.max_body_size.empty()) {
+		_loc.max_body_size.erase(_loc.max_body_size.size() - 1);
+		int size = std::stoi(_loc.max_body_size);
 		if(_req.getBody().length() > size) {
 			_code = 413;
 			return(errRes("Request Entity Too Large"));
@@ -57,18 +57,18 @@ std::string Response::chooseMethod() {
 }
 
 std::string Response::getRes() {
-	std::cout << _loc.path << std::endl;
+	// std::cout << _loc.path << std::endl;
 	setIndxFile();
-	std::cout << _indxFile << std::endl;
+	// std::cout << _indxFile << std::endl;
 	if (!_indxFile.empty()) {
 		_code = 200;
 		_body = read_html_file( _indxFile);
-		std::cout << _body << std::endl;
+		// std::cout << _body << std::endl;
 		return res();
 	}
 	setCgiPath();
 	// std::cout << "hahahahah" << std::endl;
-	std::cout << _cgiPath << std::endl;
+	// std::cout << _cgiPath << std::endl;
 	if (!_cgiOn)
 		return cgiOff();
 	_cgiRes = Cgi(_cgiPath, *this).execute();
@@ -105,15 +105,72 @@ std::string	Response::cgiOff() {
 	}
 }
 
+std::string getFilenameFromHeader(const std::string& header) {
+	// std::cout << header << std::endl;
+    // Find the position of "filename" in the header
+    size_t filenamePos = header.find("filename=");
+    if (filenamePos == std::string::npos) {
+        // "filename" parameter not found in header
+        return "";
+    }
+
+    // Extract the filename string from the header
+    std::string filename;
+    size_t start = header.find('"', filenamePos);
+    size_t end = header.find('"', start + 1);
+    if (start != std::string::npos && end != std::string::npos) {
+        filename = header.substr(start + 1, end - start - 1);
+    }
+	// else
+
+    return filename;
+}
+
+void Response::parseMultiPartBody() {
+    size_t cdHeaderPos = _req.getBody().find("Content-Disposition: ");
+    if (cdHeaderPos == std::string::npos) {
+        // "Content-Disposition" header not found in body
+        return;
+    }
+	size_t start = _req.getBody().find("filename=\"", cdHeaderPos);
+    if (start == std::string::npos) {
+        // "filename" not found in header
+        return;
+    }
+    size_t end = _req.getBody().find('"', start + 10);
+    if (start != std::string::npos && end != std::string::npos) {
+        _file = _req.getBody().substr(start + 10, end - start - 10);
+    }
+    start = _req.getBody().find("\r\n\r\n", cdHeaderPos);
+    if (start != std::string::npos) {
+        _body = _req.getBody().substr(start + 4);
+    }
+    size_t lastLinePos = _body.rfind("------WebKitFormBoundary");
+    if (lastLinePos != std::string::npos) {
+        _body = _body.substr(0, lastLinePos);
+    }
+}
+
 std::string Response::postRes() {
+	static int i = 0;
 	setCgiPath();
 	if (!_cgiOn) {
 		if (_file.empty()) {
-			if (!_req.getHeaders()["Content-Type"].empty()) {
-				// std::cout << _req.getHeaders()["Content-Type"] << std::endl;
+			if (!_req.getHeaders()["Content-Disposition"].empty()) {
+				_file = getFilenameFromHeader(_req.getHeaders()["Content-Disposition"]);
+				_body = _req.getBody();
 			}
-			_file = "new";
+			else if (_req.getHeaders()["Content-Type"].find("multipart/form-data") != std::string::npos) {
+				parseMultiPartBody();
+			}
+			else {
+				_file = "newfile" + itos(i);
+				i++;
+				_body = _req.getBody();
+
+			}
 		}
+		// std::cout << "file" << _file << std::endl;
 		std::string filename;
 		if (_loc.upload_dir.empty())
 			filename = _server.root + "/" + formatPath(_file);
@@ -123,7 +180,7 @@ std::string Response::postRes() {
 		if (!outFile) {
 			std::cerr << "Error: Unable to open file for writing: " << filename << std::endl;
 		}
-		outFile << _req.getBody();
+		outFile << _body;
 		outFile.close();
 		_type = 0;
 		_code = 200;
@@ -211,9 +268,16 @@ std::string Response::putRes(void) {
 }
 
 std::string Response::delRes() {
-	if (pathType(_req.getUri().path) != 0) {
-		if (remove(_req.getUri().path.c_str()) == 0)
-			_code = 204;
+	std::string filename;
+    size_t pos = _req.getQueryStr().find("=");
+    if (pos != std::string::npos) {
+        pos += 1; // Skip "filename="
+            filename = _req.getQueryStr().substr(pos);
+    }
+
+	if (pathType(_loc.upload_dir + "/" + filename) == 1) {
+		if (remove((_loc.upload_dir + "/" + filename).c_str()) == 0)
+			_code = 200;
 		else
 			_code = 403;
 	}
@@ -272,6 +336,7 @@ void Response::parseCgiResponse(void)
 }
 
 std::string Response::getMimeType(const std::string &ext) {
+	// std::cout << "ext: " << ext << std::endl;
     if (ext == "html")
 		return "text/html";
 	if (ext == "css")

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 import cgi
 
@@ -13,5 +13,6 @@ print("<title>CGI Python Script</title>")
 print("</head>")
 print("<body>")
 print("<h1>Cgi Python Script is successfully executed.</h1>")
+print('<p><a href="/">Click here to return to the homepage</a></p>')
 print("</body>")
 print("</html>")

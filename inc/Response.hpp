@@ -54,6 +54,7 @@ class Response {
 		bool parsePathRecursively(std::string str, Location *loc);
 		void deductPathForFolder();
 		std::string	formatPath(std::string path);
+		void parseMultiPartBody();
 
 	private:
 		std::map<int, std::string>	_codeMap;
