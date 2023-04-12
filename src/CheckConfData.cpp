@@ -11,13 +11,16 @@ void Config::CheckPort(std::string port)
     catch(const std::exception& e)
     {
         throw std::invalid_argument("Port Error!");
+        exit (1);
     }
 }
 
 void Config::CheckServerName (std::string serverName)
 {
-    if (check_word(serverName))
+    if (check_word(serverName)){
        throw std::invalid_argument("CheckServerName error");
+        exit (1);
+    }
 }
 
 
@@ -25,19 +28,20 @@ void Config::CheckServerName (std::string serverName)
 
 
 void Config::CheckClientMaxBodySize (std::string maxBodysize){
+    std::string txt;
     if(maxBodysize.back() != 'm')
-        throw std::invalid_argument("CheckClientMaxBodySize(without M) Error!");
-    std::string txt = maxBodysize.substr(0, maxBodysize.size() - 1);
-    try
+        txt = maxBodysize;
+    else
+        txt = maxBodysize.substr(0, maxBodysize.size() - 1);
+    for (int i = 0; i < txt.length(); i++)
     {
-        std::stoi(txt);
+        if (!isdigit(txt[i])){
+            throw std::invalid_argument("CheckClientMaxBodySize Error!");
+            exit (1);
+        }
     }
-    catch(const std::exception& e)
-    {
-        throw std::invalid_argument("CheckClientMaxBodySize(convert int) Error!");
-    }
-    
 }
+ 
 
 void Config::CheckLocation(std::vector<Location> location)
 {
@@ -45,45 +49,30 @@ void Config::CheckLocation(std::vector<Location> location)
     {
         CheckPath(location[i].path);
         CheckAllow(location[i].methods);
-        CheckUploadDir(location[i].upload_dir);
-        CheckIndex(location[i].index);
-        CheckReturn(location[i].redirect_cd, location[i].redirect_url);
-    }
+      }
     
 }
 
 void Config::CheckPath(std::string path){
-    if (path.empty())
+    if (path.empty()){
         throw std::invalid_argument("Path Error");
+        exit (1);
+    }
 }
 
 void Config::CheckAllow(std::vector<std::string> methods){
-    // for (int i = 0; i < methods.size(); i++)
-    // {
-    //     if (!(methods[i].compare("PUT") == 0 || methods[i].compare("GET") == 0 || methods[i].compare("POST") == 0 || methods[i].compare("DELETE") == 0))
-    //     {
-    //         // std::cout << " method is  " << methods[i] << std::endl;
-    //         throw std::invalid_argument("Methods error");}
-    // }
+    for (int i = 0; i < methods.size(); i++)
+    {
+        if (!(methods[i].compare("PUT") == 0 || methods[i].compare("GET") == 0 || methods[i].compare("POST") == 0 || methods[i].compare("DELETE") == 0))
+        {
+            std::cout << "Error " << methods[i] << std::endl;
+            throw std::invalid_argument("Methods error");
+            exit (1);
+        }
+    }
 }
 
 
 
-void Config::CheckUploadDir(std::string	upload_dir){
-    // if (upload_dir.empty())
-    //     return;
-    // std::cout << upload_dir << std::endl;
-    // if (access(upload_dir.c_str(), F_OK) == -1) 
-    //     throw std::invalid_argument("upload direction error!");
-}
 
-//What do i have check?
-void Config::CheckIndex(std::vector<std::string> index){
-
-}
-
-//What do i have check?
-void Config::CheckReturn(int redirect_cd, std::string redirect_url){
-
-}
 

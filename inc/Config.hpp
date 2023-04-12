@@ -23,6 +23,7 @@ struct Location {
 	std::vector<std::string>	index;
 	int							redirect_cd;
 	std::string					redirect_url;
+	std::string					max_body_size;
 };
 
 struct VirtualServer {
@@ -30,7 +31,6 @@ struct VirtualServer {
 	std::string					port;
 	std::string					name;
 	std::string					root;
-	std::string					max_body_size;
 	std::vector<std::string>	cgi_ext;
 	std::map<int,std::string>   error_pages;
 	std::vector<Location>		locations;
