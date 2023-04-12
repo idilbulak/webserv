@@ -1,5 +1,5 @@
 #include "../inc/Server.hpp"
-#include "../inc/ErrorMessage.hpp"
+// #include "../inc/ErrorMessage.hpp"
 #include "../inc/Socket.hpp"
 #include "../inc/Cgi.hpp"
 #include <unistd.h>
@@ -9,11 +9,22 @@ Server::Server(Config &cf) :_cf(cf) {
 
 void Server::setup() {
 
-	setupKqueue();
+	_kqueue = kqueue();
+	if (_kqueue == -1) {
+		std::perror("[ERROR] kqueue() failed");
+		exit(1);
+	}
 	for (int i = 0; i < _cf.servers.size(); i++) {
 		Socket serverSocket(_cf.servers[i].host, _cf.servers[i].port);
 		try {
-			setupListenSocket(serverSocket);
+			serverSocket.createSocket();
+			serverSocket.setSocketAddr();
+			serverSocket.setFiledOptions(serverSocket.getfd());
+			serverSocket.bind();
+			serverSocket.listen();
+			UpdateKqueue(serverSocket.getfd(), EVFILT_READ, EV_ADD, 0);
+			_listenSockets.insert(std::make_pair(serverSocket.getfd(), serverSocket));
+			printLog(serverSocket, "listening... ");
 		}
 		catch (Socket::CreateSocketFail& e) {
 			std::perror(e.what());
@@ -24,28 +35,14 @@ void Server::setup() {
 			close(serverSocket.getfd());
 			continue;
 		}
-		_listenSockets.insert(std::make_pair(serverSocket.getfd(), serverSocket));
-		printLog(serverSocket, "listening... ");
 	}
 }
 
-void Server::setupKqueue() {
+void Server::UpdateKqueue(int fd, int filter, int flag, int data) {
 
-	_kqueue = kqueue();
-	if (_kqueue == -1) {
-		std::perror("[ERROR] kqueue() failed");
-		exit(1);
-	}
-}
-
-void Server::setupListenSocket(Socket& serverSocket) {
-
-	serverSocket.createSocket();
-	serverSocket.setSocketAddr();
-	serverSocket.setFiledOptions(serverSocket.getfd());
-	serverSocket.bind();
-	serverSocket.listen();
-	UpdateKqueue(serverSocket.getfd(), EVFILT_READ, EV_ADD, 0);
+	EV_SET(&_changeList, fd, filter, flag, 0, data, NULL);
+	if (kevent(_kqueue, &_changeList, 1, NULL, 0, NULL) == -1)
+		throw std::runtime_error("[ERROR] updateKqueue() failed");
 }
 
 void Server::run() {
@@ -82,13 +79,6 @@ void Server::run() {
 	}
 }
 
-void Server::UpdateKqueue(int fd, int filter, int flag, int data) {
-
-	EV_SET(&_changeList, fd, filter, flag, 0, data, NULL);
-	if (kevent(_kqueue, &_changeList, 1, NULL, 0, NULL) == -1)
-		throw std::runtime_error("[ERROR] updateKqueue() failed");
-}
-
 bool Server::isListenSockfd(struct kevent& event) {
 
 	std::map<int, Socket>::iterator it = _listenSockets.find(event.ident);
@@ -118,11 +108,12 @@ void Server::onRead(struct kevent& event) {
 		throw std::runtime_error("[ERROR] recv() failed");
 	buffer[num_bytes] = '\0';
 	printLog(event, YELLOW, "Receiving... ", buffer.data());
-		_Clients[event.ident].request.append(buffer.data());
+	_Clients[event.ident].request.append(buffer.data());
 	if (HttpRequest().isComplete(_Clients[event.ident].request)) {
-		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
-		_Clients[event.ident].response = Response(_Clients[event.ident].request, _cf, _Clients[event.ident].port).generate();
+		Response Response(_Clients[event.ident].request, _cf, _Clients[event.ident].port);
+		_Clients[event.ident].response = Response.generate();
 		_Clients[event.ident].request.clear();
+		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
 	}
 }
 
