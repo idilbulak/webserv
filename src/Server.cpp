@@ -90,7 +90,7 @@ void Server::onClientConnect(struct kevent& event) {
 		int connectionSocket = _listenSockets[event.ident].accept();
 		printLog(_listenSockets[event.ident], "Connecting... ", connectionSocket);
 		UpdateKqueue(connectionSocket, EVFILT_READ, EV_ADD, 0);
-		UpdateKqueue(connectionSocket, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 5 * 1000);
+		UpdateKqueue(connectionSocket, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 60 * 1000);
 		struct SocketData data;
 		data.port = _listenSockets[event.ident].getPort();
 		_Clients.insert(std::make_pair(connectionSocket, data));
@@ -119,7 +119,7 @@ void Server::onRead(struct kevent& event) {
 
 void Server::onWrite(struct kevent& event) {
 
-	UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 5 * 1000);
+	UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 60 * 1000);
 	int num_bytes = send(event.ident, _Clients[event.ident].response.c_str(), _Clients[event.ident].response.size(), 0);
 	if (num_bytes <= 0)
 		throw std::runtime_error("[ERROR] send() failed");
