@@ -27,6 +27,7 @@ class AutoIndex {
 	
 	private:
 		std::string	_root;
+		std::string	_dirname;
 		
 
 };

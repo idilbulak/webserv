@@ -43,7 +43,10 @@ std::vector<std::string> AutoIndex::list_directory(const std::string& dir_path) 
             // If the entry is a file, add it to the files vector and add a file link to the output vector
             files.push_back(path);
             std::ostringstream oss;
-            oss << "[FILE] " << std::setw(8) << statbuf.st_size << "  " << std::asctime(std::localtime(&statbuf.st_mtime)) << "  " << std::oct << (statbuf.st_mode & 0777) << std::dec << "  <a href=\"" + name + "\">" + name + "</a>";
+            if (_dirname.empty())
+                oss << "[FILE] " << std::setw(8) << statbuf.st_size << "  " << std::asctime(std::localtime(&statbuf.st_mtime)) << "  " << std::oct << (statbuf.st_mode & 0777) << std::dec << "  <a href=\"" + name + "\">" + name + "</a>";
+            else
+                oss << "[FILE] " << std::setw(8) << statbuf.st_size << "  " << std::asctime(std::localtime(&statbuf.st_mtime)) << "  " << std::oct << (statbuf.st_mode & 0777) << std::dec << "  <a href=\"" + _dirname + "/" + name + "\">" + _dirname + "/" + name + "</a>";
             output.push_back(oss.str());
         }
     }
@@ -54,6 +57,11 @@ std::vector<std::string> AutoIndex::list_directory(const std::string& dir_path) 
     std::sort(directories.begin(), directories.end());
     // Recursively list the contents of each directory and add the output to the output vector
     for (std::vector<std::string>::const_iterator it = directories.begin(); it != directories.end(); ++it) {
+        // output.push_back("[DIR] <a href=\"" + *it + "\">" + *it + "</a>");
+        _dirname = *it;
+        size_t start = _dirname.find("//");
+        _dirname = _dirname.substr(start+2);
+        std::cout << _dirname << std::endl;
         std::vector<std::string> sub_dir_output = list_directory(*it);
         output.insert(output.end(), sub_dir_output.begin(), sub_dir_output.end());
     }
