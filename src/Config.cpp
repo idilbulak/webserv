@@ -135,7 +135,7 @@ void	Config::parseErrorPage(std::map<int,std::string> &error_pages, std::vector<
 		}
 		catch(const std::exception& e)
 		{
-			throw std::invalid_argument("error pages atoi error!");
+			throw std::invalid_argument("Error: Error page!");
 		}
 		
 		i++;
@@ -164,7 +164,7 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 				loc.autoindex = 1;
 			}
 			else
-				throw std::invalid_argument("autoindex error!");
+				throw std::invalid_argument("Error: Autoindex");
 		}
 		else if (tokens[i] == "cgi_path") {
 			loc.cgi_path = tokens[++i];

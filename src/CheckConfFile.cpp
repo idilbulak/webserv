@@ -30,11 +30,11 @@ void CheckConfFile::checkArgument(const std::string line){
 
     if (parse[0].compare("listen") == 0 || parse[0].compare("server_name") == 0 || parse[0].compare("root") == 0 || parse[0].compare("client_max_body_size") == 0 ||  parse[0].compare("autoindex") == 0 ){
         if (parse.size() != 2)
-            throw std::invalid_argument(parse[0] + ": argument error");
+            throw std::invalid_argument("Error: " + parse[0] + ": argument error");
     }
     if (parse[0].compare("return") == 0 || parse[0].compare("error_page") == 0){
         if (parse.size() != 3)
-            throw std::invalid_argument(parse[0] + ": argument error");
+            throw std::invalid_argument("Error: " + parse[0] + ": argument error");
     }
 }
 
@@ -50,7 +50,7 @@ void CheckConfFile::checkKey(const std::string path)
     while (getline(ifs, line))
     {
         if (!checkServerKey(split(line, " ")[0]))
-            throw std::invalid_argument("invalid Key");
+            throw std::invalid_argument("Error: Invalid Key");
         checkArgument(line);
     }
 
@@ -71,7 +71,7 @@ CheckConfFile::CheckConfFile(const std::string path) : serverBrackets(false), lo
         if (token.find("{") != std::string::npos && token.size() > 1)
         {
             if (token.size() != token.find("{") + 1)
-                throw std::invalid_argument("brackets error 7");
+                throw std::invalid_argument("Error : Brackets");
             token.resize(token.find("{"));
             tokens.push_back(token);
             tokens.push_back("{");
@@ -116,9 +116,6 @@ bool CheckConfFile::checkLocationKey(std::string word)
     return false;
 }
 
-
-
-//server key have "root"???????? @idil
 bool CheckConfFile::checkServerKey(std::string word)
 {
     word = deleteSpace(word);
@@ -165,7 +162,7 @@ void CheckConfFile::checkBrackets(std::vector<std::string> tokens)
                 setLocationBrackets(true);
             }
             else
-                throw std::invalid_argument("brackets error 2");
+                throw std::invalid_argument("Error : Brackets");
         }
 
         if (tokens[i].compare("}") == 0)
@@ -176,7 +173,8 @@ void CheckConfFile::checkBrackets(std::vector<std::string> tokens)
                 if (i < tokens.size())
                 {
                     if (!(tokens[i + 1].compare("}") == 0 || tokens[i + 1].compare("location") == 0))
-                        throw std::invalid_argument("brackets error 4");
+                        throw std::invalid_argument("Error : Brackets");
+
                 }
             }
             else if (getServerBrackets() == true)
@@ -185,16 +183,17 @@ void CheckConfFile::checkBrackets(std::vector<std::string> tokens)
                 if (i < tokens.size())
                 {
                     if ((tokens[i + 1].compare("server") != 0) && (i + 1) < tokens.size())
-                        throw std::invalid_argument("brackets error 5");
+                        throw std::invalid_argument("Error : Brackets");
                 }
             }
             else
-                throw std::invalid_argument("brackets error 3");
+                throw std::invalid_argument("Error : Brackets");
         }
     }
 
     if (getServerBrackets() || getLocationBrackets())
-        throw std::invalid_argument("brackets error (dont close)");
+        throw std::invalid_argument("Error : Brackets");
+    
 }
 
 // getter setter
