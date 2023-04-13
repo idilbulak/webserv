@@ -55,7 +55,7 @@ void Config::CheckPath(std::string path){
 void Config::CheckAllow(std::vector<std::string> methods){
     for (size_t i = 0; i < methods.size(); i++)
     {
-        if (!(methods[i].compare("PUT") == 0 || methods[i].compare("GET") == 0 || methods[i].compare("POST") == 0 || methods[i].compare("DELETE") == 0))
+         if (!(methods[i].compare("PUT") == 0 || methods[i].compare("GET") == 0 || methods[i].compare("HEAD") == 0 || methods[i].compare("CONNECT") == 0 || methods[i].compare("GET") == 0 || methods[i].compare("POST") == 0 || methods[i].compare("DELETE") == 0))
             throw std::invalid_argument("Error: Allow");
     }
 }

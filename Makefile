@@ -6,7 +6,7 @@ SRC     	:= $(shell find $(SRCDIR) -name '*.cpp')
 OBJ     	:= $(SRC:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 HEAD    	:= $(wildcard inc/*.hpp)
 CC      	:= g++
-FLAGS   	:= -Wall -Wextra -Werror -std=c++98
+FLAGS   	:= -Wall -Wextra -Werror -fsanitize=address -std=c++98
 ERR   		:= xx_html
 UPLOADDIR	:= uploadDir
 
