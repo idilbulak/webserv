@@ -233,6 +233,24 @@ std::string Response::putRes(void) {
     return res();
 }
 
+std::string decoded(std::string encoded_str)
+{
+	 std::string decoded_str = "";
+    for (std::string::size_type i = 0; i < encoded_str.length(); i++) {
+        if (encoded_str[i] == '%' && i + 3 < encoded_str.length() && isxdigit(encoded_str[i+1]) && isxdigit(encoded_str[i+2])) {
+            // Convert the next two hexadecimal characters to integer value
+            int hex_value = std::stoi(encoded_str.substr(i+1, 2), nullptr, 16);
+            // Convert the integer value to corresponding ASCII character
+            char decoded_char = static_cast<char>(hex_value);
+            decoded_str += decoded_char;
+            i += 2; // Skip the next two characters since they are already processed
+        } else {
+            decoded_str += encoded_str[i];
+        }
+    }
+	return decoded_str;
+}
+
 std::string Response::delRes() {
 	std::string filename;
     size_t pos = _req.getQueryStr().find("=");
@@ -240,7 +258,7 @@ std::string Response::delRes() {
         pos += 1; // Skip "filename="
             filename = _req.getQueryStr().substr(pos);
     }
-
+	filename = decoded(filename);
 	if (pathType(_loc.upload_dir + "/" + filename) == 1) {
 		if (remove((_loc.upload_dir + "/" + filename).c_str()) == 0)
 			_code = 200;
