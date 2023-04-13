@@ -1,7 +1,7 @@
 #include "../inc/HttpRequest.hpp"
 
 // =====================DAN==============================================
-HttpRequest::HttpRequest() {i = 0;}
+HttpRequest::HttpRequest() {}
 HttpRequest::~HttpRequest(void) {}
 std::string HttpRequest::find(const std::string& buff, std::string lookfor, std::string end) {
 	std::string contentType;
@@ -62,7 +62,6 @@ bool HttpRequest::isComplete(std::string buff) {
 // =========================IDIL============================================
 
 HttpRequest::HttpRequest(std::string buff, std::string port) : _buff(buff), _port(port) {
-    // std::cout << "buff" << _buff << std::endl;
 	parseHeader();
 	parseBody();
     // std::cout << "method " << _method << std::endl;
@@ -85,8 +84,6 @@ void HttpRequest::parseHeader() {
 	// parse other lines and put them in to map<str,str>
 	std::vector<std::string> lines = getLines();
 	for (std::vector<std::string>::iterator it = lines.begin() + 1; it != lines.end(); ++it) {
-        // std::cout << it->substr(0) << std::endl;
-        // std::cout << it->compare("\r\n") << std::endl;
         if (it->compare("\r\n\r\n") == -1)
             break ;
         std::string::size_type pos = it->find(": ");

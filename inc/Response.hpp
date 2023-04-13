@@ -14,8 +14,7 @@ class Response {
 		void			makeCodeMap();
 		VirtualServer	findServer();
 		std::string		generate();
-		// bool			findLocation(Location* loc);
-		bool findLocation(std::string str);
+		bool			findLocation(std::string str);
 		std::string		chooseMethod();
 		std::string		errRes(std::string err);
 		std::string		res();
@@ -29,63 +28,50 @@ class Response {
 		int				pathType(const std::string& path);
 		bool			validMethod(std::string method);
 		bool			readContent(const std::string path);
-		int				readFile(const std::string &path);
-		int writeContent(const std::string &content, const std::string path);
-		void CheckExtensionBlock(Location *_loc);
-		void	setCgiPath();
-		bool checkExtension();
-		bool folderExists(const std::string folder_to_check);
-		std::string findExtension();
-		long long megabytesToBytes(int megabytes);
-
-		std::string 	getCgiRes();
+		int				writeContent(const std::string &content, const std::string path);
+		void			CheckExtensionBlock(Location *_loc);
+		void			setCgiPath();
+		bool 			checkExtension();
+		bool 			folderExists(const std::string folder_to_check);
+		std::string 	findExtension();
+		long long 		megabytesToBytes(int megabytes);
 		VirtualServer 	getServer();
 		HttpRequest 	getReq();
-
-		std::string	cgiOff();
+		std::string		cgiOff();
 
 		bool			fileExists(std::string name);
-		// bool			fileExists_new(std::string name);
-		// bool			checkIndx();
 		void			setIndxFile();
-		// Location		getLocation( const std::string &path );
-		void			parsePath(const std::string& path);
 		std::string		read_html_file(const std::string& fileName);
-		bool parsePathRecursively(std::string str, Location *loc);
-		void deductPathForFolder();
-		std::string	formatPath(std::string path);
-		void parseMultiPartBody();
+		std::string		formatPath(std::string path);
+		void 			parseMultiPartBody();
 
 	private:
 		std::map<int, std::string>	_codeMap;
 		HttpRequest				    _req;
 		Config						_cf;
-		VirtualServer   _server;
+		VirtualServer   			_server;
 		Location        			_loc;
-
 		int							_code;
     	int			 				_type;
     	std::string					_body;
     	std::string 				_header;
-    	std::map<std::string, std::string> 	_otherHeaders;
-
 		std::string					_cgiRes;
     	int							_cgiCode;
     	std::string					_cgiType;
     	std::string					_cgiPath;
 		int						    _cgiOn;
-		std::string _cgiResBody; 
-
+		std::string					_cgiResBody; 
 		std::string 			    _indxFile;
-		std::vector<std::string>		_locationdirs;
-		int _found;
-
-		std::string _path;
-		std::string _file;
-		std::string _folder;
-		std::string _buff;
+		std::vector<std::string>	_locationdirs;
+		int 						_found;
+		std::string					_path;
+		std::string 				_file;
+		std::string 				_folder;
+		std::string 				_buff;
     	int							_typePath;
+    	std::map<std::string, std::string> 	_otherHeaders;
 };
-		std::string findFirstFileWithExtension(const std::string& directory, const std::string& extension);
+		
+	std::string findFirstFileWithExtension(const std::string& directory, const std::string& extension);
 
 #endif

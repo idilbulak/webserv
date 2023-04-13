@@ -11,7 +11,7 @@ bool Response::findLocation(std::string str) {
     if (str.empty()) {
         return false;
     }
-    for (int i = 0; i < _server.locations.size(); i++) {
+    for (size_t i = 0; i < _server.locations.size(); i++) {
         if (_server.locations[i].path.compare(str) == 0) {
             _loc = _server.locations[i];
             return true;
@@ -21,7 +21,7 @@ bool Response::findLocation(std::string str) {
     std::string::size_type last_slash_pos = str.find_last_of('/');
 	if (last_slash_pos == 0) {
 		path = "/";
-		for (int i = 0; i < _server.locations.size(); i++) {
+		for (size_t i = 0; i < _server.locations.size(); i++) {
             if (_server.locations[i].path.compare(path) == 0) {
                 _loc = _server.locations[i];
                 _file = _req.getUri().path.substr(1);
@@ -32,7 +32,7 @@ bool Response::findLocation(std::string str) {
     else if (last_slash_pos != std::string::npos) {
         path = str.substr(0, last_slash_pos);
         file = _req.getUri().path.substr(last_slash_pos + 1);
-        for (int i = 0; i < _server.locations.size(); i++) {
+        for (size_t i = 0; i < _server.locations.size(); i++) {
             if (_server.locations[i].path.compare(path) == 0) {
                 _loc = _server.locations[i];
                 _file = file;
@@ -77,11 +77,9 @@ void Response::CheckExtensionBlock(Location *_loc) {
 	std::string ext = findExtension();
 	if (!ext.empty()) {
 		std::string newPath = "~\\" + ext + "$";
-		for (int i = 0; i < _server.locations.size(); i++) {
+		for (size_t i = 0; i < _server.locations.size(); i++) {
 			if (_server.locations[i].path.compare(newPath) == 0) {
-				// _loc.clear
 					*_loc = _server.locations[i];
-					// _file.clear();
 			}
 		}
 	}
@@ -118,7 +116,7 @@ std::string getFirstFileInFolder(const std::string& folderPath) {
 // sets the file to be served by the get method. if the file requested is present, serves it else dafult index.
 void	Response::setIndxFile() {
 	if (_file.empty()) {
-		for (int i = 0; i < _loc.index.size(); i++) {
+		for (size_t i = 0; i < _loc.index.size(); i++) {
 			if (fileExists(formatPath(_loc.index[i]))) {
 				_indxFile =  _server.root + "/" + formatPath(_loc.index[i]);
 			}
@@ -133,13 +131,13 @@ void	Response::setIndxFile() {
 				_indxFile = _server.root + "/" + file;
 		}
 		else if(folderExists(_file)) {
-			for (int i = 0; i < _loc.index.size(); i++) {
+			for (size_t i = 0; i < _loc.index.size(); i++) {
 				if (fileExists(_file + "/" + _loc.index[i]))
 					_indxFile =  _server.root + "/" + _file + "/" + _loc.index[i];
 			}
 		}
 		else if (!_loc.root.empty() && folderExists(formatPath(_file))) {
-			for (int i = 0; i < _loc.index.size(); i++) {
+			for (size_t i = 0; i < _loc.index.size(); i++) {
 				if (fileExists(formatPath(_file) + "/" + _loc.index[i]))
 					_indxFile =  _server.root + "/" + formatPath(_file) + "/" + _loc.index[i];
 			}
@@ -149,7 +147,6 @@ void	Response::setIndxFile() {
 
 void	Response::setCgiPath() {
 	_cgiOn = 0;
-    // std::cout << _file << std::endl;
 	if(!_file.empty() && checkExtension()) {
 		_cgiPath = _server.root + "/" + formatPath(_file);
 		if (fileExists(formatPath(_file)))
@@ -177,13 +174,13 @@ long long Response::megabytesToBytes(int megabytes) {
 bool Response::checkExtension() {
 	std::string ext = findExtension();
 	if(!ext.empty()) {
-		for (int i = 0; i < _server.cgi_ext.size(); i++) {
+		for (size_t i = 0; i < _server.cgi_ext.size(); i++) {
 			if (ext.compare(_server.cgi_ext[i]) == 0)
 				return true;
 		}
 	}
 	if (ext.empty()) {
-		for (int i = 0; i < _server.cgi_ext.size(); i++) {
+		for (size_t i = 0; i < _server.cgi_ext.size(); i++) {
 			if (_server.cgi_ext[i].compare(".") == 0)
 				return true;
 		}
@@ -209,8 +206,6 @@ int Response::pathType(const std::string& path) {
 
 // Read the contents of an HTML file into a string
 std::string Response::read_html_file(const std::string& fileName) {
-	// if (!fileExists(fileName))
-	// 	return "";
 	std::ifstream file(fileName);
 	if (!file.is_open()) {
 		return "";
@@ -221,7 +216,7 @@ std::string Response::read_html_file(const std::string& fileName) {
 
 VirtualServer Response::findServer() {
     VirtualServer server;
-    for(int i=0; i<_cf.servers.size(); i++) {
+    for(size_t i=0; i<_cf.servers.size(); i++) {
         if(_cf.servers[i].port == _req.getPort()) {
             server = _cf.servers[i];
 			break ;
@@ -238,27 +233,20 @@ VirtualServer Response::getServer() {return _server;}
 HttpRequest Response::getReq() {return _req;}
 
 std::string findFirstFileWithExtension(const std::string& directory, const std::string& extension) {
-    // Open the specified directory
     DIR* dir = opendir(directory.c_str());
     if (dir == NULL) {
         std::cerr << "Failed to open directory: " << directory << std::endl;
         return "";
     }
     struct dirent* entry;
-    // Iterate through the directory entries
     while ((entry = readdir(dir)) != NULL) {
-        // Get the current entry's filename as a string
         std::string filename(entry->d_name);
-        // Check if the filename has the specified extension
         if (filename.size() > extension.size() &&
             filename.substr(filename.size() - extension.size()) == extension) {
-
-            // Close the directory and return the first found file with the specified extension
             closedir(dir);
             return directory + "/" + filename;
         }
     }
-    // If no file with the specified extension is found, close the directory and return an empty string
     closedir(dir);
     return "";
 }
@@ -269,37 +257,6 @@ std::string Response::itos(int value) {
     return ss.str();
 }
 
-// std::string getPath(const std::string& filePath) {
-//     // Find the last occurrence of a forward slash
-//     std::size_t slashIndex = filePath.find_last_of('/');
-//     if (slashIndex == std::string::npos) {
-//         // No forward slash found, return the original string
-//         return filePath;
-//     }
-//     // Extract the directory path up to the last forward slash
-//     return filePath.substr(0, slashIndex);
-// }
-
-// void Response::deductPathForFolder() {
-// 	// _folder = _server.root + "/";
-//   size_t pos = _req.getUri().path.find(_loc.path);
-//   if (pos != std::string::npos) {
-//     _folder = _req.getUri().path.substr(pos + _loc.path.length() + 1);
-//   }
-// }
-
-// int Response::readFile(const std::string &path) {
-//     std::ifstream file(path.c_str());
-// 	if (!file.is_open())
-// 		return (0);
-//     std::stringstream buffer;
-//     buffer << file.rdbuf();
-//     _body = buffer.str();
-// 	file.close();
-// 	return (1);
-// }
-
-// // bu error icin gibi
 bool Response::readContent(const std::string path) {
     if (fileExists(path)) {
         _type = 1;

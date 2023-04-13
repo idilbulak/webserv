@@ -1,6 +1,6 @@
 #include "../inc/Cgi.hpp"
 
-Cgi::Cgi(std::string file, Response &response) : _response(response), _indxFile(file), _req(response.getReq()), _server(response.getServer()) {
+Cgi::Cgi(std::string file, Response &response) :  _req(response.getReq()), _server(response.getServer()), _indxFile(file) {
     envCgi();
     std::string filename = "cgiBody.txt";
 	std::ofstream outFile(filename.c_str());
@@ -45,7 +45,6 @@ std::string Cgi::itos(int num) {
 
 void    Cgi::envCgi()
 {
-    // BURAYI EKLEMEYIIII UNUTMAAAAAAAAAAAAA
     _env.insert(std::make_pair("GATEWAY_INTERFACE", "CGI/1.1"));
     _env.insert(std::make_pair("SERVER_SOFTWARE", _server.name));
     _env.insert(std::make_pair("SERVER_PROTOCOL", "HTTP/1.1"));
@@ -56,22 +55,17 @@ void    Cgi::envCgi()
     _env.insert(std::make_pair("SCRIPT_NAME", _indxFile));
     _env.insert(std::make_pair("SCRIPT_FILENAME", _indxFile));
     _env.insert(std::make_pair("QUERY_STRING", _req.getQueryStr()));
-    // std::cout << _req.getQueryStr() << std::endl;
     _env.insert(std::make_pair("REMOTE_ADDR", _server.host));
     _env.insert(std::make_pair("REMOTEaddr", _server.host));
     _env.insert(std::make_pair("REQUEST_URI", _req.getUri().path + _req.getQueryStr()));
     _env.insert(std::make_pair("REDIRECT_STATUS", "200"));
-    // _env.insert(std::make_pair("CONTENT_TYPE", _response.getOtherHeaders()["Content-Type"]));
     _env.insert(std::make_pair("CONTENT_LENGTH", itos(_req.getBody().length())));
-
     _env.insert(std::make_pair("SERVER_NAME", ""));
     _env.insert(std::make_pair("HTTP_COOKIE", ""));
     _env.insert(std::make_pair("HTTP_USER_AGENT", ""));
     _env.insert(std::make_pair("REMOTE_HOST", ""));
     _env.insert(std::make_pair("REQUEST_METHOD", ""));
-    ///
     _env.insert(std::make_pair("HTTP_X_SECRET_HEADER_FOR_TEST", _req.getHeaders()["X-Secret-Header-For-Test"]));
-    // _env.insert(std::make_pair("BODY", _req.getBody()));
 }
 
 std::string Cgi::execute()
@@ -118,18 +112,7 @@ std::string Cgi::execute()
     else
     {
         // Parent process
-
         // Read the output of the CGI program from the output file
-        // char buff[SIZE] = {0};
-
-        // waitpid(pid, NULL, 0);
-        // lseek(fdOut, 0, 0);
-
-        // while (read(fdOut, buff, SIZE) > 0)
-        // {
-        //     output += buff;
-        //     memset(buff, 0, SIZE);
-        // }
         std::vector<char> buffer(SIZE);
 
         waitpid(pid, NULL, 0);

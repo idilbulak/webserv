@@ -21,27 +21,14 @@ class Cgi {
 	public:
 		Cgi(std::string file, Response &response);
 		~Cgi(void);
+		
 		std::string 	execute();
-		void	envCgi();
-				std::string itos(int num);
+		void			envCgi();
+		std::string 	itos(int num);
 
 	private:
 		std::map<std::string, std::string> _env;
 		HttpRequest      _req;
-		VirtualServer		_server;
+		VirtualServer	_server;
 		std::string     _indxFile;
-		Response     &_response;
-		// std::string _body; //req.body
-// 		std::string _method;
-// 		std::string _host;
-// 		std::string _port;
-// 		std::string _uri;
-// 		std::string _version;
-// 		// VirtualServer   _server;
-// 		// Location        _loc;
-// 		// int			    _cgiOn;
-// 		// Response        _res;
-// 		// std::map<int, std::string> _codeMap;
 };
-
-// #endif

@@ -2,12 +2,10 @@
 
 Response::~Response(void) {}
 
-Response::Response(std::string buff, Config cf, std::string port) : _buff(buff), _cf(cf), _req(HttpRequest(buff, port)){
-	// std::cout << "idil is it form meeee" << std::endl;
+Response::Response(std::string buff, Config cf, std::string port) : _cf(cf), _buff(buff) {
+	_req = HttpRequest(buff, port);
 	makeCodeMap();
 	_body.clear();
-	// _code.clear();
-	// _code.clear();
 	_server = findServer();
 }
 
@@ -30,10 +28,9 @@ std::string	Response::generate() {
 		_code = 405;
 		return(errRes("Not allowed method"));
 	}
-	// burasi manuel oldu kesin degistir.
 	if(!_req.getBody().empty() && !_loc.max_body_size.empty()) {
 		_loc.max_body_size.erase(_loc.max_body_size.size() - 1);
-		int size = std::stoi(_loc.max_body_size);
+		size_t size = std::stoi(_loc.max_body_size);
 		if(_req.getBody().length() > size) {
 			_code = 413;
 			return(errRes("Request Entity Too Large"));
@@ -58,18 +55,13 @@ std::string Response::chooseMethod() {
 }
 
 std::string Response::getRes() {
-	// std::cout << _loc.path << std::endl;
 	setIndxFile();
-	// std::cout << _indxFile << std::endl;
 	if (!_indxFile.empty()) {
 		_code = 200;
 		_body = read_html_file( _indxFile);
-		// std::cout << _body << std::endl;
 		return res();
 	}
 	setCgiPath();
-	// std::cout << "hahahahah" << std::endl;
-	// std::cout << _cgiPath << std::endl;
 	if (!_cgiOn)
 		return cgiOff();
 	_cgiRes = Cgi(_cgiPath, *this).execute();
@@ -107,11 +99,8 @@ std::string	Response::cgiOff() {
 }
 
 std::string getFilenameFromHeader(const std::string& header) {
-	// std::cout << header << std::endl;
-    // Find the position of "filename" in the header
     size_t filenamePos = header.find("filename=");
     if (filenamePos == std::string::npos) {
-        // "filename" parameter not found in header
         return "";
     }
 
@@ -122,20 +111,16 @@ std::string getFilenameFromHeader(const std::string& header) {
     if (start != std::string::npos && end != std::string::npos) {
         filename = header.substr(start + 1, end - start - 1);
     }
-	// else
-
     return filename;
 }
 
 void Response::parseMultiPartBody() {
     size_t cdHeaderPos = _req.getBody().find("Content-Disposition: ");
     if (cdHeaderPos == std::string::npos) {
-        // "Content-Disposition" header not found in body
         return;
     }
 	size_t start = _req.getBody().find("filename=\"", cdHeaderPos);
     if (start == std::string::npos) {
-        // "filename" not found in header
         return;
     }
     size_t end = _req.getBody().find('"', start + 10);
@@ -171,7 +156,6 @@ std::string Response::postRes() {
 
 			}
 		}
-		// std::cout << "file" << _file << std::endl;
 		std::string filename;
 		if (_loc.upload_dir.empty())
 			filename = _server.root + "/" + formatPath(_file);
@@ -187,16 +171,6 @@ std::string Response::postRes() {
 		_code = 200;
 		return res();
 	}
-	// if (!_cgiOn) {
-	// 	setIndxFile();
-	// 	std::cout << "ïndexfile "<< _indxFile << std::endl;
-	// 	if (!_indxFile.empty()) {
-	// 		_code = 200;
-	// 		_body = read_html_file( _indxFile);
-	// 		return res();
-	// 	}
-	// 	return cgiOff();
-	// }
 	_cgiRes = Cgi(_cgiPath, *this).execute();
 	parseCgiResponse();
 	if (_cgiCode == 302)
@@ -229,14 +203,10 @@ std::string Response::postRes() {
 	return res();
 }
 
-//fileexist kismini kesinlikle duzeltmelisin
 int Response::writeContent(const std::string &_body, std::string path) {
 	if (_loc.upload_dir.empty())
 		return 404;
-	// if (_body.empty())
-	// 	return 204;
 	path = _loc.upload_dir + "/" + path;
-	bool fExists = fileExists(path);
 	std::ofstream	file(path, std::ofstream::trunc);
 	if (fileExists(path)) {
 		if (file.is_open()) {
@@ -257,14 +227,9 @@ int Response::writeContent(const std::string &_body, std::string path) {
 
 std::string Response::putRes(void) {
     _code = writeContent(_req.getBody(), _file);
-
     if (!(_code == 201 || _code == 200))
         return this->errRes("Write failed");
     _type = 0;
-	// if (fileExists(_indxFile))
-	// 		_body = read_html_file(_indxFile);
-	// else
-	// 	_body = "";
     return res();
 }
 
@@ -293,7 +258,7 @@ std::string Response::errRes(std::string err)
 {
 	int code = _code;
     std::string path = this->_server.error_pages[this->_code];
-    // readContent(path);
+	std::cout << err << std::endl;
     if (!readContent(path))
         _body = "<!DOCTYPE html>\n<html><title>Errorpage</title><body><h1>ERROR 404</h1></body></html>";
     this->_type = 0;
@@ -303,7 +268,6 @@ std::string Response::errRes(std::string err)
 
 std::string Response::res() {
 	_header += "HTTP/1.1 " + _codeMap[_code] + CRLF;
-	// date gerekir mi?
     // _header += "Server: " + this->_server.name + CRLF;
     if (this->_type != 2) {
         _header += "Content-Length: " + itos(this->_body.size()) + CRLF;
@@ -337,7 +301,6 @@ void Response::parseCgiResponse(void)
 }
 
 std::string Response::getMimeType(const std::string &ext) {
-	// std::cout << "ext: " << ext << std::endl;
     if (ext == "html")
 		return "text/html";
 	if (ext == "css")
@@ -355,7 +318,6 @@ std::string Response::getMimeType(const std::string &ext) {
 	return "text/html";
 }
 
-//making a map for status codes
 void Response::makeCodeMap() {
 	_codeMap.insert(std::pair<int, std::string>(100,"100 Continue"));
 	_codeMap.insert(std::pair<int, std::string>(101,"101 Switching Protocols"));

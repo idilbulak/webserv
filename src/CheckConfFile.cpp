@@ -1,10 +1,7 @@
 #include "../inc/CheckConfFile.hpp"
 
 
-CheckConfFile::~CheckConfFile()
-{
-}
-
+CheckConfFile::~CheckConfFile(){}
 
 std::vector<std::string> CheckConfFile::split(std::string str, std::string delimiter) {
     std::vector<std::string> words;
@@ -28,7 +25,7 @@ std::vector<std::string> CheckConfFile::split(std::string str, std::string delim
 void CheckConfFile::checkArgument(const std::string line){
     std::vector<std::string> parse = split(line, " ");
     // std::cout << "burda" << parse.size() << std::endl;
-    for (int i = 0; parse.size() > i; i++)
+    for (size_t i = 0; parse.size() > i; i++)
         parse[i] = deleteSpace(parse[i]);
 
     if (parse[0].compare("listen") == 0 || parse[0].compare("server_name") == 0 || parse[0].compare("root") == 0 || parse[0].compare("client_max_body_size") == 0 ||  parse[0].compare("autoindex") == 0 ){
@@ -92,7 +89,7 @@ CheckConfFile::CheckConfFile(const std::string path) : serverBrackets(false), lo
 
 std::string CheckConfFile::deleteSpace(std::string word)
 {
-     int count = 0;
+     size_t count = 0;
 
     for (int i = 0; word[i]; i++)
     {
@@ -152,7 +149,7 @@ bool CheckConfFile::checkServerKey(std::string word)
 
 void CheckConfFile::checkBrackets(std::vector<std::string> tokens)
 {
-    for (int i = 0; i < tokens.size(); i++)
+    for (size_t i = 0; i < tokens.size(); i++)
     {
         if (tokens[i].compare("{") == 0)
         {

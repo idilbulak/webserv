@@ -2,13 +2,6 @@
 #include "../inc/CheckConfFile.hpp"
 
 Config::Config(const std::string &path) :_path(path) {
-	// for(int i=0; i<servers.size(); i++) {
-	// 	for(int j=0; j<servers[i].locations.size(); j++) {
-	// 		servers[i].locations[j].autoindex = 0;
-	// 		servers[i].locations[j].redirect_cd = 0;
-	// 	}
-	// }
-
 	try
 	{
 		CheckConfFile confCheck(path);
@@ -86,7 +79,7 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 			i++;
 	}
 	bool isNew = true;
-	for (int i = 0; i < servers.size(); i++)
+	for (size_t i = 0; i < servers.size(); i++)
 	{
 		if (servers[i].port == server.port)
 			isNew = false;
@@ -211,7 +204,7 @@ void Config::display() {
         std::cout << "\tName: " << server.name << std::endl;
         std::cout << "\tRoot: " << server.root << std::endl;
 		std::cout << "\tCGI EXT " << server.cgi_ext.size() << std::endl;
-		for (int i = 0; server.cgi_ext.size() > i ; i++) {
+		for (size_t i = 0; server.cgi_ext.size() > i ; i++) {
             std::cout << "\t\tcgiExit " << server.cgi_ext[i]<< std::endl;
         }
         std::cout << "\tError Pages: " << std::endl;

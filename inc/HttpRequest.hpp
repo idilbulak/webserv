@@ -31,25 +31,21 @@ class HttpRequest {
 		HttpRequest(std::string buff, std::string port);
 		~HttpRequest(void);
 
-		int i;
-
-		void	parseHeader();
-		void	parseBody();
-		Uri		parseUri(std::string token);
-		void    parseMultiData();
-
+		void						parseHeader();
+		void						parseBody();
+		Uri							parseUri(std::string token);
+		void    					parseMultiData();
 		bool						isComplete(std::string buff);
 		std::string 				getFirstLine();
 		std::string 				find(const std::string& buff, std::string lookfor, std::string end);
 		std::vector<std::string>	getLines();
-
-		std::string		getMethod();
-		std::string		getPort();
-		std::string		getVersion();
-		std::string		getBody();
-		std::string		getQueryStr();
-		Uri				getUri();
-		void			setUriPath(std::string path);
+		std::string					getMethod();
+		std::string					getPort();
+		std::string					getVersion();
+		std::string					getBody();
+		std::string					getQueryStr();
+		Uri							getUri();
+		void						setUriPath(std::string path);
 		std::map<std::string, std::string>	getHeaders();
 
 	private:
