@@ -94,7 +94,6 @@ void Server::onClientConnect(struct kevent& event) {
 		int connectionSocket = _listenSockets[event.ident].accept();
 		printLog(_listenSockets[event.ident], "Connecting... ", connectionSocket);
 		UpdateKqueue(connectionSocket, EVFILT_READ, EV_ADD, 0);
-		UpdateKqueue(connectionSocket, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 60 * 1000);
 		struct SocketData data;
 		data.port = _listenSockets[event.ident].getPort();
 		_Clients.insert(std::make_pair(connectionSocket, data));
@@ -116,8 +115,9 @@ void Server::onRead(struct kevent& event) {
 		printLog(event, PURPLE, "Processing... ");
 		Response Response(_Clients[event.ident].request, _cf, _Clients[event.ident].port);
 		_Clients[event.ident].response = Response.generate();
-		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
+		_Clients[event.ident].closeConnection = checkConnectionType(Response);
 		_Clients[event.ident].request.clear();
+		UpdateKqueue(event.ident, EVFILT_WRITE, EV_ADD, 0);
 	}
 }
 
@@ -129,8 +129,23 @@ void Server::onWrite(struct kevent& event) {
 		throw std::runtime_error("[ERROR] send() failed");
 	printLog(event, CYAN, "Sending... ", _Clients[event.ident].response.substr(0, num_bytes));
 	_Clients[event.ident].response.erase(0, num_bytes);
-	if (_Clients[event.ident].response.empty())
+	if (_Clients[event.ident].response.empty()) {
 		UpdateKqueue(event.ident, EVFILT_WRITE, EV_DELETE, 0);
+		if (_Clients[event.ident].closeConnection) {
+			UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
+			closeConnection(event);
+		}
+	}
+}
+
+bool Server::checkConnectionType(Response& Response) {
+
+	if (Response.getReq().getHeaders()["Connection"].empty())
+		return false;
+	else if (Response.getReq().getHeaders()["Connection"].compare("close") == 0)
+		return true;
+	else
+		return false;
 }
 
 void Server::closeConnection(struct kevent& event) {

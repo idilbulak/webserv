@@ -10,6 +10,7 @@ struct SocketData {
 	std::string request;
 	std::string response;
 	std::string port;
+	bool		closeConnection;
 };
 
 class Server {
@@ -37,6 +38,7 @@ class Server {
 		void onClientConnect(struct kevent& event);
 		void onRead(struct kevent& event);
 		void onWrite(struct kevent& event);
+		bool checkConnectionType(Response& Response);
 		void closeConnection(struct kevent& event);
 		void closeAllConnections();
 		void closeListenSockets();
