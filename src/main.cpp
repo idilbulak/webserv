@@ -3,11 +3,14 @@
 #include "../inc/Server.hpp"
 
 int main(int argc, char **argv) {
-
-	if (argc != 2) {
-		exit(1); // instead we should do default config??
-	}
-	Config cf(argv[1]);
+	std::string fileName;
+	if (argc == 1)
+		fileName = "Conf/test.conf";
+	else if (argc != 2)
+		exit(1);
+	else
+		fileName = argv[1];
+	Config cf(fileName);
 	// cf.display();
 	Server Server(cf);
 	Server.setup();
