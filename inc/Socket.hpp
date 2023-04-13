@@ -58,7 +58,6 @@ class Socket {
 		std::string _host;
 		std::string _port;
 		struct sockaddr_in _addr;
-		socklen_t _addrlen;
 };
 
 std::ostream& operator<<(std::ostream &os, Socket& obj);

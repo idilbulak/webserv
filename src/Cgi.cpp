@@ -105,7 +105,7 @@ std::string Cgi::execute()
         const char* _args[2] = {"cgiBody.txt", NULL};
         execve(_indxFile.c_str(), const_cast<char* const*>(_args), env);
         // Error: failed to execute the CGI program
-        std::cout <<  std::strerror(errno) << std::endl;
+        // std::cerr <<  std::strerror(errno) << std::endl;
         std::cout << "Status: 502\r\n\r\n" << std::endl;
         exit(1);
     }

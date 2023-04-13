@@ -19,16 +19,15 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HEAD)
 	@mkdir -p $(@D)
 	@$(CC) -g $(FLAGS) -c $< -o $@
 $(ERR):
-	@mkdir -p {1..5}$(ERR)
-# @mkdir -p $(UPLOADDIR)
-	@python3 assets/$(ERR).py
+	@mkdir -p www/{1..5}$(ERR)
+	@python3 www/$(ERR).py
 run: $(NAME)
 	./$(NAME) Conf/test.conf
 clean:
 	@rm -rf $(OBJDIR)
-	@rm -rf {1..5}$(ERR)
+	@rm -rf www/{1..5}$(ERR)
 	@echo 0 > assets/cgi-bin/count.txt
-# @rm -rf $(UPLOADDIR)
+	@echo "" > cgiBody.txt
 fclean: clean
 	@rm -f $(NAME)
 re: fclean all

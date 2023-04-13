@@ -1,5 +1,6 @@
 #include "../inc/Server.hpp"
 #include "../inc/Socket.hpp"
+#include "../inc/Cgi.hpp"
 
 Server::Server(Config &cf) :_cf(cf) {
 }
@@ -11,7 +12,7 @@ void Server::setup() {
 		std::perror("[ERROR] kqueue() failed");
 		exit(1);
 	}
-	for (int i = 0; i < _cf.servers.size(); i++) {
+	for (size_t i = 0; i < _cf.servers.size(); i++) {
 		Socket serverSocket(_cf.servers[i].host, _cf.servers[i].port);
 		try {
 			serverSocket.createSocket();
@@ -101,15 +102,15 @@ void Server::onClientConnect(struct kevent& event) {
 }
 
 void Server::onRead(struct kevent& event) {
-		
+
 	UpdateKqueue(event.ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 5 * 1000);
-	std::vector<char> buffer(event.data + 1);
-	int num_bytes = recv(event.ident, buffer.data(), buffer.size() - 1, 0);
+	char buffer[SIZE];
+	int num_bytes = recv(event.ident, buffer, sizeof(buffer) - 1, 0);
 	if (num_bytes <= 0)
 		throw std::runtime_error("[ERROR] recv() failed");
 	buffer[num_bytes] = '\0';
-	printLog(event, YELLOW, "Receiving... ", buffer.data());
-	_Clients[event.ident].request.append(buffer.data());
+	printLog(event, YELLOW, "Receiving... ", buffer);
+	_Clients[event.ident].request.append(buffer, num_bytes);
 	if (HttpRequest().isComplete(_Clients[event.ident].request)) {
 		UpdateKqueue(event.ident, EVFILT_TIMER, EV_DELETE, 0);
 		printLog(event, PURPLE, "Processing... ");

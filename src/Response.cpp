@@ -59,16 +59,14 @@ std::string Response::getRes() {
 	if (!_indxFile.empty()) {
 		_code = 200;
 		_body = read_html_file( _indxFile);
+		_type = 1;
 		return res();
 	}
 	setCgiPath();
 	if (!_cgiOn)
 		return cgiOff();
 	_cgiRes = Cgi(_cgiPath, *this).execute();
-	parseCgiResponse();
-	std::cout << _cgiCode << std::endl;  
-	std::cout << _cgiType << std::endl;  
-	std::cout << _cgiResBody << std::endl;  
+	parseCgiResponse(); 
 	if (_cgiCode == 302)
     {
         _type = 2;
@@ -164,6 +162,8 @@ std::string Response::postRes() {
 		std::ofstream outFile(filename.c_str());
 		if (!outFile) {
 			std::cerr << "Error: Unable to open file for writing: " << filename << std::endl;
+			_code = 500;
+			return (errRes("Internal Server Error"));
 		}
 		outFile << _body;
 		outFile.close();
@@ -191,11 +191,11 @@ std::string Response::postRes() {
 		filename = _server.root + "/" + formatPath(_file);
 	else
 		filename = _loc.upload_dir + "/" + _file;
-	if (_file.empty())
-		filename = "NONAME";
 	std::ofstream outFile(filename.c_str());
     if (!outFile) {
         std::cerr << "Error: Unable to open file for writing: " << filename << std::endl;
+		_code = 500;
+		return (errRes("Internal Server Error"));
     }
     outFile << _cgiResBody;
     outFile.close();
@@ -258,7 +258,7 @@ std::string Response::errRes(std::string err)
 {
 	int code = _code;
     std::string path = this->_server.error_pages[this->_code];
-	std::cout << err << std::endl;
+	std::cerr << "[ERROR] " << err << std::endl;
     if (!readContent(path))
         _body = "<!DOCTYPE html>\n<html><title>Errorpage</title><body><h1>ERROR 404</h1></body></html>";
     this->_type = 0;

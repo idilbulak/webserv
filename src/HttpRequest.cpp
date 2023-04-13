@@ -41,11 +41,13 @@ int hexToDec(const std::string& hexStr) {
 
    
 bool HttpRequest::isComplete(std::string buff) {
+        if (buff.find("multipart/form-data") != std::string::npos && buff.find("--\r\n") == std::string::npos)
+            return false;
 	if (buff.find("Content-Length: ") != std::string::npos) {
 
 		size_t contentLength = std::stoi(find(buff, "Content-Length: ", "\r\n"));
-        if (contentLength > 4096)
-            return true;
+        // if (contentLength > 4096)
+        //     return true;
 		size_t headerLength = buff.find("\r\n\r\n") + 4;
 		if (contentLength + headerLength > buff.size())
 			return false;
@@ -110,12 +112,6 @@ std::string parseChunked(std::string body) {
 	return newBody;
 }
 
-void    HttpRequest::parseMultiData() {
-    // std::vector<std::string> lines = getLines();
-    // _bodyti pars4e edecejsin icinden compiositioni koy headersa
-
-}
-
 void HttpRequest::parseBody() {
 	// Find the start of the request body
 	size_t body_start = _buff.find("\r\n\r\n");
@@ -132,9 +128,6 @@ void HttpRequest::parseBody() {
 	}
     if (_buff.find("Transfer-Encoding: chunked") != std::string::npos && _buff.find("\r\n\r\n0\r\n\r\n") == std::string::npos){
         _body = parseChunked(_buff.substr(body_start));
-    }
-    if(multipartFormData) {
-        parseMultiData();
     }
 }
 
