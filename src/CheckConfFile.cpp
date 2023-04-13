@@ -56,6 +56,15 @@ void CheckConfFile::checkKey(const std::string path)
 
 }
 
+bool hasSemicolon(const std::string& str) {
+    for (size_t i = 0; i < str.length(); i++) {
+        if (str[i] == ';' && i != str.length()-1) {
+            return true;
+        }
+    }
+    return false;
+}
+
 CheckConfFile::CheckConfFile(const std::string path) : serverBrackets(false), locationBrackets(false)
 {
     std::ifstream ifs(path.c_str());
@@ -68,6 +77,10 @@ CheckConfFile::CheckConfFile(const std::string path) : serverBrackets(false), lo
     std::vector<std::string> tokens;
     while (ifs >> token)
     {
+        if (token.find(";") != std::string::npos){
+          if (hasSemicolon(token))
+            throw std::invalid_argument("Error: missing semicolon or invalid use of semicolon in " + token);
+        }
         if (token.find("{") != std::string::npos && token.size() > 1)
         {
             if (token.size() != token.find("{") + 1)
