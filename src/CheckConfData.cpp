@@ -9,14 +9,14 @@ void Config::CheckPort(std::string port)
         std::stoi(port);
     }
     catch(const std::exception& e){
-        throw std::invalid_argument("Port Error!");
+        throw std::invalid_argument("Error: Port!");
         }
 }
 
 void Config::CheckServerName (std::string serverName)
 {
     if (check_word(serverName))
-       throw std::invalid_argument("CheckServerName error");
+       throw std::invalid_argument("Error: CheckServerName");
 }
 
 
@@ -32,7 +32,7 @@ void Config::CheckClientMaxBodySize (std::string maxBodysize){
     for (size_t i = 0; i < txt.length(); i++)
     {
         if (!isdigit(txt[i]))
-            throw std::invalid_argument("CheckClientMaxBodySize Error!");
+            throw std::invalid_argument("Error: CheckClientMaxBodySize!");
     }
 }
  
@@ -49,14 +49,14 @@ void Config::CheckLocation(std::vector<Location> location)
 
 void Config::CheckPath(std::string path){
     if (path.empty())
-        throw std::invalid_argument("Path Error");
+        throw std::invalid_argument("Error: Path");
 }
 
 void Config::CheckAllow(std::vector<std::string> methods){
     for (size_t i = 0; i < methods.size(); i++)
     {
         if (!(methods[i].compare("PUT") == 0 || methods[i].compare("GET") == 0 || methods[i].compare("POST") == 0 || methods[i].compare("DELETE") == 0))
-            throw std::invalid_argument("Methods error");
+            throw std::invalid_argument("Error: Allow");
     }
 }
 
