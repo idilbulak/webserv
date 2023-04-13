@@ -44,9 +44,12 @@ void Server::UpdateKqueue(int fd, int filter, int flag, int data) {
 
 void Server::run() {
 
+	struct timespec timeout = { 0, 0 };
 	for(;!_listenSockets.empty();) {
 		try {
-			int new_event = kevent(_kqueue, NULL, 0, &_eventList, 1, NULL);
+			int new_event = kevent(_kqueue, NULL, 0, &_eventList, 1, &timeout);
+			if (new_event == 0)
+				continue;
 			if (new_event == -1 || _eventList.flags & EV_ERROR)
 				throw KeventFail();
 			else if (_eventList.flags & EV_EOF || _eventList.filter == EVFILT_TIMER)
