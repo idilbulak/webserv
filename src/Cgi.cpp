@@ -1,6 +1,6 @@
 #include "../inc/Cgi.hpp"
 
-Cgi::Cgi(std::string file, Response &response) :  _req(response.getReq()), _server(response.getServer()), _indxFile(file) {
+Cgi::Cgi(std::string file, std::string path, Response &response) :  _req(response.getReq()), _server(response.getServer()), _indxFile(file), _pathDir(path) {
     envCgi();
     std::string filename = "cgiBody.txt";
 	std::ofstream outFile(filename.c_str());
@@ -101,6 +101,7 @@ std::string Cgi::execute()
         dup2(fdIn, 0);
         dup2(fdOut, 1);
 
+        chdir(_pathDir.c_str());
         // Execute the CGI program with environment variables
         const char* _args[2] = {"cgiBody.txt", NULL};
         execve(_indxFile.c_str(), const_cast<char* const*>(_args), env);
@@ -122,6 +123,14 @@ std::string Cgi::execute()
         while ((bytesRead = read(fdOut, &buffer[0], SIZE)) > 0) {
         output.append(buffer.begin(), buffer.begin() + bytesRead);
     }
+        // // Parent process
+        // // Copy the output of the CGI program from the output file to the output string
+        // int c;
+        // while ((c = fgetc(fOut)) != EOF) {
+        //     output += static_cast<char>(c);
+        // }
+        // // Wait for the child process to terminate
+        // waitpid(pid, NULL, 0);
     }
 
     // Restore standard input and output file descriptors

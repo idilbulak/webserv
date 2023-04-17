@@ -19,7 +19,7 @@ class Response;
 
 class Cgi {
 	public:
-		Cgi(std::string file, Response &response);
+		Cgi(std::string file, std::string path, Response &response);
 		~Cgi(void);
 		
 		std::string 	execute();
@@ -31,4 +31,5 @@ class Cgi {
 		HttpRequest      _req;
 		VirtualServer	_server;
 		std::string     _indxFile;
+		std::string     _pathDir;
 };

@@ -65,7 +65,7 @@ std::string Response::getRes() {
 	setCgiPath();
 	if (!_cgiOn)
 		return cgiOff();
-	_cgiRes = Cgi(_cgiPath, *this).execute();
+	_cgiRes = Cgi(_cgiFile, _cgiPath, *this).execute();
 	parseCgiResponse(); 
 	if (_cgiCode == 302)
     {
@@ -171,7 +171,7 @@ std::string Response::postRes() {
 		_code = 200;
 		return res();
 	}
-	_cgiRes = Cgi(_cgiPath, *this).execute();
+	_cgiRes = Cgi(_cgiFile, _cgiPath, *this).execute();
 	parseCgiResponse();
 	if (_cgiCode == 302)
     {

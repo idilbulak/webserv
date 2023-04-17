@@ -59,6 +59,7 @@ class Response {
     	int							_cgiCode;
     	std::string					_cgiType;
     	std::string					_cgiPath;
+    	std::string					_cgiFile;
 		int						    _cgiOn;
 		std::string					_cgiResBody; 
 		std::string 			    _indxFile;

@@ -148,17 +148,20 @@ void	Response::setIndxFile() {
 void	Response::setCgiPath() {
 	_cgiOn = 0;
 	if(!_file.empty() && checkExtension()) {
-		_cgiPath = _server.root + "/" + formatPath(_file);
+		_cgiPath = _server.root + "/" + _loc.root;
+        _cgiFile = _file;
 		if (fileExists(formatPath(_file)))
 			_cgiOn = 1;
 	}
 	else if(!_loc.cgi_path.empty() && _file.empty()) {
-		_cgiPath = _server.root + "/" + formatPath(_loc.cgi_path);
+		_cgiPath = _server.root + "/" + _loc.root;
+        _cgiFile = _loc.cgi_path;
 		if (fileExists(formatPath(_loc.cgi_path)))
 			_cgiOn = 1;
 	}
 	else if(!_loc.cgi_path.empty() && _req.getMethod().compare("POST") == 0) {
-		_cgiPath = _server.root + "/" + formatPath(_loc.cgi_path);
+		_cgiPath = _server.root + "/" + _loc.root;
+        _cgiFile = _loc.cgi_path;
 		if (fileExists(formatPath(_loc.cgi_path)))
 			_cgiOn = 1;
 	}
