@@ -38,7 +38,7 @@ std::vector<std::string> AutoIndex::list_directory(const std::string& dir_path) 
         if (S_ISDIR(statbuf.st_mode)) {
             // If the entry is a directory, add it to the directories vector and add a directory link to the output vector
             directories.push_back(path);
-            output.push_back("[DIR] <a href=\"" + name + "\">" + name + "</a>");
+            // output.push_back("[DIR] <a href=\"" + name + "\">" + name + "</a>");
         } else {
             // If the entry is a file, add it to the files vector and add a file link to the output vector
             files.push_back(path);
