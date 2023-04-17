@@ -278,7 +278,7 @@ std::string Response::errRes(std::string err)
     std::string path = this->_server.error_pages[this->_code];
 	std::cerr << "[ERROR] " << err << std::endl;
     if (!readContent(path))
-        _body = "<!DOCTYPE html>\n<html><title>Errorpage</title><body><h1>ERROR 404</h1></body></html>";
+        _body = "<!DOCTYPE html>\n<html><title>Errorpage</title><body><h1>ERROR " + itos(code) + " (Generated)</h1></body></html>";
     this->_type = 0;
 	_code = code;
     return res();
