@@ -75,4 +75,4 @@ for directory, codes in dirs.items():
             f.write(x)
             
     # Print a message to indicate that the files have been created
-    print(f"Created {directory}/*")
+    # print(f"Created {directory}/*")
