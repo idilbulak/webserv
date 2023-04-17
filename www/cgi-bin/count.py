@@ -1,10 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import cgi
 import os
 
 def incrementcount():
-    count_file_path = os.path.join(os.getcwd(), 'www/count.txt')
+    count_file_path = os.path.join(os.getcwd(), 'count.txt')
     try:
         with open(count_file_path, 'r+') as f:
             i = int(f.read().strip())
