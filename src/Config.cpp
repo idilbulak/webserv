@@ -50,7 +50,6 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 	VirtualServer	server;
 	i++;
 	for (;i<tokens.size()-1;) {
-		// std::cout << tokens[i] << "is token " << std::endl;
 		if(tokens[i] == "server")
 			break;
 		else if (tokens[i] == "listen") {
@@ -62,19 +61,23 @@ void	Config::parseServer(std::vector<std::string> &tokens, size_t &i) {
 			CheckServerName(tokens[++i]);
 			server.name = tokens[i];
 		}
+
 		else if (tokens[i] == "root")
 			server.root = tokens[++i];
+
 		else if (tokens[i] == "error_page" ){
 			parseErrorPage(server.error_pages, tokens, i);
-			
-			}
+		}
+
 		else if (tokens[i] == "cgi_ext"){
 			parseCgiExt(server.cgi_ext,tokens, ++i);
 		}
+
 		else if (tokens[i] == "location" ){
 			parseLocation(server.locations, tokens, i);
 			CheckLocation(server.locations);
 		}
+		
 		else
 			i++;
 	}
@@ -109,7 +112,8 @@ void	Config::parseHostPort(std::string &host, std::string &port, std::string &to
 bool	Config::check_word(const std::string &word) {
 	if (word.empty())
 		return true;
-	if (word == "cgi_ext" || word == "cgi_path" || word == "index" || word == "listen" || word == "location"  || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return" || word == "autoindex" || word == "upload_dir" || word == "max_body_size")
+	if (word == "cgi_ext" || word == "cgi_path" || word == "index" || word == "listen" || word == "location"  || word == "server_name" || word == "error_page" || word == "root" || word == "index" || word == "return" || word == "autoindex" || word == "upload_dir" || word == "max_body_size" || 
+		word == "server")
 		return true;
 	return false;
 }
@@ -150,13 +154,14 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 	//what do you mean? if for work, first if doesnt always work :))))
 	for (; i<tokens.size()-1 && (tokens[i] != "location" || tokens[i] != "server");) {
 		if (tokens[i] == "location" || tokens[i] == "server")
-			break;
+				break;
 		else if ( tokens[i] == "allow" ) {
 			for ( ++i; !check_word(tokens[i]); ++i){
 				loc.methods.push_back(tokens[i]);}
 		}
-		else if ( tokens[i] == "root" )
+		else if ( tokens[i] == "root" ){
 			loc.root = tokens[++i];
+			}
 		else if ( tokens[i] == "autoindex" ) {
 			std::string str = tokens[++i];
 			if (str.compare("on") == 0 || str.compare("off") == 0){
@@ -168,7 +173,6 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 		}
 		else if (tokens[i] == "cgi_path") {
 			loc.cgi_path = tokens[++i];
-			// std::cout << "path is "<< loc.cgi_path<< std::endl;
 		}
 		else if (tokens[i] == "upload_dir") {
 			loc.upload_dir = tokens[++i];
@@ -177,20 +181,27 @@ void	Config::parseLocation(std::vector<Location> &locations, const std::vector<s
 		{
 			for (++i;!check_word(tokens[i]); ++i)
 				loc.index.push_back(tokens[i]);			
+			i--;
 		}
-		else if (tokens[i] == "return") { //////////birdaha bakimmalisinn 601 gelince mesela patliyo
-			loc.redirect_cd = stoi(tokens[++i]);
-			loc.redirect_url = tokens[++i];
+		else if (tokens[i] == "return") {
+			try
+			{
+				loc.redirect_cd = stoi(tokens[++i]);
+				loc.redirect_url = tokens[++i];
+			}
+			catch(const std::exception& e)
+			{
+				throw std::invalid_argument("invalid data(return)");
+			}
 		}
 		else if(tokens[i] == "max_body_size")
 		{
 			CheckClientMaxBodySize(tokens[++i]);
 			loc.max_body_size = tokens[i];
-			// std::cout << "size is " << loc.max_body_size << " than  "<< i++ << std::endl;
 		}
 		else
 			i++;
-	}
+		}
 	locations.push_back(loc);
 }
 
